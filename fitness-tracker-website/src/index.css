@@ -2,7 +2,11 @@ body {
   margin: 0;
   font-family: Arial, sans-serif;
   line-height: 1.6;
+  min-height: 100vh;
+  display: flex; 
+  flex-direction: column; 
 }
+
 
 .header {
   display: flex;
@@ -65,4 +69,5 @@ body {
   padding: 1rem;
   background-color: #282c34;
   color: white;
+  margin-top: auto;
 }
