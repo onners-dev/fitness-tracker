@@ -1,25 +1,32 @@
-import React from "react";
+import { useNavigate } from 'react-router-dom'
+import './Features.css'
 
 const Features = () => {
-  const features = [
-    { title: "Workout Tracking", description: "Log your exercises and monitor your progress." },
-    { title: "Calorie Counting", description: "Track your meals and manage your diet effortlessly." },
-    { title: "Progress Insights", description: "View detailed reports and stay motivated." },
-  ];
+  const navigate = useNavigate();
 
   return (
     <section id="features" className="features">
       <h2>Features</h2>
       <div className="features-grid">
-        {features.map((feature, index) => (
-          <div key={index} className="feature-card">
-            <h3>{feature.title}</h3>
-            <p>{feature.description}</p>
-          </div>
-        ))}
+        <div className="feature" onClick={() => navigate('/calorietracker')}>
+          <h3>Calorie Tracking</h3>
+          <p>Track your daily calorie intake</p>
+        </div>
+        <div className="feature" onClick={() => navigate('/workout')}>
+          <h3>Workout Plans</h3>
+          <p>Custom workout routines</p>
+        </div>
+        <div className="feature" onClick={() => navigate('/progress')}>
+          <h3>Progress Tracking</h3>
+          <p>Monitor your fitness journey</p>
+        </div>
+        <div className="feature" onClick={() => navigate('/nutrition')}>
+          <h3>Nutrition Guide</h3>
+          <p>Healthy meal planning</p>
+        </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default Features;
+export default Features

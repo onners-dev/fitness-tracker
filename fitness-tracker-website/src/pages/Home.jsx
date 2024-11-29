@@ -7,7 +7,7 @@ function Home() {
     <div className="home">
       <Hero />
       <Features />
-      <CalorieTracker />
+
     </div>
   )
 }
