@@ -1,21 +1,20 @@
-import React from "react";
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import Features from "./components/Features";
-import Footer from "./components/Footer";
-import CalorieTracker from './components/CalorieTracker';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Header from './components/Header'
+import Footer from './components/Footer'
+import Home from './pages/Home'
+import './App.css'
 
-
-const App = () => {
+function App() {
   return (
-    <>
+    <BrowserRouter>
       <Header />
-      <Hero />
-      <Features />
-      <CalorieTracker />
+      <Routes>
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/home" element={<Home />} />
+      </Routes>
       <Footer />
-    </>
-  );
-};
+    </BrowserRouter>
+  )
+}
 
-export default App;
+export default App
