@@ -18,11 +18,11 @@ const Features = () => {
         </div>
         <div className="feature" onClick={() => navigate('/progress')}>
           <h3>Progress Tracking</h3>
-          <p>Monitor your fitness journey</p>
+          <p>Keep track of your workouts</p>
         </div>
         <div className="feature" onClick={() => navigate('/nutrition')}>
           <h3>Nutrition Guide</h3>
-          <p>Healthy meal planning</p>
+          <p>Healthy meal suggestions</p>
         </div>
       </div>
     </section>
