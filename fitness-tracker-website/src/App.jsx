@@ -4,6 +4,9 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import CalorieTracker from './components/CalorieTracker'
 import './App.css'
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   return (
@@ -15,6 +18,9 @@ function App() {
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
             <Route path="/calorietracker" element={<CalorieTracker />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
           </Routes>
         </main>
         <Footer />
