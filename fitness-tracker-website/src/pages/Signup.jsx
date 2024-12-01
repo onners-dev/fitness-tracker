@@ -1,6 +1,5 @@
-// In src/pages/Signup.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import './Signup.css';
 
@@ -90,6 +89,12 @@ const Signup = () => {
             Sign Up
           </button>
         </form>
+
+        <div className="signup-footer">
+          <p>
+            Already have an account? <Link to="/login" className="login-link">Log in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
-// In src/pages/Login.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import './Login.css';
 
@@ -58,12 +57,21 @@ const Login = () => {
               onChange={handleChange}
               required
             />
+            <Link to="/forgot-password" className="forgot-password-link">
+              Forgot Password?
+            </Link>
           </div>
           
           <button type="submit" className="login-button">
             Log In
           </button>
         </form>
+
+        <div className="login-footer">
+          <p>
+            Don't have an account? <Link to="/signup" className="signup-link">Sign up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

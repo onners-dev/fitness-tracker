@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -17,14 +18,31 @@ function App() {
         <Header />
         <main>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
-            <Route path="/calorietracker" element={<CalorieTracker />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/about" element={<About />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+
+            {/* Protected Routes */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/calorietracker" 
+              element={
+                <ProtectedRoute>
+                  <CalorieTracker />
+                </ProtectedRoute>
+              } 
+            />
           </Routes>
         </main>
         <Footer />
@@ -32,6 +50,5 @@ function App() {
     </BrowserRouter>
   )
 }
-
 
 export default App
