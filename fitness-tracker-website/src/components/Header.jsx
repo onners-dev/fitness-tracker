@@ -1,9 +1,28 @@
 import { Link, useNavigate } from "react-router-dom";
-import './Header.css'
+import { useState, useEffect } from 'react';
+import { userService } from '../services/api';
+import './Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
   const isLoggedIn = localStorage.getItem('token');
+  const [userInitials, setUserInitials] = useState('');
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (isLoggedIn) {
+        try {
+          const profile = await userService.getProfile();
+          const initials = `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase();
+          setUserInitials(initials);
+        } catch (err) {
+          console.error('Error fetching profile:', err);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [isLoggedIn]);
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
@@ -15,14 +34,23 @@ const Header = () => {
       <Link to="/home" className="logo">Fitness App</Link>
       <nav>
         {isLoggedIn ? (
-          // Links for logged-in users
           <>
             <Link to="/dashboard" className="link">Dashboard</Link>
             <Link to="/about" className="link">About</Link>
-            <button onClick={handleSignOut} className="link">Sign Out</button>
+            <div className="profile-menu">
+              <div className="avatar">
+                {userInitials}
+              </div>
+              <div className="dropdown-content">
+                <Link to="/dashboard" className="dropdown-item">Profile</Link>
+                <Link to="/settings" className="dropdown-item">Settings</Link>
+                <button onClick={handleSignOut} className="dropdown-item sign-out-btn">
+                  Sign Out
+                </button>
+              </div>
+            </div>
           </>
         ) : (
-          // Links for logged-out users
           <>
             <Link to="/home#features" className="link">Features</Link>
             <Link to="/about" className="link">About</Link>
