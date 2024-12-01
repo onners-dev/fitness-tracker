@@ -1,3 +1,4 @@
+// In Dashboard.jsx
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api';
 import './Dashboard.css';
@@ -6,6 +7,28 @@ const Dashboard = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Format fitness goal for display
+  const formatFitnessGoal = (goal) => {
+    const goalMap = {
+      'weight_loss': 'Weight Loss',
+      'muscle_gain': 'Build Muscle',
+      'maintenance': 'Maintain Weight',
+      'general_fitness': 'General Fitness'
+    };
+    return goalMap[goal] || goal;
+  };
+
+  // Format activity level for display
+  const formatActivityLevel = (level) => {
+    const activityMap = {
+      'sedentary': 'Sedentary (little or no exercise)',
+      'lightly_active': 'Lightly Active (1-3 days/week)',
+      'moderately_active': 'Moderately Active (3-5 days/week)',
+      'very_active': 'Very Active (6-7 days/week)'
+    };
+    return activityMap[level] || level;
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -38,11 +61,11 @@ const Dashboard = () => {
         <div className="dashboard-card">
           <h2>Profile Summary</h2>
           <div className="profile-info">
-            <p><strong>Name:</strong> {userProfile.first_name} {userProfile.last_name}</p>
-            <p><strong>Height:</strong> {userProfile.height} cm</p>
-            <p><strong>Weight:</strong> {userProfile.current_weight} kg</p>
-            <p><strong>Fitness Goal:</strong> {userProfile.fitness_goal}</p>
-            <p><strong>Activity Level:</strong> {userProfile.activity_level}</p>
+            <p><strong>Name:</strong> <span>{userProfile.first_name} {userProfile.last_name}</span></p>
+            <p><strong>Height:</strong> <span>{userProfile.height} cm</span></p>
+            <p><strong>Weight:</strong> <span>{userProfile.current_weight} kg</span></p>
+            <p><strong>Fitness Goal:</strong> <span>{formatFitnessGoal(userProfile.fitness_goal)}</span></p>
+            <p><strong>Activity Level:</strong> <span>{formatActivityLevel(userProfile.activity_level)}</span></p>
           </div>
         </div>
 
@@ -56,7 +79,6 @@ const Dashboard = () => {
                 {(userProfile.current_weight / Math.pow(userProfile.height/100, 2)).toFixed(1)}
               </span>
             </div>
-            {/* Add more stats as needed */}
           </div>
         </div>
 
@@ -69,7 +91,7 @@ const Dashboard = () => {
         {/* Goals Card */}
         <div className="dashboard-card">
           <h2>Fitness Goals</h2>
-          <p>Current Goal: {userProfile.fitness_goal}</p>
+          <p>Current Goal: {formatFitnessGoal(userProfile.fitness_goal)}</p>
           <p>Coming soon...</p>
         </div>
       </div>
