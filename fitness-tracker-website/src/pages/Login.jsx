@@ -1,5 +1,7 @@
+// In src/pages/Login.jsx
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
 import './Login.css';
 
 const Login = () => {
@@ -7,6 +9,8 @@ const Login = () => {
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -16,18 +20,21 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add authentication logic here
-    console.log('Login attempt:', credentials);
+    try {
+      await authService.login(credentials.email, credentials.password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred');
+    }
   };
 
   return (
     <div className="login-page">
       <div className="login-container">
         <h2>Welcome Back</h2>
-        <p>Enter your credentials to access your account</p>
-        
+        {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -38,7 +45,6 @@ const Login = () => {
               value={credentials.email}
               onChange={handleChange}
               required
-              placeholder="Enter your email"
             />
           </div>
           
@@ -51,7 +57,6 @@ const Login = () => {
               value={credentials.password}
               onChange={handleChange}
               required
-              placeholder="Enter your password"
             />
           </div>
           
@@ -59,11 +64,6 @@ const Login = () => {
             Log In
           </button>
         </form>
-        
-        <div className="login-footer">
-        <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
-        <Link to="/forgot-password">Forgot Password?</Link>
-        </div>
       </div>
     </div>
   );
