@@ -44,4 +44,21 @@
       font-size: 1.2rem;
     }
   }
+
+
+  
+.sign-out-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+}
+
+.sign-out-btn:hover {
+  color: #007bff;
+}
+
   
