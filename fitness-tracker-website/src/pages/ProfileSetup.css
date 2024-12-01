@@ -1,0 +1,147 @@
+.profile-setup-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f5f5f5;
+    padding: 2rem;
+  }
+  
+  .profile-setup-container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .setup-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .setup-header h2 {
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+  
+  .setup-header p {
+    color: #666;
+  }
+  
+  .progress-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 2rem;
+  }
+  
+  .progress-indicator .step {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    transition: background-color 0.3s ease;
+  }
+  
+  .progress-indicator .step.active {
+    background-color: #007bff;
+  }
+  
+  .setup-step {
+    margin-bottom: 2rem;
+  }
+  
+  .setup-step h3 {
+    color: #333;
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 500;
+  }
+  
+  .form-input,
+  .form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  
+  .form-input:focus,
+  .form-select:focus {
+    outline: none;
+    border-color: #007bff;
+  }
+  
+  .next-button,
+  .back-button,
+  .complete-button,
+  .skip-button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .next-button,
+  .complete-button {
+    background-color: #007bff;
+    color: white;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .next-button:hover,
+  .complete-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .back-button {
+    background-color: #e0e0e0;
+    color: #333;
+    width: 100%;
+  }
+  
+  .back-button:hover {
+    background-color: #d0d0d0;
+  }
+  
+  .skip-section {
+    text-align: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+  }
+  
+  .skip-button {
+    background: none;
+    border: none;
+    color: #666;
+    text-decoration: underline;
+    padding: 0.5rem;
+  }
+  
+  .skip-button:hover {
+    color: #333;
+  }
+  
+  @media (max-width: 768px) {
+    .profile-setup-container {
+      margin: 1rem;
+      padding: 1.5rem;
+    }
+  }
+  

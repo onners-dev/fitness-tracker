@@ -10,6 +10,7 @@ import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import About from './pages/About';
 import Dashboard from './pages/Dashboard';
+import ProfileSetup from './pages/ProfileSetup';
 
 function App() {
   return (
@@ -42,6 +43,14 @@ function App() {
                   <CalorieTracker />
                 </ProtectedRoute>
               } 
+            />
+            <Route
+              path="/profile-setup"
+              element={
+                <ProtectedRoute>
+                  <ProfileSetup />
+                </ProtectedRoute>
+              }
             />
           </Routes>
         </main>

@@ -57,22 +57,31 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
-        return;
-    }
-    try {
-        setIsLoading(true);
-        await authService.register(formData);
-        navigate('/dashboard');
-    } catch (err) {
-        setError(err.response?.data?.message || 'An error occurred');
-    } finally {
-        setIsLoading(false);
-    }
+
+// In Signup.jsx, modify the handleSubmit function
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (formData.password !== formData.confirmPassword) {
+    setError('Passwords do not match');
+    return;
+  }
+  try {
+    // Register user and get token
+    await authService.register({
+      email: formData.email,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      dateOfBirth: formData.dateOfBirth,
+      gender: formData.gender
+    });
+    navigate('/profile-setup');
+  } catch (err) {
+    setError(err.response?.data?.message || 'An error occurred');
+  }
 };
+
+
 
   const renderStep1 = () => (
     <form onSubmit={handleNextStep} className="signup-form">

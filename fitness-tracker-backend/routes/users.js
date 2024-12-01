@@ -20,10 +20,10 @@ router.get('/profile', authorization, async (req, res) => {
 // Update user profile
 router.put('/profile', authorization, async (req, res) => {
     try {
-        const { 
-            first_name, 
-            last_name, 
-            date_of_birth, 
+        const {
+            first_name,
+            last_name,
+            date_of_birth,
             gender,
             height,
             current_weight,
@@ -33,14 +33,15 @@ router.put('/profile', authorization, async (req, res) => {
 
         const updatedProfile = await pool.query(
             `UPDATE user_profiles 
-             SET first_name = $1, 
-                 last_name = $2, 
-                 date_of_birth = $3, 
-                 gender = $4,
-                 height = $5,
-                 current_weight = $6,
-                 fitness_goal = $7,
-                 activity_level = $8
+             SET first_name = COALESCE($1, first_name),
+                 last_name = COALESCE($2, last_name),
+                 date_of_birth = COALESCE($3, date_of_birth),
+                 gender = COALESCE($4, gender),
+                 height = COALESCE($5, height),
+                 current_weight = COALESCE($6, current_weight),
+                 fitness_goal = COALESCE($7, fitness_goal),
+                 activity_level = COALESCE($8, activity_level),
+                 updated_at = CURRENT_TIMESTAMP
              WHERE user_id = $9
              RETURNING *`,
             [first_name, last_name, date_of_birth, gender, height, 
@@ -53,5 +54,6 @@ router.put('/profile', authorization, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 module.exports = router;
