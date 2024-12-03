@@ -1,10 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api';
 import './Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const isLoggedIn = localStorage.getItem('token');
   const [userInitials, setUserInitials] = useState('');
 
@@ -27,6 +28,19 @@ const Header = () => {
   const handleSignOut = () => {
     localStorage.removeItem('token');
     navigate('/home');
+  };
+
+  const handleFeaturesClick = (e) => {
+    e.preventDefault();
+    if (location.pathname !== '/home') {
+      navigate('/home');
+      // Wait for navigation to complete before scrolling
+      setTimeout(() => {
+        document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -52,7 +66,7 @@ const Header = () => {
           </>
         ) : (
           <>
-            <Link to="/home#features" className="link">Features</Link>
+            <a href="#features" onClick={handleFeaturesClick} className="link">Features</a>
             <Link to="/about" className="link">About</Link>
             <Link to="/login" className="link">Login</Link>
           </>
