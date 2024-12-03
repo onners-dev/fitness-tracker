@@ -57,21 +57,21 @@ export const userService = {
 
 
   // Muscle services
-export const exerciseService = {
+  export const exerciseService = {
     getMuscleGroups: async () => {
-      const response = await api.get('/exercises/muscle-groups');
-      return response.data;
+        const response = await api.get('/exercises/muscle-groups');
+        return response.data;
     },
-  
+
     getMuscles: async (groupId) => {
-      const response = await api.get(`/exercises/muscles/${groupId}`);
-      return response.data;
+        const response = await api.get(`/exercises/muscles/${groupId}`);
+        return response.data;
     },
-  
+
     getExercises: async (muscleId) => {
-      const response = await api.get(`/exercises/by-muscle/${muscleId}`);
-      return response.data;
+        const response = await api.get(`/exercises/by-muscle/${muscleId}`);
+        return response.data;
     }
-  };
+};
   
   
