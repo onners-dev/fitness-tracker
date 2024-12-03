@@ -32,6 +32,31 @@ nav {
   color: #666;
 }
 
+/* Auth buttons styles */
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.signup-button {
+  background-color: #007bff;
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.signup-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Profile menu styles */
 .profile-menu {
   position: relative;
   display: inline-block;
@@ -108,5 +133,20 @@ nav {
   
   .link {
       font-size: 1.2rem;
+  }
+
+  .signup-button {
+      font-size: 1.2rem;
+      padding: 0.6rem 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-buttons {
+      gap: 1rem;
+  }
+  
+  .signup-button {
+      padding: 0.4rem 1rem;
   }
 }
