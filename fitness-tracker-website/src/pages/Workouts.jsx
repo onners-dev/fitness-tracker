@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { exerciseService } from '../services/api';
+import { exerciseService, favoriteService } from '../services/api';
+import { FaStar } from 'react-icons/fa'; // Import the star icon
 import './Workouts.css';
 
 const Workouts = () => {
@@ -13,9 +14,9 @@ const Workouts = () => {
     difficulty: 'all',
     equipment: 'all',
   });
+  const [favorites, setFavorites] = useState([]);
   const [sortOrder, setSortOrder] = useState('asc');
 
-  // Fetch muscle groups on component mount
   useEffect(() => {
     const fetchMuscleGroups = async () => {
       try {
@@ -32,7 +33,6 @@ const Workouts = () => {
     fetchMuscleGroups();
   }, []);
 
-  // Fetch muscles when a group is selected
   useEffect(() => {
     if (selectedGroup) {
       const fetchMuscles = async () => {
@@ -49,14 +49,11 @@ const Workouts = () => {
     }
   }, [selectedGroup?.group_id]);
 
-  // Fetch exercises when a muscle is selected
   useEffect(() => {
     if (selectedMuscle) {
       const fetchExercises = async () => {
         try {
-          console.log('Fetching exercises for muscle:', selectedMuscle.muscle_id);
           const data = await exerciseService.getExercises(selectedMuscle.muscle_id);
-          console.log('Received exercises:', data);
           setExercises(data);
         } catch (err) {
           console.error('Error:', err);
@@ -67,6 +64,19 @@ const Workouts = () => {
       fetchExercises();
     }
   }, [selectedMuscle?.muscle_id]);
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const data = await favoriteService.getFavorites();
+        setFavorites(data.map(fav => fav.exercise_id));
+      } catch (err) {
+        console.error('Failed to load favorites', err);
+      }
+    };
+
+    fetchFavorites();
+  }, []);
 
   const uniqueEquipment = [...new Set(exercises.map(ex => ex.equipment))].filter(Boolean);
 
@@ -92,6 +102,20 @@ const Workouts = () => {
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const toggleFavorite = async (exerciseId) => {
+    try {
+      if (favorites.includes(exerciseId)) {
+        await favoriteService.removeFavorite(exerciseId);
+        setFavorites(favorites.filter(id => id !== exerciseId));
+      } else {
+        await favoriteService.addFavorite(exerciseId);
+        setFavorites([...favorites, exerciseId]);
+      }
+    } catch (err) {
+      console.error('Error updating favorite status', err);
+    }
   };
 
   const handleMuscleGroupClick = (group) => {
@@ -199,7 +223,13 @@ const Workouts = () => {
             {filteredAndSortedExercises.length > 0 ? (
               filteredAndSortedExercises.map((exercise) => (
                 <div key={exercise.exercise_id} className="exercise-card">
-                  <h3>{exercise.name}</h3>
+                  <div className="exercise-header">
+                    <h3>{exercise.name}</h3>
+                    <FaStar
+                      className={`favorite-icon ${favorites.includes(exercise.exercise_id) ? 'favorited' : ''}`}
+                      onClick={() => toggleFavorite(exercise.exercise_id)}
+                    />
+                  </div>
                   <p><strong>Equipment:</strong> {exercise.equipment}</p>
                   <p><strong>Difficulty:</strong> {exercise.difficulty}</p>
                   {exercise.description && (
