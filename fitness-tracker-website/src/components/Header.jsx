@@ -34,7 +34,6 @@ const Header = () => {
     e.preventDefault();
     if (location.pathname !== '/home') {
       navigate('/home');
-      // Wait for navigation to complete before scrolling
       setTimeout(() => {
         document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -50,6 +49,7 @@ const Header = () => {
         {isLoggedIn ? (
           <>
             <Link to="/dashboard" className="link">Dashboard</Link>
+            <Link to="/workouts" className="link">Workouts</Link>
             <Link to="/about" className="link">About</Link>
             <div className="profile-menu">
               <div className="avatar">
@@ -68,7 +68,10 @@ const Header = () => {
           <>
             <a href="#features" onClick={handleFeaturesClick} className="link">Features</a>
             <Link to="/about" className="link">About</Link>
-            <Link to="/login" className="link">Login</Link>
+            <div className="auth-buttons">
+              <Link to="/login" className="link">Log in</Link>
+              <Link to="/signup" className="signup-button">Sign up</Link>
+            </div>
           </>
         )}
       </nav>

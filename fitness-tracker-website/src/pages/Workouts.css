@@ -1,0 +1,301 @@
+.workouts-page {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: calc(100vh - 160px);
+  }
+  
+  .workouts-page h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+    font-size: 2.5rem;
+  }
+  
+  /* Loading and Error States */
+  .loading,
+  .error {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-size: 1.2rem;
+  }
+  
+  .error {
+    color: #dc3545;
+  }
+  
+  .retry-button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .retry-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Back Button */
+  .back-button {
+    background: none;
+    border: none;
+    color: #007bff;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s ease;
+  }
+  
+  .back-button:hover {
+    color: #0056b3;
+  }
+  
+  /* Filters Section */
+  .filters-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+  }
+  
+  .filters-group {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .filter label {
+    font-weight: 500;
+    color: #444;
+  }
+  
+  .filter select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    min-width: 150px;
+  }
+  
+  .sort-button {
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  
+  .sort-button:hover {
+    background-color: #e9ecef;
+  }
+  
+  .results-count {
+    margin-top: 1rem;
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  /* Muscle Groups Grid */
+  .muscle-groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .muscle-group-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+  }
+  
+  .muscle-group-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  
+  .muscle-group-card h2 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+  
+  .muscle-group-card p {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  /* Muscles Grid */
+  .muscles-section h2 {
+    color: #333;
+    margin: 1rem 0;
+    font-size: 2rem;
+  }
+  
+  .muscles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .muscle-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+  }
+  
+  .muscle-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  
+  .muscle-card h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  
+  .muscle-card p {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  /* Exercises Grid */
+  .exercises-section h2 {
+    color: #333;
+    margin: 1rem 0;
+    font-size: 2rem;
+  }
+  
+  .exercises-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .exercise-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .exercise-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  
+  .exercise-card h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+  }
+  
+  .exercise-card p {
+    color: #666;
+    margin: 0.5rem 0;
+    font-size: 0.95rem;
+  }
+  
+  .exercise-card strong {
+    color: #444;
+  }
+  
+  .exercise-description {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+  }
+  
+  .exercise-instructions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+  }
+  
+  .exercise-instructions p {
+    margin-top: 0.5rem;
+    white-space: pre-line;
+  }
+  
+  .no-exercises {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    grid-column: 1 / -1;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .workouts-page {
+      padding: 1rem;
+    }
+  
+    .workouts-page h1 {
+      font-size: 2rem;
+    }
+  
+    .filters-group {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+    }
+  
+    .filter {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .sort-button {
+      width: 100%;
+      justify-content: center;
+    }
+  
+    .muscle-groups-grid,
+    .muscles-grid,
+    .exercises-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .muscle-group-card,
+    .muscle-card,
+    .exercise-card {
+      padding: 1.25rem;
+    }
+  
+    .exercise-card h3 {
+      font-size: 1.2rem;
+    }
+  }
+  
