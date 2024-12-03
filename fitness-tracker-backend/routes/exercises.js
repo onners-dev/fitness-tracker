@@ -30,16 +30,18 @@ router.get('/muscles/:groupId', authorization, async (req, res) => {
 // Get exercises by muscle
 router.get('/by-muscle/:muscleId', authorization, async (req, res) => {
     try {
+        console.log('Fetching exercises for muscle:', req.params.muscleId);
         const exercises = await pool.query(`
             SELECT e.* 
             FROM exercises e
             JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
             WHERE em.muscle_id = $1
-            ORDER BY e.name
         `, [req.params.muscleId]);
+        
+        console.log('Found exercises:', exercises.rows);
         res.json(exercises.rows);
     } catch (err) {
-        console.error(err);
+        console.error('Error fetching exercises:', err);
         res.status(500).json({ message: 'Server error' });
     }
 });

@@ -54,7 +54,9 @@ const Workouts = () => {
     if (selectedMuscle) {
       const fetchExercises = async () => {
         try {
+          console.log('Fetching exercises for muscle:', selectedMuscle.muscle_id);
           const data = await exerciseService.getExercises(selectedMuscle.muscle_id);
+          console.log('Received exercises:', data);
           setExercises(data);
         } catch (err) {
           console.error('Error:', err);
