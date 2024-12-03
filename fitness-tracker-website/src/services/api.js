@@ -75,3 +75,21 @@ export const userService = {
 };
   
   
+// In services/api.js
+export const favoriteService = {
+    addFavorite: async (exerciseId) => {
+        const response = await api.post('/favorites/add', { exerciseId });
+        return response.data;
+    },
+
+    removeFavorite: async (exerciseId) => {
+        const response = await api.delete('/favorites/remove', { data: { exerciseId } });
+        return response.data;
+    },
+
+    getFavorites: async () => {
+        const response = await api.get('/favorites');
+        return response.data;
+    }
+};
+

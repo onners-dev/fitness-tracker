@@ -216,10 +216,31 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   }
   
+  .exercise-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
   .exercise-card h3 {
     color: #333;
     margin-bottom: 1rem;
     font-size: 1.3rem;
+  }
+  
+  .favorite-icon {
+    font-size: 1.5rem;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  
+  .favorite-icon.favorited {
+    color: #ffd700; /* Gold color for favorited */
+  }
+  
+  .favorite-icon:hover {
+    color: #ffcc00; /* Lighter gold on hover */
   }
   
   .exercise-card p {
