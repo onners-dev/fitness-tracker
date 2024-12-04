@@ -21,24 +21,29 @@ function CalorieTracker() {
     const loadMeals = async () => {
       try {
         const data = await mealService.getMealsByDate(selectedDate);
-        setMeals(data);
+        // Ensure data is an array
+        setMeals(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Error loading meals:', error);
+        setMeals([]); // Set to empty array on error
       }
     };
-
+  
     loadMeals();
   }, [selectedDate]);
+  
 
   // Calculate nutrition totals
   useEffect(() => {
+    if (!Array.isArray(meals)) return;
+  
     const totals = meals.reduce((sum, meal) => ({
-      calories: sum.calories + (meal.calories || 0),
-      protein: sum.protein + (meal.protein || 0),
-      carbs: sum.carbs + (meal.carbs || 0),
-      fats: sum.fats + (meal.fats || 0)
+      calories: sum.calories + (parseFloat(meal.calories) || 0),
+      protein: sum.protein + (parseFloat(meal.protein) || 0),
+      carbs: sum.carbs + (parseFloat(meal.carbs) || 0),
+      fats: sum.fats + (parseFloat(meal.fats) || 0)
     }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
-
+  
     setNutritionSummary(totals);
   }, [meals]);
 
@@ -76,26 +81,29 @@ function CalorieTracker() {
       date: selectedDate,
       serving: '100g'
     };
-
+  
     try {
       const newMeal = await mealService.addMeal(mealData);
-      setMeals([...meals, newMeal]);
+      // Ensure we're adding to an array
+      setMeals(prevMeals => [...(Array.isArray(prevMeals) ? prevMeals : []), newMeal]);
       setSearchResults([]);
       setSearchQuery('');
     } catch (error) {
       console.error('Error adding meal:', error);
     }
   };
+  
 
   const removeMeal = async (id) => {
     try {
       await mealService.removeMeal(id);
-      setMeals(meals.filter(meal => meal.id !== id));
+      setMeals(prevMeals => 
+        Array.isArray(prevMeals) ? prevMeals.filter(meal => meal.meal_id !== id) : []
+      );
     } catch (error) {
       console.error('Error removing meal:', error);
     }
   };
-
   return (
     <div className="calorie-tracker">
       <h2>Calorie Tracker</h2>
@@ -145,8 +153,8 @@ function CalorieTracker() {
 
       {/* Meals List */}
       <div className="meals-list">
-        {meals.map((meal) => (
-          <div key={meal.id} className="meal-item">
+        {Array.isArray(meals) && meals.map((meal) => (
+          <div key={meal.meal_id} className="meal-item">
             <div className="meal-info">
               <h4>{meal.name}</h4>
               <div className="nutrition-info">
@@ -156,7 +164,7 @@ function CalorieTracker() {
                 <span>{meal.fats}g fat</span>
               </div>
             </div>
-            <button onClick={() => removeMeal(meal.id)}>Remove</button>
+            <button onClick={() => removeMeal(meal.meal_id)}>Remove</button>
           </div>
         ))}
       </div>
@@ -167,19 +175,19 @@ function CalorieTracker() {
         <div className="nutrition-totals">
           <div className="total-item">
             <span>Calories</span>
-            <span>{nutritionSummary.calories.toFixed(0)} kcal</span>
+            <span>{(Number(nutritionSummary.calories) || 0).toFixed(0)} kcal</span>
           </div>
           <div className="total-item">
             <span>Protein</span>
-            <span>{nutritionSummary.protein.toFixed(1)}g</span>
+            <span>{(Number(nutritionSummary.protein) || 0).toFixed(1)}g</span>
           </div>
           <div className="total-item">
             <span>Carbs</span>
-            <span>{nutritionSummary.carbs.toFixed(1)}g</span>
+            <span>{(Number(nutritionSummary.carbs) || 0).toFixed(1)}g</span>
           </div>
           <div className="total-item">
             <span>Fats</span>
-            <span>{nutritionSummary.fats.toFixed(1)}g</span>
+            <span>{(Number(nutritionSummary.fats) || 0).toFixed(1)}g</span>
           </div>
         </div>
       </div>
