@@ -20,17 +20,37 @@ function CalorieTracker() {
   useEffect(() => {
     const loadMeals = async () => {
       try {
+        console.log('Loading meals for date:', selectedDate);
         const data = await mealService.getMealsByDate(selectedDate);
-        // Ensure data is an array
+        
+        // Ensure data is an array and log it
+        console.log('Loaded meals:', data);
         setMeals(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Error loading meals:', error);
-        setMeals([]); // Set to empty array on error
+        console.error('Detailed error loading meals:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+        
+        // Handle specific error scenarios
+        if (error.response?.status === 401) {
+          // Redirect to login or clear token
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+        
+        // Set meals to empty array
+        setMeals([]);
+        
+        // Optional: show user-friendly error message
+        alert('Failed to load meals. Please try again or log in.');
       }
     };
   
     loadMeals();
   }, [selectedDate]);
+  
   
 
   // Calculate nutrition totals
@@ -74,22 +94,30 @@ function CalorieTracker() {
   const addMeal = async (food) => {
     const mealData = {
       name: food.product_name,
-      calories: food.nutriments?.energy_100g || 0,
-      protein: food.nutriments?.proteins_100g || 0,
-      carbs: food.nutriments?.carbohydrates_100g || 0,
-      fats: food.nutriments?.fat_100g || 0,
+      calories: parseFloat(food.nutriments?.energy_100g) || 0,
+      protein: parseFloat(food.nutriments?.proteins_100g) || 0,
+      carbs: parseFloat(food.nutriments?.carbohydrates_100g) || 0,
+      fats: parseFloat(food.nutriments?.fat_100g) || 0,
       date: selectedDate,
       serving: '100g'
     };
   
     try {
+      console.log('Attempting to add meal:', mealData);
       const newMeal = await mealService.addMeal(mealData);
-      // Ensure we're adding to an array
+      console.log('Successfully added meal:', newMeal);
       setMeals(prevMeals => [...(Array.isArray(prevMeals) ? prevMeals : []), newMeal]);
       setSearchResults([]);
       setSearchQuery('');
     } catch (error) {
-      console.error('Error adding meal:', error);
+      console.error('Failed to add meal:', error);
+      // Add user feedback
+      if (error.response?.status === 401) {
+        alert('Please log in again to continue.');
+        // Optionally redirect to login page
+      } else {
+        alert('Failed to save meal. Please try again.');
+      }
     }
   };
   

@@ -63,10 +63,10 @@ router.post('/register', async (req, res) => {
 
           // Create token for automatic login
           const token = jwt.sign(
-              { userId: newUser.rows[0].user_id },
-              process.env.JWT_SECRET,
-              { expiresIn: '1d' }
-          );
+            { user_id: user.rows[0].user_id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
 
           // Return token along with success message
           res.status(201).json({ 
@@ -106,18 +106,26 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        // Create token
+        // Create token - use user_id consistently
         const token = jwt.sign(
-            { userId: user.rows[0].user_id },
+            { user_id: user.rows[0].user_id },  // Explicitly use user_id from database row
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
-        res.json({ token });
+        console.log('Login successful for user:', user.rows[0].user_id);
+        console.log('Generated Token:', token);
+
+        res.json({ 
+            token,
+            user: {
+                user_id: user.rows[0].user_id,
+                email: user.rows[0].email
+            }
+        });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Login error:', err);
+        res.status(500).send('Server error');
     }
 });
-
 module.exports = router;

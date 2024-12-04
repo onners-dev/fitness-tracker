@@ -7,7 +7,7 @@ router.get('/profile', authorization, async (req, res) => {
     try {
         const profile = await pool.query(
             'SELECT up.* FROM user_profiles up WHERE up.user_id = $1',
-            [req.user.userId]
+            [req.user.id]  // Change from userId to id
         );
 
         res.json(profile.rows[0]);
@@ -45,7 +45,7 @@ router.put('/profile', authorization, async (req, res) => {
              WHERE user_id = $9
              RETURNING *`,
             [first_name, last_name, date_of_birth, gender, height, 
-             current_weight, fitness_goal, activity_level, req.user.userId]
+             current_weight, fitness_goal, activity_level, req.user.id]
         );
 
         res.json(updatedProfile.rows[0]);
