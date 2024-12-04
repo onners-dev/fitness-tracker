@@ -5,8 +5,13 @@ require('dotenv').config();
 
 const app = express();
 
+// Use the specific CORS configuration
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 
 // Database configuration
@@ -37,7 +42,10 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/exercises', require('./routes/exercises'));
 app.use('/api/favorites', require('./routes/favorites'));
-app.use('/api/meals', require('./routes/meals'));
+console.log('Loading meals routes...');
+const mealsRoutes = require('./routes/meals');
+console.log('Meals routes loaded:', !!mealsRoutes);
+app.use('/api/meals', mealsRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
