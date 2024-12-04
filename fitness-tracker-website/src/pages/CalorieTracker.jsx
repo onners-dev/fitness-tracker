@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { searchFood } from '../services/foodApi';
 import { mealService } from '../services/mealApi';
+import { contributedFoodService } from '../services/contributedFoodApi';
 import './CalorieTracker.css';
 
 function CalorieTracker() {
@@ -16,6 +17,20 @@ function CalorieTracker() {
     fats: 0
   });
 
+  // New states for custom food and contributions
+  const [isCustomFoodModalOpen, setIsCustomFoodModalOpen] = useState(false);
+  const [customFood, setCustomFood] = useState({
+    name: '',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: '',
+    serving: '100g',
+    brand: ''
+  });
+  const [contributedFoods, setContributedFoods] = useState([]);
+  const [showContributedFoods, setShowContributedFoods] = useState(false);
+
   // Load meals for selected date
   useEffect(() => {
     const loadMeals = async () => {
@@ -23,7 +38,6 @@ function CalorieTracker() {
         console.log('Loading meals for date:', selectedDate);
         const data = await mealService.getMealsByDate(selectedDate);
         
-        // Ensure data is an array and log it
         console.log('Loaded meals:', data);
         setMeals(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -33,25 +47,32 @@ function CalorieTracker() {
           status: error.response?.status
         });
         
-        // Handle specific error scenarios
         if (error.response?.status === 401) {
-          // Redirect to login or clear token
           localStorage.removeItem('token');
           window.location.href = '/login';
         }
         
-        // Set meals to empty array
         setMeals([]);
-        
-        // Optional: show user-friendly error message
         alert('Failed to load meals. Please try again or log in.');
       }
     };
   
     loadMeals();
   }, [selectedDate]);
-  
-  
+
+  // Fetch user's contributed foods
+  useEffect(() => {
+    const fetchContributions = async () => {
+      try {
+        const contributions = await contributedFoodService.getMyContributions();
+        setContributedFoods(contributions);
+      } catch (error) {
+        console.error('Failed to fetch contributions');
+      }
+    };
+
+    fetchContributions();
+  }, []);
 
   // Calculate nutrition totals
   useEffect(() => {
@@ -66,6 +87,69 @@ function CalorieTracker() {
   
     setNutritionSummary(totals);
   }, [meals]);
+
+  // Handle custom food input changes
+  const handleCustomFoodChange = (e) => {
+    const { name, value } = e.target;
+    setCustomFood(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Add custom food
+  const addCustomFood = async (e) => {
+    e.preventDefault();
+    
+    // Validate input
+    const { name, calories, protein, carbs, fats } = customFood;
+    if (!name || !calories) {
+      alert('Please enter at least a name and calories');
+      return;
+    }
+
+    try {
+      const foodData = {
+        name,
+        calories: parseFloat(calories),
+        protein: parseFloat(protein) || null,
+        carbs: parseFloat(carbs) || null,
+        fats: parseFloat(fats) || null,
+        serving_size: customFood.serving,
+        brand: customFood.brand || null
+      };
+
+      const newContribution = await contributedFoodService.contributeFood(foodData);
+      
+      // Add to meals if approved
+      if (newContribution.approval_status === 'approved') {
+        const mealData = {
+          ...foodData,
+          date: selectedDate
+        };
+        const newMeal = await mealService.addMeal(mealData);
+        setMeals(prevMeals => [...prevMeals, newMeal]);
+      }
+
+      // Update contributed foods list
+      setContributedFoods(prev => [...prev, newContribution]);
+      
+      // Reset form
+      setCustomFood({
+        name: '',
+        calories: '',
+        protein: '',
+        carbs: '',
+        fats: '',
+        serving: '100g',
+        brand: ''
+      });
+      setIsCustomFoodModalOpen(false);
+    } catch (error) {
+      console.error('Failed to contribute food:', error);
+      alert('Failed to contribute food. Please try again.');
+    }
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -120,7 +204,6 @@ function CalorieTracker() {
       }
     }
   };
-  
 
   const removeMeal = async (id) => {
     try {
@@ -132,6 +215,7 @@ function CalorieTracker() {
       console.error('Error removing meal:', error);
     }
   };
+
   return (
     <div className="calorie-tracker">
       <h2>Calorie Tracker</h2>
@@ -146,18 +230,151 @@ function CalorieTracker() {
         />
       </div>
       
-      {/* Search Form */}
-      <form className="meal-form" onSubmit={handleSearch}>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search for a food..."
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Searching...' : 'Search'}
-        </button>
-      </form>
+      {/* Search and Custom Food Buttons */}
+      <div className="food-actions">
+        <form className="meal-form" onSubmit={handleSearch}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search for a food..."
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Searching...' : 'Search'}
+          </button>
+        </form>
+
+        <div className="action-buttons">
+          <button 
+            className="custom-food-button" 
+            onClick={() => setIsCustomFoodModalOpen(true)}
+          >
+            Add Custom Food
+          </button>
+          <button 
+            className="contributed-foods-button"
+            onClick={() => setShowContributedFoods(!showContributedFoods)}
+          >
+            {showContributedFoods ? 'Hide' : 'Show'} My Contributions
+          </button>
+        </div>
+      </div>
+
+      {/* Contributed Foods Section */}
+      {showContributedFoods && (
+        <div className="contributed-foods-section">
+          <h3>Your Contributed Foods</h3>
+          {contributedFoods.length === 0 ? (
+            <p>No contributed foods yet.</p>
+          ) : (
+            contributedFoods.map(food => (
+              <div key={food.food_id} className="contributed-food-item">
+                <div className="food-info">
+                  <h4>{food.name}</h4>
+                  <div className="nutrition-info">
+                    <span>{food.calories} kcal</span>
+                    <span>{food.protein || 0}g protein</span>
+                    <span>{food.carbs || 0}g carbs</span>
+                    <span>{food.fats || 0}g fat</span>
+                  </div>
+                </div>
+                <span className="contribution-status">
+                  Status: {food.approval_status}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Custom Food Modal */}
+      {isCustomFoodModalOpen && (
+        <div className="custom-food-modal">
+          <div className="custom-food-content">
+            <h3>Contribute a New Food</h3>
+            <form onSubmit={addCustomFood}>
+              <div className="form-group">
+                <label>Food Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={customFood.name}
+                  onChange={handleCustomFoodChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Calories *</label>
+                <input
+                  type="number"
+                  name="calories"
+                  value={customFood.calories}
+                  onChange={handleCustomFoodChange}
+                  step="0.1"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Protein (g)</label>
+                <input
+                  type="number"
+                  name="protein"
+                  value={customFood.protein}
+                  onChange={handleCustomFoodChange}
+                  step="0.1"
+                />
+              </div>
+              <div className="form-group">
+                <label>Carbs (g)</label>
+                <input
+                  type="number"
+                  name="carbs"
+                  value={customFood.carbs}
+                  onChange={handleCustomFoodChange}
+                  step="0.1"
+                />
+              </div>
+              <div className="form-group">
+                <label>Fats (g)</label>
+                <input
+                  type="number"
+                  name="fats"
+                  value={customFood.fats}
+                  onChange={handleCustomFoodChange}
+                  step="0.1"
+                />
+              </div>
+              <div className="form-group">
+                <label>Brand</label>
+                <input
+                  type="text"
+                  name="brand"
+                  value={customFood.brand}
+                  onChange={handleCustomFoodChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Serving Size</label>
+                <input
+                  type="text"
+                  name="serving"
+                  value={customFood.serving}
+                  onChange={handleCustomFoodChange}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="submit">Contribute Food</button>
+                <button 
+                  type="button" 
+                  onClick={() => setIsCustomFoodModalOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Search Results */}
       {searchResults.length > 0 && (
