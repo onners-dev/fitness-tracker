@@ -11,7 +11,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import About from './pages/About';
 import Dashboard from './pages/Dashboard';
 import ProfileSetup from './pages/ProfileSetup';
-import Workouts from './pages/Workouts'
+import Workouts from './pages/Workouts';
+import Favorites from './pages/Favorites';
 
 function App() {
   return (
@@ -58,6 +59,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Workouts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/favorites"
+              element={
+                <ProtectedRoute>
+                  <Favorites />
                 </ProtectedRoute>
               }
             />
