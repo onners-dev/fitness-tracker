@@ -46,6 +46,7 @@ console.log('Loading meals routes...');
 const mealsRoutes = require('./routes/meals');
 console.log('Meals routes loaded:', !!mealsRoutes);
 app.use('/api/meals', mealsRoutes);
+app.use('/api/foods', require('./routes/foods'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
