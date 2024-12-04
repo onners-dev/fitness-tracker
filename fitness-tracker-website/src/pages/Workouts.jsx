@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { exerciseService, favoriteService } from '../services/api';
-import { FaStar } from 'react-icons/fa'; // Import the star icon
+import { FaStar } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import './Workouts.css';
 
 const Workouts = () => {
@@ -16,6 +17,7 @@ const Workouts = () => {
   });
   const [favorites, setFavorites] = useState([]);
   const [sortOrder, setSortOrder] = useState('asc');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMuscleGroups = async () => {
@@ -64,6 +66,7 @@ const Workouts = () => {
       fetchExercises();
     }
   }, [selectedMuscle?.muscle_id]);
+  
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -209,6 +212,12 @@ const Workouts = () => {
   return (
     <div className="workouts-page">
       <h1>Workout Library</h1>
+
+      <div className="favorites-link">
+        <button onClick={() => navigate('/favorites')} className="favorites-button">
+          View Favorites
+        </button>
+      </div>
       
       {selectedMuscle && (
         <div className="exercises-section">
