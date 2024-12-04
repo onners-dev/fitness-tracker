@@ -1,30 +1,42 @@
+// In src/services/mealApi.js
 import axios from 'axios';
 
-const BASE_URL = '/api/meals'; // Your backend endpoint
+const BASE_URL = 'http://localhost:5000/api/meals'; // Update this to match your backend port
 
 export const mealService = {
-  // Get meals for a specific date
   getMealsByDate: async (date) => {
-    const response = await axios.get(`${BASE_URL}/date/${date}`);
+    const response = await axios.get(`${BASE_URL}/date/${date}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add this for authentication
+      }
+    });
     return response.data;
   },
 
-  // Add a new meal
   addMeal: async (mealData) => {
-    const response = await axios.post(BASE_URL, mealData);
+    const response = await axios.post(BASE_URL, mealData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add this for authentication
+      }
+    });
     return response.data;
   },
 
-  // Remove a meal
   removeMeal: async (mealId) => {
-    const response = await axios.delete(`${BASE_URL}/${mealId}`);
+    const response = await axios.delete(`${BASE_URL}/${mealId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add this for authentication
+      }
+    });
     return response.data;
   },
 
-  // Get meals summary for a date range
   getMealsSummary: async (startDate, endDate) => {
     const response = await axios.get(`${BASE_URL}/summary`, {
-      params: { startDate, endDate }
+      params: { startDate, endDate },
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add this for authentication
+      }
     });
     return response.data;
   }

@@ -158,3 +158,71 @@
     width: 100%;
   }
 }
+
+
+.date-selector {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.date-selector input {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.food-info, .meal-info {
+  flex: 1;
+}
+
+.nutrition-info {
+  display: flex;
+  gap: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.nutrition-summary {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.nutrition-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.total-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.total-item span:first-child {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.total-item span:last-child {
+  color: #2d3436;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.food-item h4, .meal-item h4 {
+  margin: 0;
+  color: #2d3436;
+  font-size: 1.1rem;
+}
