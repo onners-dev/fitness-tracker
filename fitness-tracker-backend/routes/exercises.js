@@ -46,4 +46,65 @@ router.get('/by-muscle/:muscleId', authorization, async (req, res) => {
     }
 });
 
+router.get('/', authorization, async (req, res) => {
+    try {
+        const { muscle_group, difficulty } = req.query;
+
+        let query = `
+            SELECT 
+                e.exercise_id, 
+                e.name, 
+                e.difficulty, 
+                e.equipment,
+                (
+                    SELECT json_agg(DISTINCT mg.name)
+                    FROM exercise_muscles em
+                    JOIN muscles m ON em.muscle_id = m.muscle_id
+                    JOIN muscle_groups mg ON m.group_id = mg.group_id
+                    WHERE em.exercise_id = e.exercise_id
+                ) as muscle_groups
+            FROM exercises e
+        `;
+
+        const queryParams = [];
+        const whereClauses = [];
+
+        if (muscle_group) {
+            whereClauses.push(`
+                EXISTS (
+                    SELECT 1 
+                    FROM exercise_muscles em
+                    JOIN muscles m ON em.muscle_id = m.muscle_id
+                    JOIN muscle_groups mg ON m.group_id = mg.group_id
+                    WHERE em.exercise_id = e.exercise_id AND mg.name = $${queryParams.length + 1}
+                )
+            `);
+            queryParams.push(muscle_group);
+        }
+
+        if (difficulty) {
+            whereClauses.push(`e.difficulty = $${queryParams.length + 1}`);
+            queryParams.push(difficulty);
+        }
+
+        if (whereClauses.length > 0) {
+            query += ' WHERE ' + whereClauses.join(' AND ');
+        }
+
+        console.log('Executing query:', query);
+        console.log('Query params:', queryParams);
+
+        const { rows } = await pool.query(query, queryParams);
+
+        console.log('Fetched exercises:', rows);
+        res.json(rows);
+    } catch (err) {
+        console.error('Error fetching all exercises:', err);
+        res.status(500).json({ 
+            message: 'Server error fetching exercises',
+            error: err.message 
+        });
+    }
+});
+
 module.exports = router;
