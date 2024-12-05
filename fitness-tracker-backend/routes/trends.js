@@ -37,14 +37,16 @@ router.get('/workouts', authorization, async (req, res) => {
         const { rows } = await pool.query(`
             SELECT 
                 date, 
-                COUNT(*) as workout_count,
-                COALESCE(SUM(total_calories_burned), 0) as total_calories_burned,
-                json_agg(DISTINCT workout_type) as workout_types
+                COUNT(*) as total_workout_count,
+                COALESCE(SUM(total_calories_burned), 0) as total_calories_burned
             FROM user_workouts
-            WHERE user_id = $1 AND date >= NOW() - INTERVAL '${days} days'
+            WHERE user_id = $1 
+            AND date >= NOW() - INTERVAL '${days} days'
             GROUP BY date
             ORDER BY date
         `, [userId]);
+
+        console.log('Workout trends query results:', rows);
 
         res.json(rows || []);
     } catch (err) {
@@ -55,6 +57,7 @@ router.get('/workouts', authorization, async (req, res) => {
         });
     }
 });
+
 
 
 module.exports = router;
