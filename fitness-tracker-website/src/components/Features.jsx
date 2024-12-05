@@ -16,7 +16,7 @@ const Features = () => {
           <h3>Workout Plans</h3>
           <p>Custom workout routines</p>
         </div>
-        <div className="feature" onClick={() => navigate('/progress')}>
+        <div className="feature" onClick={() => navigate('/trends')}>
           <h3>Progress Tracking</h3>
           <p>Keep track of your workouts</p>
         </div>
