@@ -13,6 +13,9 @@ import Dashboard from './pages/Dashboard';
 import ProfileSetup from './pages/ProfileSetup';
 import Workouts from './pages/Workouts';
 import Favorites from './pages/Favorites';
+import TrackingPage from './pages/TrackingPage';
+import TrendsPage from './pages/TrendsPage';
+import WorkoutLogging from './pages/WorkoutLogging';
 
 function App() {
   return (
@@ -67,6 +70,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Favorites />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tracking"
+              element={
+                <ProtectedRoute>
+                  <TrackingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/trends"
+              element={
+                <ProtectedRoute>
+                  <TrendsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workout-logging"
+              element={
+                <ProtectedRoute>
+                  <WorkoutLogging />
                 </ProtectedRoute>
               }
             />
