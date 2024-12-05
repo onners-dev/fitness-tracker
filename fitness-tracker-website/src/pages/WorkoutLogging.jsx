@@ -85,7 +85,7 @@ function WorkoutLogging() {
             exercises: prev.exercises.filter((_, i) => i !== index)
         }));
     };
-    
+
     useEffect(() => {
         const fetchExercises = async () => {
             setIsLoading(true);
