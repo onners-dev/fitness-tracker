@@ -84,8 +84,16 @@ function TrendsPage() {
         borderColor: type === 'calories' ? 'rgb(255, 99, 132)' : 
                      type === 'protein' ? 'rgb(54, 162, 235)' : 
                      type === 'carbs' ? 'rgb(255, 206, 86)' : 
-                     'rgb(75, 192, 192)',
-        tension: 0.1
+                     type === 'fats' ? 'rgb(75, 192, 192)' : 
+                     'rgb(153, 102, 255)',
+        backgroundColor: type === 'calories' ? 'rgba(255, 99, 132, 0.2)' : 
+                         type === 'protein' ? 'rgba(54, 162, 235, 0.2)' : 
+                         type === 'carbs' ? 'rgba(255, 206, 86, 0.2)' : 
+                         type === 'fats' ? 'rgba(75, 192, 192, 0.2)' : 
+                         'rgba(153, 102, 255, 0.2)',
+        tension: 0.1,
+        borderWidth: 2,
+        pointRadius: 4
       }]
     };
   };
@@ -93,26 +101,41 @@ function TrendsPage() {
   // Prepare chart options
   const getChartOptions = (title) => ({
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
       },
       title: {
         display: true,
-        text: title
+        text: title,
+        font: {
+          size: 16
+        }
       }
     },
-    // Ensure chart doesn't break with empty data
     scales: {
       y: {
-        beginAtZero: true
+        beginAtZero: true,
+        ticks: {
+          font: {
+            size: 12
+          }
+        }
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 12
+          }
+        }
       }
     }
   });
 
   // Render loading or error states
-  if (loading) return <div>Loading trends...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div className="loading-error">Loading trends...</div>;
+  if (error) return <div className="loading-error">Error: {error}</div>;
 
   return (
     <div className="trends-page">
@@ -135,7 +158,7 @@ function TrendsPage() {
       <div className="trends-section">
         <h2>Nutrition Trends</h2>
         {nutritionTrends.length === 0 ? (
-          <p>No nutrition data available</p>
+          <p className="loading-error">No nutrition data available</p>
         ) : (
           <div className="charts-grid">
             {['calories', 'protein', 'carbs', 'fats'].map(type => (
@@ -154,7 +177,7 @@ function TrendsPage() {
       <div className="trends-section">
         <h2>Workout Trends</h2>
         {workoutTrends.length === 0 ? (
-          <p>No workout data available</p>
+          <p className="loading-error">No workout data available</p>
         ) : (
           <div className="charts-grid">
             <div className="chart-container">
