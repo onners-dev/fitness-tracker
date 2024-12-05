@@ -3,7 +3,6 @@ import { workoutService, exerciseLibraryService } from '../services/workoutApi';
 import './WorkoutLogging.css';
 
 function WorkoutLogging() {
-    // Workout type options
     const workoutTypes = [
         'Full Body',
         'Upper Body',
@@ -15,6 +14,8 @@ function WorkoutLogging() {
         'Custom'
     ];
 
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
     const [workoutData, setWorkoutData] = useState({
         workout_type: '', 
         workout_name: '', 
@@ -34,21 +35,7 @@ function WorkoutLogging() {
         notes: ''
     });
 
-    // Fetch exercise library
-    useEffect(() => {
-        const fetchExercises = async () => {
-            try {
-                const exercises = await exerciseLibraryService.getExercises();
-                setExerciseLibrary(exercises);
-            } catch (error) {
-                console.error('Failed to fetch exercise library', error);
-                alert('Failed to load exercise library. Please try again later.');
-            }
-        };
-    
-        fetchExercises();
-    }, []);
-
+    // Add these methods back
     const handleWorkoutChange = (e) => {
         const { name, value } = e.target;
         setWorkoutData(prev => ({
@@ -98,47 +85,62 @@ function WorkoutLogging() {
             exercises: prev.exercises.filter((_, i) => i !== index)
         }));
     };
+    
+    useEffect(() => {
+        const fetchExercises = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const exercises = await exerciseLibraryService.getExercises();
+                setExerciseLibrary(exercises);
+            } catch (error) {
+                setError('Failed to load exercise library. Please try again later.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+    
+        fetchExercises();
+    }, []);
+
+    // ... (keep your existing handle change functions)
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
+        setError(null);
         
-        // Validation
         const errors = [];
-        if (!workoutData.workout_type) {
-            errors.push('Workout type is required');
-        }
+        if (!workoutData.workout_type) errors.push('Workout type is required');
         if (workoutData.workout_type === 'Custom' && !workoutData.workout_name.trim()) {
             errors.push('Custom workout name is required');
         }
-        if (!workoutData.date) {
-            errors.push('Date is required');
-        }
-        if (workoutData.exercises.length === 0) {
-            errors.push('Please add at least one exercise');
-        }
+        if (!workoutData.date) errors.push('Date is required');
+        if (workoutData.exercises.length === 0) errors.push('Please add at least one exercise');
         
-        // Show errors if any
         if (errors.length > 0) {
-            alert(errors.join('\n'));
+            setError(errors.join('\n'));
+            setIsLoading(false);
             return;
         }
 
         try {
-            // Prepare workout data for submission
             const submissionData = {
                 ...workoutData,
                 total_duration: workoutData.total_duration || null,
                 total_calories_burned: workoutData.total_calories_burned || null,
                 notes: workoutData.notes || null,
-                // Use workout_type or workout_name depending on the type
                 workout_name: workoutData.workout_type === 'Custom' 
                     ? workoutData.workout_name 
                     : workoutData.workout_type
             };
 
-            const response = await workoutService.logWorkout(submissionData);
+            await workoutService.logWorkout(submissionData);
             
-            alert('Workout logged successfully!');
+            // Success message
+            const successMessage = document.getElementById('success-message');
+            successMessage.classList.add('show');
+            setTimeout(() => successMessage.classList.remove('show'), 3000);
             
             // Reset form
             setWorkoutData({
@@ -151,162 +153,220 @@ function WorkoutLogging() {
                 exercises: []
             });
         } catch (error) {
-            console.error('Workout logging error:', error);
-            alert(`Failed to log workout: ${error.message}`);
+            setError(`Failed to log workout: ${error.message}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="workout-logging">
-            <h1>Log Workout</h1>
-            <form onSubmit={handleSubmit}>
-                {/* Workout Type Selection */}
-                <div className="form-group">
-                    <label>Workout Type *</label>
-                    <select
-                        name="workout_type"
-                        value={workoutData.workout_type}
-                        onChange={handleWorkoutChange}
-                        required
-                    >
-                        <option value="">Select Workout Type</option>
-                        {workoutTypes.map(type => (
-                            <option key={type} value={type}>{type}</option>
-                        ))}
-                    </select>
+        <div className="workout-logging" role="main">
+            <h1>Log Your Workout</h1>
+            
+            {error && (
+                <div className="error-message" role="alert">
+                    {error}
                 </div>
+            )}
+            
+            <div id="success-message" className="success-message" role="alert">
+                Workout logged successfully!
+            </div>
 
-                {/* Custom Workout Name (conditionally rendered) */}
-                {workoutData.workout_type === 'Custom' && (
+            <form onSubmit={handleSubmit} className="workout-form">
+                <fieldset className="form-section">
+                    <legend>Workout Details</legend>
+                    
                     <div className="form-group">
-                        <label>Custom Workout Name *</label>
-                        <input
-                            type="text"
-                            name="workout_name"
-                            value={workoutData.workout_name}
+                        <label htmlFor="workout-type">Workout Type *</label>
+                        <select
+                            id="workout-type"
+                            name="workout_type"
+                            value={workoutData.workout_type}
                             onChange={handleWorkoutChange}
-                            placeholder="Enter custom workout name"
                             required
-                        />
+                            aria-required="true"
+                        >
+                            <option value="">Select Workout Type</option>
+                            {workoutTypes.map(type => (
+                                <option key={type} value={type}>{type}</option>
+                            ))}
+                        </select>
                     </div>
-                )}
 
-                {/* Date */}
-                <div className="form-group">
-                    <label>Date *</label>
-                    <input
-                        type="date"
-                        name="date"
-                        value={workoutData.date}
-                        onChange={handleWorkoutChange}
-                        required
-                    />
-                </div>
+                    {workoutData.workout_type === 'Custom' && (
+                        <div className="form-group">
+                            <label htmlFor="workout-name">Custom Workout Name *</label>
+                            <input
+                                id="workout-name"
+                                type="text"
+                                name="workout_name"
+                                value={workoutData.workout_name}
+                                onChange={handleWorkoutChange}
+                                placeholder="Enter custom workout name"
+                                required
+                                aria-required="true"
+                            />
+                        </div>
+                    )}
 
-                {/* Duration */}
-                <div className="form-group">
-                    <label>Total Duration (minutes)</label>
-                    <input
-                        type="number"
-                        name="total_duration"
-                        value={workoutData.total_duration}
-                        onChange={handleWorkoutChange}
-                        placeholder="Enter total workout duration"
-                        min="0"
-                    />
-                </div>
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label htmlFor="workout-date">Date *</label>
+                            <input
+                                id="workout-date"
+                                type="date"
+                                name="date"
+                                value={workoutData.date}
+                                onChange={handleWorkoutChange}
+                                required
+                                aria-required="true"
+                            />
+                        </div>
 
-                {/* Calories Burned */}
-                <div className="form-group">
-                    <label>Calories Burned</label>
-                    <input
-                        type="number"
-                        name="total_calories_burned"
-                        value={workoutData.total_calories_burned}
-                        onChange={handleWorkoutChange}
-                        placeholder="Enter total calories burned"
-                        min="0"
-                    />
-                </div>
+                        <div className="form-group">
+                            <label htmlFor="workout-duration">Duration (mins)</label>
+                            <input
+                                id="workout-duration"
+                                type="number"
+                                name="total_duration"
+                                value={workoutData.total_duration}
+                                onChange={handleWorkoutChange}
+                                placeholder="0"
+                                min="0"
+                            />
+                        </div>
 
-                {/* Workout Notes */}
+                        <div className="form-group">
+                            <label htmlFor="calories-burned">Calories Burned</label>
+                            <input
+                                id="calories-burned"
+                                type="number"
+                                name="total_calories_burned"
+                                value={workoutData.total_calories_burned}
+                                onChange={handleWorkoutChange}
+                                placeholder="0"
+                                min="0"
+                            />
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset className="form-section">
+                    <legend>Exercises</legend>
+                    
+                    <div className="exercises-list">
+                        {workoutData.exercises.map((exercise, index) => (
+                            <div key={index} className="exercise-card">
+                                <h3>{exercise.exercise_name}</h3>
+                                <div className="exercise-details">
+                                    <span>{exercise.sets} sets</span>
+                                    <span>{exercise.reps} reps</span>
+                                    {exercise.weight && <span>{exercise.weight} lbs</span>}
+                                </div>
+                                <button 
+                                    type="button" 
+                                    onClick={() => removeExercise(index)}
+                                    className="remove-exercise"
+                                    aria-label={`Remove ${exercise.exercise_name}`}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="add-exercise-section">
+                        <h3>Add Exercise</h3>
+                        <div className="add-exercise-form">
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label htmlFor="exercise-select">Exercise *</label>
+                                    <select
+                                        id="exercise-select"
+                                        name="exercise_id"
+                                        value={currentExercise.exercise_id}
+                                        onChange={handleExerciseChange}
+                                    >
+                                        <option value="">Select Exercise</option>
+                                        {exerciseLibrary.map(exercise => (
+                                            <option key={exercise.exercise_id} value={exercise.exercise_id}>
+                                                {exercise.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="form-group compact">
+                                    <label htmlFor="sets">Sets *</label>
+                                    <input
+                                        id="sets"
+                                        type="number"
+                                        name="sets"
+                                        placeholder="0"
+                                        value={currentExercise.sets}
+                                        onChange={handleExerciseChange}
+                                        min="1"
+                                    />
+                                </div>
+
+                                <div className="form-group compact">
+                                    <label htmlFor="reps">Reps *</label>
+                                    <input
+                                        id="reps"
+                                        type="number"
+                                        name="reps"
+                                        placeholder="0"
+                                        value={currentExercise.reps}
+                                        onChange={handleExerciseChange}
+                                        min="1"
+                                    />
+                                </div>
+
+                                <div className="form-group compact">
+                                    <label htmlFor="weight">Weight (lbs)</label>
+                                    <input
+                                        id="weight"
+                                        type="number"
+                                        name="weight"
+                                        placeholder="0"
+                                        value={currentExercise.weight}
+                                        onChange={handleExerciseChange}
+                                        min="0"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <button 
+                                type="button" 
+                                onClick={addExercise}
+                                className="add-exercise-btn"
+                                disabled={!currentExercise.exercise_id || !currentExercise.sets || !currentExercise.reps}
+                            >
+                                Add Exercise
+                            </button>
+                        </div>
+                    </div>
+                </fieldset>
+
                 <div className="form-group">
-                    <label>Workout Notes</label>
+                    <label htmlFor="workout-notes">Additional Notes</label>
                     <textarea
+                        id="workout-notes"
                         name="notes"
                         value={workoutData.notes}
                         onChange={handleWorkoutChange}
-                        placeholder="Additional notes about the workout"
+                        placeholder="Add any notes about your workout..."
+                        rows="3"
                     />
                 </div>
 
-                {/* Exercise Selection Section */}
-                <div className="exercises-section">
-                    <h2>Exercises</h2>
-                    {workoutData.exercises.map((exercise, index) => (
-                        <div key={index} className="exercise-item">
-                            <span>{exercise.exercise_name}</span>
-                            <span>{exercise.sets} sets</span>
-                            <span>{exercise.reps} reps</span>
-                            <button 
-                                type="button" 
-                                onClick={() => removeExercise(index)}
-                            >
-                                Remove
-                            </button>
-                        </div>
-                    ))}
-
-                    {/* Add Exercise Form */}
-                    <div className="add-exercise-form">
-                        <select
-                            name="exercise_id"
-                            value={currentExercise.exercise_id}
-                            onChange={handleExerciseChange}
-                        >
-                            <option value="">Select Exercise</option>
-                            {exerciseLibrary.map(exercise => (
-                                <option 
-                                    key={exercise.exercise_id} 
-                                    value={exercise.exercise_id}
-                                >
-                                    {exercise.name}
-                                </option>
-                            ))}
-                        </select>
-                        <input
-                            type="number"
-                            name="sets"
-                            placeholder="Sets"
-                            value={currentExercise.sets}
-                            onChange={handleExerciseChange}
-                        />
-                        <input
-                            type="number"
-                            name="reps"
-                            placeholder="Reps"
-                            value={currentExercise.reps}
-                            onChange={handleExerciseChange}
-                        />
-                        <input
-                            type="number"
-                            name="weight"
-                            placeholder="Weight (optional)"
-                            value={currentExercise.weight}
-                            onChange={handleExerciseChange}
-                        />
-                        <button 
-                            type="button" 
-                            onClick={addExercise}
-                        >
-                            Add Exercise
-                        </button>
-                    </div>
-                </div>
-
-                {/* Submit Button */}
-                <button type="submit" className="submit-workout">
-                    Log Workout
+                <button 
+                    type="submit" 
+                    className="submit-workout"
+                    disabled={isLoading}
+                >
+                    {isLoading ? 'Logging Workout...' : 'Log Workout'}
                 </button>
             </form>
         </div>
