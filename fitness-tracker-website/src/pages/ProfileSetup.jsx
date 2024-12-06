@@ -5,26 +5,33 @@ import './ProfileSetup.css';
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     height: '',
-    current_weight: '',
-    fitness_goal: '',
-    activity_level: ''
+    currentWeight: '',
+    targetWeight: '',
+    fitnessGoal: '',
+    activityLevel: '',
+    primaryFocus: '',
+    age: ''
   });
-  const [existingProfile, setExistingProfile] = useState(null);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch existing profile data when component mounts
+  // Retrieve pre-filled data from local storage if available
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const profile = await userService.getProfile();
-        setExistingProfile(profile);
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-      }
-    };
-    fetchProfile();
+    const storedGoals = JSON.parse(localStorage.getItem('signupFitnessGoals') || '{}');
+    
+    // Pre-fill fitness goals if available
+    if (storedGoals.fitnessGoal || storedGoals.activityLevel) {
+      setFormData(prev => ({
+        ...prev,
+        fitnessGoal: storedGoals.fitnessGoal || '',
+        activityLevel: storedGoals.activityLevel || ''
+      }));
+
+      // Clear the stored goals
+      localStorage.removeItem('signupFitnessGoals');
+    }
   }, []);
 
   const handleChange = (e) => {
@@ -33,140 +40,173 @@ const ProfileSetup = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleSkip = () => {
-    navigate('/dashboard');
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Comprehensive validation
+    const requiredFields = [
+      'height', 'currentWeight', 'fitnessGoal', 
+      'activityLevel', 'primaryFocus', 'age'
+    ];
+    
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      setError(`Please fill in the following fields: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      // Combine existing profile data with new form data
-      const updatedProfile = {
-        ...(existingProfile || {}),
-        ...formData
+      const profileData = {
+        height: parseFloat(formData.height),
+        current_weight: parseFloat(formData.currentWeight),
+        target_weight: parseFloat(formData.targetWeight) || null,
+        fitness_goal: formData.fitnessGoal,
+        activity_level: formData.activityLevel,
+        primary_focus: formData.primaryFocus,
+        age: parseInt(formData.age)
       };
-      
-      await userService.updateProfile(updatedProfile);
+
+      await userService.updateProfile(profileData);
+
       navigate('/dashboard');
     } catch (err) {
-      console.error('Error updating profile:', err);
+      setError(err.response?.data?.message || 'An error occurred');
+      setIsLoading(false);
     }
   };
-
-  const renderStep1 = () => (
-    <div className="setup-step">
-      <h3>Let's set your fitness goals</h3>
-      <div className="form-group">
-        <label htmlFor="fitness_goal">What's your primary fitness goal?</label>
-        <select
-          id="fitness_goal"
-          name="fitness_goal"
-          value={formData.fitness_goal}
-          onChange={handleChange}
-          className="form-select"
-        >
-          <option value="">Select a goal</option>
-          <option value="weight_loss">Weight Loss</option>
-          <option value="muscle_gain">Build Muscle</option>
-          <option value="maintenance">Maintain Weight</option>
-          <option value="general_fitness">General Fitness</option>
-        </select>
-      </div>
-      <button onClick={() => setStep(2)} className="next-button">
-        Next
-      </button>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="setup-step">
-      <h3>Physical Measurements</h3>
-      <div className="form-group">
-        <label htmlFor="height">Height (cm)</label>
-        <input
-          type="number"
-          id="height"
-          name="height"
-          value={formData.height}
-          onChange={handleChange}
-          placeholder="Enter your height in centimeters"
-          className="form-input"
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="current_weight">Weight (kg)</label>
-        <input
-          type="number"
-          id="current_weight"
-          name="current_weight"
-          value={formData.current_weight}
-          onChange={handleChange}
-          placeholder="Enter your weight in kilograms"
-          className="form-input"
-        />
-      </div>
-      <button onClick={() => setStep(3)} className="next-button">
-        Next
-      </button>
-      <button onClick={() => setStep(1)} className="back-button">
-        Back
-      </button>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="setup-step">
-      <h3>Activity Level</h3>
-      <div className="form-group">
-        <label htmlFor="activity_level">How active are you?</label>
-        <select
-          id="activity_level"
-          name="activity_level"
-          value={formData.activity_level}
-          onChange={handleChange}
-          className="form-select"
-        >
-          <option value="">Select activity level</option>
-          <option value="sedentary">Sedentary (little or no exercise)</option>
-          <option value="lightly_active">Lightly Active (1-3 days/week)</option>
-          <option value="moderately_active">Moderately Active (3-5 days/week)</option>
-          <option value="very_active">Very Active (6-7 days/week)</option>
-        </select>
-      </div>
-      <button onClick={handleSubmit} className="complete-button">
-        Complete Setup
-      </button>
-      <button onClick={() => setStep(2)} className="back-button">
-        Back
-      </button>
-    </div>
-  );
 
   return (
     <div className="profile-setup-page">
       <div className="profile-setup-container">
-        <div className="setup-header">
-          <h2>Complete Your Profile</h2>
-          <p>Help us personalize your experience</p>
-        </div>
+        <h2>Complete Your Profile</h2>
+        
+        {error && <div className="error-message">{error}</div>}
+        
+        <form onSubmit={handleSubmit} className="profile-setup-form">
+          <div className="form-group">
+            <label htmlFor="height">Height (cm)</label>
+            <input
+              type="number"
+              id="height"
+              name="height"
+              value={formData.height}
+              onChange={handleChange}
+              required
+              min="50"
+              max="300"
+            />
+          </div>
 
-        <div className="progress-indicator">
-          <div className={`step ${step >= 1 ? 'active' : ''}`}></div>
-          <div className={`step ${step >= 2 ? 'active' : ''}`}></div>
-          <div className={`step ${step >= 3 ? 'active' : ''}`}></div>
-        </div>
+          <div className="form-group">
+            <label htmlFor="currentWeight">Current Weight (kg)</label>
+            <input
+              type="number"
+              id="currentWeight"
+              name="currentWeight"
+              value={formData.currentWeight}
+              onChange={handleChange}
+              required
+              min="20"
+              max="300"
+              step="0.1"
+            />
+          </div>
 
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
+          <div className="form-group">
+            <label htmlFor="targetWeight">Target Weight (kg, optional)</label>
+            <input
+              type="number"
+              id="targetWeight"
+              name="targetWeight"
+              value={formData.targetWeight}
+              onChange={handleChange}
+              min="20"
+              max="300"
+              step="0.1"
+            />
+          </div>
 
-        <div className="skip-section">
-          <button onClick={handleSkip} className="skip-button">
-            Skip for now
+          <div className="form-group">
+            <label htmlFor="age">Age</label>
+            <input
+              type="number"
+              id="age"
+              name="age"
+              value={formData.age}
+              onChange={handleChange}
+              required
+              min="13"
+              max="120"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="fitnessGoal">Primary Fitness Goal</label>
+            <select
+              id="fitnessGoal"
+              name="fitnessGoal"
+              value={formData.fitnessGoal}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select your goal</option>
+              <option value="weight_loss">Lose Weight</option>
+              <option value="muscle_gain">Build Muscle</option>
+              <option value="maintenance">Maintain Weight</option>
+              <option value="endurance">Improve Endurance</option>
+              <option value="general_fitness">General Fitness</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="activityLevel">Activity Level</label>
+            <select
+              id="activityLevel"
+              name="activityLevel"
+              value={formData.activityLevel}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select activity level</option>
+              <option value="sedentary">Sedentary (little or no exercise)</option>
+              <option value="lightly_active">Lightly Active (1-3 days/week)</option>
+              <option value="moderately_active">Moderately Active (3-5 days/week)</option>
+              <option value="very_active">Very Active (6-7 days/week)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="primaryFocus">Primary Focus</label>
+            <select
+              id="primaryFocus"
+              name="primaryFocus"
+              value={formData.primaryFocus}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select your primary focus</option>
+              <option value="strength">Strength Training</option>
+              <option value="cardio">Cardiovascular Health</option>
+              <option value="flexibility">Flexibility and Mobility</option>
+              <option value="weight_management">Weight Management</option>
+              <option value="overall_wellness">Overall Wellness</option>
+            </select>
+          </div>
+
+          <button 
+            type="submit" 
+            className="profile-setup-button"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Saving...' : 'Complete Profile'}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

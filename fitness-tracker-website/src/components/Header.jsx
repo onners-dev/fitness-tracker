@@ -8,6 +8,7 @@ const Header = () => {
   const location = useLocation();
   const isLoggedIn = localStorage.getItem('token');
   const [userInitials, setUserInitials] = useState('');
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -30,43 +31,92 @@ const Header = () => {
     navigate('/home');
   };
 
-  const handleFeaturesClick = (e) => {
-    e.preventDefault();
-    if (location.pathname !== '/home') {
-      navigate('/home');
-      setTimeout(() => {
-        document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-    }
+  const toggleDropdown = (dropdown) => {
+    setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
+  };
+
+  const closeDropdowns = () => {
+    setActiveDropdown(null);
   };
 
   return (
-    <header className="header">
+    <header className="header" onClick={closeDropdowns}>
       <Link to="/home" className="logo">Fitness App</Link>
       <nav>
         {isLoggedIn ? (
           <>
+            {/* Tracking Dropdown */}
+            <div 
+              className="header-dropdown"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleDropdown('tracking');
+              }}
+            >
+              <span>Tracking</span>
+              {activeDropdown === 'tracking' && (
+                <div className="dropdown-menu">
+                  <Link to="/calorietracker" className="dropdown-item">
+                    Calorie Tracking
+                  </Link>
+                  <Link to="/workout-logging" className="dropdown-item">
+                    Log Workout
+                  </Link>
+                  <Link to="/trends" className="dropdown-item">
+                    Progress Trends
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Fitness Dropdown */}
+            <div 
+              className="header-dropdown"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleDropdown('fitness');
+              }}
+            >
+              <span>Fitness</span>
+              {activeDropdown === 'fitness' && (
+                <div className="dropdown-menu">
+                  <Link to="/workouts" className="dropdown-item">
+                    Workout Library
+                  </Link>
+                  <Link to="/exercises" className="dropdown-item">
+                    Workout Plans
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <Link to="/dashboard" className="link">Dashboard</Link>
-            <Link to="/workouts" className="link">Workouts</Link>
-            <Link to="/about" className="link">About</Link>
-            <div className="profile-menu">
-              <div className="avatar">
-                {userInitials}
-              </div>
-              <div className="dropdown-content">
-                <Link to="/dashboard" className="dropdown-item">Profile</Link>
-                <Link to="/settings" className="dropdown-item">Settings</Link>
-                <button onClick={handleSignOut} className="dropdown-item sign-out-btn">
-                  Sign Out
-                </button>
-              </div>
+
+            {/* Profile Dropdown */}
+            <div 
+              className="header-dropdown profile-dropdown"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleDropdown('profile');
+              }}
+            >
+              <div className="avatar">{userInitials}</div>
+              {activeDropdown === 'profile' && (
+                <div className="dropdown-menu">
+                  <Link to="/dashboard" className="dropdown-item">Profile</Link>
+                  <Link to="/settings" className="dropdown-item">Settings</Link>
+                  <button 
+                    onClick={handleSignOut} 
+                    className="dropdown-item sign-out-btn"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (
           <>
-            <a href="#features" onClick={handleFeaturesClick} className="link">Features</a>
             <Link to="/about" className="link">About</Link>
             <div className="auth-buttons">
               <Link to="/login" className="link">Log in</Link>

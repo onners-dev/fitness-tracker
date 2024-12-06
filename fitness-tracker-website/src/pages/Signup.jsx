@@ -16,6 +16,7 @@ const Signup = () => {
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,18 +25,6 @@ const Signup = () => {
       [name]: value
     }));
     setError(''); // Clear error when user types
-  };
-
-  const handleNextStep = (e) => {
-    e.preventDefault();
-    if (validateStep1()) {
-      setStep(2);
-    }
-  };
-
-  const handlePrevStep = () => {
-    setStep(1);
-    setError('');
   };
 
   const validateStep1 = () => {
@@ -54,37 +43,69 @@ const Signup = () => {
     return true;
   };
 
-  const [isLoading, setIsLoading] = useState(false);
+  const validateStep2 = () => {
+    if (!formData.email.trim()) {
+      setError('Please enter your email');
+      return false;
+    }
+    if (!formData.password) {
+      setError('Please enter a password');
+      return false;
+    }
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    return true;
+  };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Ensure preventDefault is called
+    
+    // Validate both steps before submission
+    if (!validateStep1() || !validateStep2()) {
+      return;
+    }
 
+    setIsLoading(true);
 
-// In Signup.jsx, modify the handleSubmit function
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (formData.password !== formData.confirmPassword) {
-    setError('Passwords do not match');
-    return;
-  }
-  try {
-    // Register user and get token
-    await authService.register({
-      email: formData.email,
-      password: formData.password,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      dateOfBirth: formData.dateOfBirth,
-      gender: formData.gender
-    });
-    navigate('/profile-setup');
-  } catch (err) {
-    setError(err.response?.data?.message || 'An error occurred');
-  }
-};
-
-
+    try {
+      // Register user
+      const response = await authService.register({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender
+      });
+      
+      // Check if registration was successful
+      if (response) {
+        console.log('Registration successful', response);
+        navigate('/profile-setup');
+      } else {
+        setError('Registration failed');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError(err.response?.data?.message || 'An error occurred during registration');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const renderStep1 = () => (
-    <form onSubmit={handleNextStep} className="signup-form">
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      if (validateStep1()) {
+        setStep(2);
+      }
+    }} className="signup-form">
       <div className="form-group">
         <label htmlFor="firstName">First Name</label>
         <input
@@ -135,6 +156,7 @@ const handleSubmit = async (e) => {
           value={formData.dateOfBirth}
           onChange={handleChange}
           required
+          max={new Date().toISOString().split('T')[0]} // Prevent future dates
         />
       </div>
 
@@ -185,11 +207,19 @@ const handleSubmit = async (e) => {
       </div>
 
       <div className="button-group">
-        <button type="button" onClick={handlePrevStep} className="back-button">
+        <button 
+          type="button" 
+          onClick={() => setStep(1)} 
+          className="back-button"
+        >
           Back
         </button>
-        <button type="submit" className="signup-button" disabled={isLoading}>
-          {isLoading ? 'Creating Account...' : 'Sign Up'}
+        <button 
+          type="submit" 
+          className="signup-button"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Signing Up...' : 'Sign Up'}
         </button>
       </div>
     </form>
@@ -204,9 +234,11 @@ const handleSubmit = async (e) => {
           <div className="step-line"></div>
           <div className={`step ${step >= 2 ? 'active' : ''}`}>2</div>
         </div>
+        
         {error && <div className="error-message">{error}</div>}
         
-        {step === 1 ? renderStep1() : renderStep2()}
+        {step === 1 && renderStep1()}
+        {step === 2 && renderStep2()}
 
         <div className="signup-footer">
           <p>

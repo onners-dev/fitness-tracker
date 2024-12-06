@@ -1,14 +1,18 @@
-// In Dashboard.jsx
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api';
+import { workoutService } from '../services/workoutApi';
+import { trendService } from '../services/trendApi';
+import GoalSummary from '../components/GoalSummary';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const [userProfile, setUserProfile] = useState(null);
+  const [recentWorkouts, setRecentWorkouts] = useState([]);
+  const [nutritionTrends, setNutritionTrends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Format fitness goal for display
+  // Existing formatting methods
   const formatFitnessGoal = (goal) => {
     const goalMap = {
       'weight_loss': 'Weight Loss',
@@ -19,7 +23,6 @@ const Dashboard = () => {
     return goalMap[goal] || goal;
   };
 
-  // Format activity level for display
   const formatActivityLevel = (level) => {
     const activityMap = {
       'sedentary': 'Sedentary (little or no exercise)',
@@ -31,41 +34,61 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const data = await userService.getProfile();
-        setUserProfile(data);
+        // Fetch user profile
+        const profileData = await userService.getProfile();
+        setUserProfile(profileData);
+
+        // Fetch recent workouts (last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const workouts = await workoutService.getWorkouts(sevenDaysAgo.toISOString());
+        setRecentWorkouts(workouts.slice(0, 3)); // Latest 3 workouts
+
+        // Fetch nutrition trends
+        const nutritionData = await trendService.getNutritionTrends(7);
+        setNutritionTrends(nutritionData);
+
       } catch (err) {
-        setError('Failed to load profile');
-        console.error('Error:', err);
+        setError('Failed to load dashboard data');
+        console.error('Dashboard Error:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserProfile();
+    fetchDashboardData();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  // Calculate BMI safely
+  const calculateBMI = (weight, height) => {
+    if (!weight || !height) return 'N/A';
+    return (weight / Math.pow(height/100, 2)).toFixed(1);
+  };
+
+  if (loading) return <div>Loading dashboard...</div>;
+  if (error) return <div className="error">{error}</div>;
   if (!userProfile) return <div>No profile data found</div>;
 
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h1>Welcome, {userProfile.first_name}!</h1>
+        <h1>Welcome, {userProfile.first_name || 'User'}!</h1>
       </div>
+
+      <GoalSummary userProfile={userProfile} />
 
       <div className="dashboard-grid">
         {/* Profile Summary Card */}
         <div className="dashboard-card">
           <h2>Profile Summary</h2>
           <div className="profile-info">
-            <p><strong>Name:</strong> <span>{userProfile.first_name} {userProfile.last_name}</span></p>
-            <p><strong>Height:</strong> <span>{userProfile.height} cm</span></p>
-            <p><strong>Weight:</strong> <span>{userProfile.current_weight} kg</span></p>
-            <p><strong>Fitness Goal:</strong> <span>{formatFitnessGoal(userProfile.fitness_goal)}</span></p>
-            <p><strong>Activity Level:</strong> <span>{formatActivityLevel(userProfile.activity_level)}</span></p>
+            <p><strong>Name:</strong> {userProfile.first_name} {userProfile.last_name}</p>
+            <p><strong>Height:</strong> {userProfile.height} cm</p>
+            <p><strong>Weight:</strong> {userProfile.current_weight} kg</p>
+            <p><strong>Fitness Goal:</strong> {formatFitnessGoal(userProfile.fitness_goal)}</p>
+            <p><strong>Activity Level:</strong> {formatActivityLevel(userProfile.activity_level)}</p>
           </div>
         </div>
 
@@ -76,24 +99,45 @@ const Dashboard = () => {
             <div className="stat-item">
               <span className="stat-label">BMI</span>
               <span className="stat-value">
-                {(userProfile.current_weight / Math.pow(userProfile.height/100, 2)).toFixed(1)}
+                {calculateBMI(userProfile.current_weight, userProfile.height)}
               </span>
             </div>
+            {/* Add more stats if needed */}
           </div>
         </div>
 
-        {/* Recent Activity Card */}
+        {/* Recent Workouts Card */}
         <div className="dashboard-card">
-          <h2>Recent Activity</h2>
-          <p>Coming soon...</p>
+          <h2>Recent Workouts</h2>
+          {recentWorkouts.length > 0 ? (
+            <ul className="recent-workouts-list">
+              {recentWorkouts.map((workout, index) => (
+                <li key={index}>
+                  {workout.type} - {new Date(workout.date).toLocaleDateString()}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No recent workouts</p>
+          )}
         </div>
 
-        {/* Goals Card */}
+        {/* Nutrition Trends Card */}
         <div className="dashboard-card">
-          <h2>Fitness Goals</h2>
-          <p>Current Goal: {formatFitnessGoal(userProfile.fitness_goal)}</p>
-          <p>Coming soon...</p>
+          <h2>Nutrition Trends</h2>
+          {nutritionTrends.length > 0 ? (
+            <ul className="nutrition-trends-list">
+              {nutritionTrends.map((trend, index) => (
+                <li key={index}>
+                  {trend.description} - {trend.value}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No recent nutrition data</p>
+          )}
         </div>
+
       </div>
     </div>
   );
