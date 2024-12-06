@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { userService } from '../services/api';
 import { workoutService } from '../services/workoutApi';
 import { trendService } from '../services/trendApi';
@@ -6,6 +7,7 @@ import GoalSummary from '../components/GoalSummary';
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState(null);
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [nutritionTrends, setNutritionTrends] = useState([]);
@@ -33,6 +35,34 @@ const Dashboard = () => {
     return activityMap[level] || level;
   };
 
+  // Summarize nutrition trends
+  const summarizeNutritionTrends = (trends) => {
+    if (trends.length === 0) return [];
+
+    // Calculate average calories
+    const averageCalories = trends.reduce((sum, trend) => 
+      sum + parseFloat(trend.total_calories), 0) / trends.length;
+
+    // Get the most recent trend
+    const latestTrend = trends[trends.length - 1];
+    
+    return [
+      {
+        description: 'Average Daily Calories',
+        value: `${averageCalories.toFixed(0)} cal`
+      },
+      {
+        description: 'Latest Protein Intake',
+        value: `${latestTrend.total_protein}g`
+      },
+      {
+        description: 'View Full Nutrition Trends',
+        value: 'Click to see detailed breakdown',
+        isLink: true
+      }
+    ];
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -48,7 +78,8 @@ const Dashboard = () => {
 
         // Fetch nutrition trends
         const nutritionData = await trendService.getNutritionTrends(7);
-        setNutritionTrends(nutritionData);
+        const summarizedTrends = summarizeNutritionTrends(nutritionData);
+        setNutritionTrends(summarizedTrends);
 
       } catch (err) {
         setError('Failed to load dashboard data');
@@ -125,19 +156,21 @@ const Dashboard = () => {
         {/* Nutrition Trends Card */}
         <div className="dashboard-card">
           <h2>Nutrition Trends</h2>
-          {nutritionTrends.length > 0 ? (
-            <ul className="nutrition-trends-list">
-              {nutritionTrends.map((trend, index) => (
-                <li key={index}>
-                  {trend.description} - {trend.value}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No recent nutrition data</p>
-          )}
+          <ul className="nutrition-trends-list">
+            {nutritionTrends.map((trend, index) => (
+              <li 
+                key={index} 
+                className={trend.isLink ? 'trends-link' : ''}
+                onClick={trend.isLink 
+                  ? () => navigate('/trends') 
+                  : undefined
+                }
+              >
+                <strong>{trend.description}:</strong> {trend.value}
+              </li>
+            ))}
+          </ul>
         </div>
-
       </div>
     </div>
   );
