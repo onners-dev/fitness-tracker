@@ -16,6 +16,7 @@ import Favorites from './pages/Favorites';
 import TrackingPage from './pages/TrackingPage';
 import TrendsPage from './pages/TrendsPage';
 import WorkoutLogging from './pages/WorkoutLogging';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -97,6 +98,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />  
           </Routes>
         </main>
         <Footer />
