@@ -41,7 +41,7 @@ const Header = () => {
 
   return (
     <header className="header" onClick={closeDropdowns}>
-      <Link to="/home" className="logo">Fitness App</Link>
+      <Link to="/home" className="logo">Arcus</Link>
       <nav>
         {isLoggedIn ? (
           <>
