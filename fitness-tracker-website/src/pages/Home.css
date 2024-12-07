@@ -1,0 +1,49 @@
+/* Home.css */
+.value-proposition {
+    background-color: #f8f9fa;
+    padding: 4rem 2rem;
+    text-align: center;
+  }
+  
+  .value-proposition h2 {
+    margin-bottom: 3rem;
+    font-size: 2.5rem;
+    color: #333;
+  }
+  
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .value-item {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .value-item:hover {
+    transform: translateY(-10px);
+  }
+  
+  .value-item h3 {
+    color: #007bff;
+    margin-bottom: 1rem;
+  }
+  
+  .value-item p {
+    color: #666;
+    line-height: 1.6;
+  }
+  
+  @media (max-width: 768px) {
+    .value-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
