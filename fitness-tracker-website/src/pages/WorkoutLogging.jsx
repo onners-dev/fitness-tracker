@@ -262,7 +262,7 @@ function WorkoutLogging() {
                                 <div className="exercise-details">
                                     <span>{exercise.sets} sets</span>
                                     <span>{exercise.reps} reps</span>
-                                    {exercise.weight && <span>{exercise.weight} lbs</span>}
+                                    {exercise.weight && <span>{exercise.weight} kg</span>}
                                 </div>
                                 <button 
                                     type="button" 
@@ -324,7 +324,7 @@ function WorkoutLogging() {
                                 </div>
 
                                 <div className="form-group compact">
-                                    <label htmlFor="weight">Weight (lbs)</label>
+                                    <label htmlFor="weight">Weight (kg)</label>
                                     <input
                                         id="weight"
                                         type="number"
