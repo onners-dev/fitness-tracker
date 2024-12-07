@@ -1,91 +1,105 @@
 .workout-plans-page {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-  }
-  
-  .workout-plans-header {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-  
-  .workout-plan-container {
-    display: grid;
-    gap: 2rem;
-  }
-  
+  max-width: 1400px; /* Wider container */
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.workout-plan-container {
+  display: flex; /* Changed from grid to flex */
+  flex-wrap: wrap;
+  gap: 30px; /* More space between days */
+  justify-content: center;
+}
+
+.workout-day {
+  flex: 0 1 calc(33.333% - 30px); /* Ensures three columns with gap */
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  min-width: 350px; /* Minimum width to prevent squishing */
+  max-width: 450px; /* Maximum width to prevent over-stretching */
+}
+
+.exercises-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.exercise-card {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  width: 100%; /* Full width of the container */
+}
+
+.exercise-card h4 {
+  margin-bottom: 15px;
+  font-size: 1.2em;
+  color: #2c3e50;
+}
+
+.exercise-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  font-size: 0.9em;
+  color: #495057;
+}
+
+.exercise-sets-reps {
+  display: flex;
+  justify-content: space-between;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 15px;
+}
+
+@media (max-width: 1200px) {
   .workout-day {
-    background-color: #f4f4f4;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      flex: 0 1 calc(50% - 30px); /* Two columns on medium screens */
   }
-  
-  .workout-day h2 {
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-    color: #333;
+}
+
+@media (max-width: 768px) {
+  .workout-day {
+      flex: 0 1 100%; /* Single column on small screens */
+      min-width: 100%;
   }
-  
-  .exercises-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-  }
-  
-  .exercise-card {
-    background-color: white;
-    border-radius: 6px;
-    padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-  }
-  
-  .exercise-card:hover {
-    transform: translateY(-5px);
-  }
-  
-  .exercise-card h4 {
-    margin-bottom: 0.75rem;
-    color: #007bff;
-  }
-  
-  .exercise-details p {
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-  }
-  
-  .exercise-sets-reps {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 0.5rem;
-    font-weight: bold;
-    color: #666;
-  }
-  
-  .video-link {
-    display: block;
-    margin-top: 0.5rem;
-    color: #007bff;
-    text-decoration: none;
-    font-size: 0.9rem;
-  }
-  
-  .video-link:hover {
-    text-decoration: underline;
-  }
-  
-  .plan-notes {
-    margin-top: 2rem;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-  }
-  
-  .loading, .error {
-    text-align: center;
-    padding: 2rem;
-    font-size: 1.2rem;
-  }
-  
+}
+
+.exercise-sets-reps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f0f4f8;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-top: 15px;
+  border: 1px solid #e1e8f0;
+}
+
+.exercise-sets-reps span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.exercise-sets-reps span::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background-color: #007bff;
+  mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>');
+  mask-size: cover;
+  margin-right: 5px;
+  opacity: 0.7;
+}
+

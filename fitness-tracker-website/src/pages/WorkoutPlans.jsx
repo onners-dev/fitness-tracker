@@ -78,30 +78,34 @@ const WorkoutPlans = () => {
     if (!exercise || !exercise.details) return null;
 
     return (
-      <div key={exercise.exercise_id} className="exercise-card">
-        <h4>{exercise.details.name}</h4>
-        <div className="exercise-details">
-          <p><strong>Muscle Groups:</strong> {exercise.details.muscle_groups?.join(', ')}</p>
-          <p><strong>Equipment:</strong> {exercise.details.equipment}</p>
-          <p><strong>Difficulty:</strong> {exercise.details.difficulty}</p>
-          <div className="exercise-sets-reps">
-            <span>Sets: {exercise.sets}</span>
-            <span>Reps: {exercise.reps}</span>
-          </div>
-          {exercise.details.video_url && (
-            <a 
-              href={exercise.details.video_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="video-link"
-            >
-              Watch Tutorial
-            </a>
-          )}
+        <div key={exercise.exercise_id} className="exercise-card">
+            <h4>{exercise.details.name}</h4>
+            <div className="exercise-details">
+                <p><strong>Muscle Groups:</strong> {exercise.details.muscle_groups?.join(', ')}</p>
+                <p><strong>Equipment:</strong> {exercise.details.equipment}</p>
+                <p><strong>Difficulty:</strong> {exercise.details.difficulty}</p>
+            </div>
+            <div className="exercise-sets-reps">
+                <span>
+                    <strong>Sets:</strong> {exercise.sets}
+                </span>
+                <span>
+                    <strong>Reps:</strong> {exercise.reps}
+                </span>
+            </div>
+            {exercise.details.video_url && (
+                <a 
+                    href={exercise.details.video_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="video-link"
+                >
+                    Watch Tutorial
+                </a>
+            )}
         </div>
-      </div>
     );
-  };
+};
 
   if (loading) return <div className="loading">Loading workout plan...</div>;
 
