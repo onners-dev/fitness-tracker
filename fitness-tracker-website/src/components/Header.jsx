@@ -83,7 +83,7 @@ const Header = () => {
                   <Link to="/workouts" className="dropdown-item">
                     Workout Library
                   </Link>
-                  <Link to="/exercises" className="dropdown-item">
+                  <Link to="/workout-plans" className="dropdown-item">
                     Workout Plans
                   </Link>
                 </div>
