@@ -17,6 +17,7 @@ import TrackingPage from './pages/TrackingPage';
 import TrendsPage from './pages/TrendsPage';
 import WorkoutLogging from './pages/WorkoutLogging';
 import Settings from './pages/Settings';
+import WorkoutPlans from './pages/WorkoutPlans';
 
 function App() {
   return (
@@ -106,6 +107,14 @@ function App() {
                 </ProtectedRoute>
               }
             />  
+            <Route
+              path="/workout-plans"
+              element={
+                <ProtectedRoute>
+                  <WorkoutPlans />
+                </ProtectedRoute>
+              } 
+            />
           </Routes>
         </main>
         <Footer />
