@@ -66,8 +66,11 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch user profile
+        console.log('Token:', localStorage.getItem('token')); // Log the token
+        
         const profileData = await userService.getProfile();
+        console.log('Profile Data:', profileData); // Log the profile data
+        
         setUserProfile(profileData);
 
         // Fetch recent workouts (last 7 days)
@@ -82,6 +85,10 @@ const Dashboard = () => {
         setNutritionTrends(summarizedTrends);
 
       } catch (err) {
+        console.error('Full error object:', err);
+        console.error('Error response:', err.response);
+        console.error('Error message:', err.message);
+        
         setError('Failed to load dashboard data');
         console.error('Dashboard Error:', err);
       } finally {
@@ -90,7 +97,7 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+}, []);
 
   // Calculate BMI safely
   const calculateBMI = (weight, height) => {

@@ -45,19 +45,33 @@ export const authService = {
 // User services
 export const userService = {
     getProfile: async () => {
-      const response = await api.get('/users/profile');
-      return response.data;
+        const response = await api.get('/users/profile');
+        return response.data;
     },
   
     updateProfile: async (profileData) => {
-      const response = await api.put('/users/profile', profileData);
-      return response.data;
+        try {
+            const response = await api.put('/users/profile', profileData);
+            return response.data;
+        } catch (error) {
+            console.error('Update profile error', error);
+            throw error;
+        }
+    },
+
+    updatePassword: async (passwordData) => {
+        try {
+            const response = await api.put('/users/password', passwordData);
+            return response.data;
+        } catch (error) {
+            console.error('Update password error', error);
+            throw error;
+        }
     }
-  };
+};
 
-
-  // Muscle services
-  export const exerciseService = {
+// Exercise services
+export const exerciseService = {
     getMuscleGroups: async () => {
         const response = await api.get('/exercises/muscle-groups');
         return response.data;
@@ -73,9 +87,8 @@ export const userService = {
         return response.data;
     }
 };
-  
-  
-// In services/api.js
+
+// Favorite services
 export const favoriteService = {
     addFavorite: async (exerciseId) => {
         const response = await api.post('/favorites/add', { exerciseId });
@@ -93,3 +106,4 @@ export const favoriteService = {
     }
 };
 
+export default api;
