@@ -39,20 +39,31 @@
   color: #333;
 }
 
-/* First row: Profile Summary, Quick Stats, Workout Insights */
-.dashboard-grid > div:nth-child(-n+3) {
-  grid-column: span 4;
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1rem;
 }
 
-/* Second row: Recent Workouts, Nutrition Trends, Empty space */
-.dashboard-grid > div:nth-child(n+4):nth-child(-n+5) {
-  grid-column: span 4;
-}
-
-/* Bottom row: Center Profile Summary and Quick Stats */
-.dashboard-grid > div:nth-child(n+6) {
+/* First row: 2 cards */
+.dashboard-grid > div:nth-child(-n+2) {
   grid-column: span 6;
 }
+
+/* Middle row: 3 cards, forced into one row */
+.dashboard-grid > div:nth-child(3),
+.dashboard-grid > div:nth-child(4),
+.dashboard-grid > div:nth-child(5) {
+  grid-column: span 4;
+}
+
+/* Last row: 3 cards */
+.dashboard-grid > div:nth-child(n+6) {
+  grid-column: span 4;
+}
+
+
+
 
 .profile-info p,
 .recent-workouts-list li,
