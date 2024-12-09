@@ -16,7 +16,7 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(12, 1fr);
   gap: 1rem;
 }
 
@@ -37,6 +37,21 @@
   padding-bottom: 0.5rem;
   margin-bottom: 1rem;
   color: #333;
+}
+
+/* First row: Profile Summary, Quick Stats, Workout Insights */
+.dashboard-grid > div:nth-child(-n+3) {
+  grid-column: span 4;
+}
+
+/* Second row: Recent Workouts, Nutrition Trends, Empty space */
+.dashboard-grid > div:nth-child(n+4):nth-child(-n+5) {
+  grid-column: span 4;
+}
+
+/* Bottom row: Center Profile Summary and Quick Stats */
+.dashboard-grid > div:nth-child(n+6) {
+  grid-column: span 6;
 }
 
 .profile-info p,
@@ -61,21 +76,92 @@
   color: #333;
 }
 
-.nutrition-trends-list .trends-link {
+.recent-workouts-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.workout-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.workout-type {
+  font-weight: bold;
+  flex: 1;
+  text-align: left;
+}
+
+.workout-date {
+  color: #666;
+  margin: 0 10px;
+}
+
+.workout-duration {
+  color: #888;
+  font-size: 0.9em;
+}
+
+.workout-insights-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.workout-insight-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.insight-type {
+  font-weight: bold;
+}
+
+.insight-count {
+  color: #666;
+}
+
+.log-workout-btn,
+.log-meal-btn,
+.view-progress-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
-  color: #007bff;
-  text-decoration: underline;
-  transition: color 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
-.nutrition-trends-list .trends-link:hover {
-  color: #0056b3;
+.log-workout-btn:hover,
+.log-meal-btn:hover,
+.view-progress-btn:hover {
+  background-color: #0056b3;
 }
 
-/* Responsive adjustments */
+.no-workouts,
+.no-meals,
+.no-insights {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Responsive design */
 @media (max-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .dashboard-grid > div {
+    grid-column: span 1 !important;
   }
 }
 

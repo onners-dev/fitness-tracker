@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [nutritionTrends, setNutritionTrends] = useState([]);
+  const [workoutInsights, setWorkoutInsights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,6 +36,20 @@ const Dashboard = () => {
     return activityMap[level] || level;
   };
 
+  // Calculate workout insights
+  const calculateWorkoutFrequency = (workouts) => {
+    const workoutTypes = workouts.map(w => w.workout_type);
+    const typeCounts = workoutTypes.reduce((acc, type) => {
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return Object.entries(typeCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([type, count]) => ({ type, count }))
+      .slice(0, 3); // Top 3 workout types
+  };
+
   // Summarize nutrition trends
   const summarizeNutritionTrends = (trends) => {
     if (trends.length === 0) return [];
@@ -54,11 +69,6 @@ const Dashboard = () => {
       {
         description: 'Latest Protein Intake',
         value: `${latestTrend.total_protein}g`
-      },
-      {
-        description: 'View Full Nutrition Trends',
-        value: 'Click to see detailed breakdown',
-        isLink: true
       }
     ];
   };
@@ -66,11 +76,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        console.log('Token:', localStorage.getItem('token')); // Log the token
-        
         const profileData = await userService.getProfile();
-        console.log('Profile Data:', profileData); // Log the profile data
-        
         setUserProfile(profileData);
 
         // Fetch recent workouts (last 7 days)
@@ -79,25 +85,25 @@ const Dashboard = () => {
         const workouts = await workoutService.getWorkouts(sevenDaysAgo.toISOString());
         setRecentWorkouts(workouts.slice(0, 3)); // Latest 3 workouts
 
+        // Calculate workout insights
+        const insights = calculateWorkoutFrequency(workouts);
+        setWorkoutInsights(insights);
+
         // Fetch nutrition trends
         const nutritionData = await trendService.getNutritionTrends(7);
         const summarizedTrends = summarizeNutritionTrends(nutritionData);
         setNutritionTrends(summarizedTrends);
 
       } catch (err) {
-        console.error('Full error object:', err);
-        console.error('Error response:', err.response);
-        console.error('Error message:', err.message);
-        
-        setError('Failed to load dashboard data');
         console.error('Dashboard Error:', err);
+        setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-}, []);
+  }, []);
 
   // Calculate BMI safely
   const calculateBMI = (weight, height) => {
@@ -140,43 +146,112 @@ const Dashboard = () => {
                 {calculateBMI(userProfile.current_weight, userProfile.height)}
               </span>
             </div>
-            {/* Add more stats if needed */}
           </div>
+        </div>
+
+        {/* Workout Insights Card */}
+        <div className="dashboard-card">
+          <h2>Workout Insights</h2>
+          {workoutInsights.length > 0 ? (
+            <>
+              <ul className="workout-insights-list">
+                {workoutInsights.map((insight, index) => (
+                  <li key={index} className="workout-insight-item">
+                    <span className="insight-type">{insight.type}</span>
+                    <span className="insight-count">{insight.count} workouts</span>
+                  </li>
+                ))}
+              </ul>
+              <button 
+                className="view-progress-btn"
+                onClick={() => navigate('/trends')}
+              >
+                View Progress
+              </button>
+            </>
+          ) : (
+            <div className="no-insights">
+              <p>No workout insights available</p>
+              <button 
+                className="view-progress-btn"
+                onClick={() => navigate('/trends')}
+              >
+                View Progress
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Recent Workouts Card */}
         <div className="dashboard-card">
           <h2>Recent Workouts</h2>
           {recentWorkouts.length > 0 ? (
-            <ul className="recent-workouts-list">
-              {recentWorkouts.map((workout, index) => (
-                <li key={index}>
-                  {workout.type} - {new Date(workout.date).toLocaleDateString()}
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="recent-workouts-list">
+                {recentWorkouts.map((workout, index) => (
+                  <li key={index} className="workout-item">
+                    <div className="workout-type">{workout.workout_type}</div>
+                    <div className="workout-date">
+                      {new Date(workout.date).toLocaleDateString()}
+                    </div>
+                    {workout.total_duration && (
+                      <div className="workout-duration">
+                        {workout.total_duration} mins
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <button 
+                className="log-workout-btn"
+                onClick={() => navigate('/workout-logging')}
+              >
+                Log a Workout
+              </button>
+            </>
           ) : (
-            <p>No recent workouts</p>
+            <div className="no-workouts">
+              <p>No recent workouts</p>
+              <button 
+                className="log-workout-btn"
+                onClick={() => navigate('/workout-logging')}
+              >
+                Log Your First Workout
+              </button>
+            </div>
           )}
         </div>
 
         {/* Nutrition Trends Card */}
         <div className="dashboard-card">
           <h2>Nutrition Trends</h2>
-          <ul className="nutrition-trends-list">
-            {nutritionTrends.map((trend, index) => (
-              <li 
-                key={index} 
-                className={trend.isLink ? 'trends-link' : ''}
-                onClick={trend.isLink 
-                  ? () => navigate('/trends') 
-                  : undefined
-                }
+          {nutritionTrends.length > 0 ? (
+            <>
+              <ul className="nutrition-trends-list">
+                {nutritionTrends.map((trend, index) => (
+                  <li key={index}>
+                    <strong>{trend.description}:</strong> {trend.value}
+                  </li>
+                ))}
+              </ul>
+              <button 
+                className="log-meal-btn"
+                onClick={() => navigate('/calorietracker')}
               >
-                <strong>{trend.description}:</strong> {trend.value}
-              </li>
-            ))}
-          </ul>
+                Log a Meal
+              </button>
+            </>
+          ) : (
+            <div className="no-meals">
+              <p>No nutrition data available</p>
+              <button 
+                className="log-meal-btn"
+                onClick={() => navigate('/calorietracker')}
+              >
+                Log Your First Meal
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
