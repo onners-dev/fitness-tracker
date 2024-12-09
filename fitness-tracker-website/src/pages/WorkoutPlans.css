@@ -1,24 +1,24 @@
 .workout-plans-page {
-  max-width: 1400px; /* Wider container */
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
 }
 
 .workout-plan-container {
-  display: flex; /* Changed from grid to flex */
+  display: flex;
   flex-wrap: wrap;
-  gap: 30px; /* More space between days */
+  gap: 30px;
   justify-content: center;
 }
 
 .workout-day {
-  flex: 0 1 calc(33.333% - 30px); /* Ensures three columns with gap */
+  flex: 0 1 calc(33.333% - 30px);
   background-color: #f9f9f9;
   border-radius: 12px;
   padding: 25px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  min-width: 350px; /* Minimum width to prevent squishing */
-  max-width: 450px; /* Maximum width to prevent over-stretching */
+  min-width: 350px;
+  max-width: 450px;
 }
 
 .exercises-grid {
@@ -34,7 +34,12 @@
   border: 1px solid #e0e0e0;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
-  width: 100%; /* Full width of the container */
+  width: 100%;
+  cursor: pointer;
+}
+
+.exercise-card:hover {
+  transform: scale(1.02);
 }
 
 .exercise-card h4 {
@@ -54,28 +59,6 @@
 .exercise-sets-reps {
   display: flex;
   justify-content: space-between;
-  background-color: #f8f9fa;
-  padding: 10px;
-  border-radius: 6px;
-  margin-top: 15px;
-}
-
-@media (max-width: 1200px) {
-  .workout-day {
-      flex: 0 1 calc(50% - 30px); /* Two columns on medium screens */
-  }
-}
-
-@media (max-width: 768px) {
-  .workout-day {
-      flex: 0 1 100%; /* Single column on small screens */
-      min-width: 100%;
-  }
-}
-
-.exercise-sets-reps {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
   background-color: #f0f4f8;
   padding: 10px 15px;
@@ -87,19 +70,120 @@
 .exercise-sets-reps span {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  color: #2c3e50;
+}
+
+.exercise-sets-reps span strong {
+  margin-right: 10px;
 }
 
 .exercise-sets-reps span::before {
   content: '';
+  display: inline-block;
   width: 16px;
   height: 16px;
   background-color: #007bff;
   mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>');
   mask-size: cover;
-  margin-right: 5px;
+  margin-left: 8px;
   opacity: 0.7;
+  vertical-align: middle;
+}
+
+.video-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 15px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.video-link:hover {
+  background-color: #0056b3;
+}
+
+.exercise-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.exercise-modal-content {
+  background-color: white;
+  border-radius: 10px;
+  padding: 30px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #888;
+}
+
+.modal-exercise-details {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detail-section {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.detail-section h3 {
+  margin-bottom: 10px;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 5px;
+}
+
+@media (max-width: 1200px) {
+  .workout-day {
+    flex: 0 1 calc(50% - 30px);
+  }
+}
+
+@media (max-width: 768px) {
+  .workout-day {
+    flex: 0 1 100%;
+    min-width: 100%;
+  }
+}
+
+.exercise-instructions {
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.exercise-instructions li {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.exercise-instructions li::marker {
+  color: #007bff;
+  font-weight: bold;
 }
 
