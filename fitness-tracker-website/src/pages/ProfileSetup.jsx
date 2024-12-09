@@ -12,7 +12,6 @@ const ProfileSetup = () => {
     fitnessGoal: '',
     activityLevel: '',
     primaryFocus: '',
-    age: ''
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +48,7 @@ const ProfileSetup = () => {
     // Comprehensive validation
     const requiredFields = [
       'height', 'currentWeight', 'fitnessGoal', 
-      'activityLevel', 'primaryFocus', 'age'
+      'activityLevel', 'primaryFocus'
     ];
     
     const missingFields = requiredFields.filter(field => !formData[field]);
@@ -69,7 +68,6 @@ const ProfileSetup = () => {
         fitness_goal: formData.fitnessGoal,
         activity_level: formData.activityLevel,
         primary_focus: formData.primaryFocus,
-        age: parseInt(formData.age)
       };
 
       await userService.updateProfile(profileData);
@@ -129,20 +127,6 @@ const ProfileSetup = () => {
               min="20"
               max="300"
               step="0.1"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="age">Age</label>
-            <input
-              type="number"
-              id="age"
-              name="age"
-              value={formData.age}
-              onChange={handleChange}
-              required
-              min="13"
-              max="120"
             />
           </div>
 

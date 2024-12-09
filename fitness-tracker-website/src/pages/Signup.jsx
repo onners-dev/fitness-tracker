@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './Signup.css';
 
 const Signup = () => {
@@ -17,6 +18,8 @@ const Signup = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,6 +28,19 @@ const Signup = () => {
       [name]: value
     }));
     setError(''); // Clear error when user types
+  };
+
+  const calculateAge = (dateOfBirth) => {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
   };
 
   const validateStep1 = () => {
@@ -74,6 +90,8 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
+
+      const age = calculateAge(formData.dateOfBirth);
       // Register user
       const response = await authService.register({
         email: formData.email,
@@ -81,7 +99,8 @@ const Signup = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender
+        gender: formData.gender,
+        age: age
       });
       
       // Check if registration was successful
@@ -180,30 +199,48 @@ const Signup = () => {
         />
       </div>
 
-      <div className="form-group">
+      <div className="form-group password-group">
         <label htmlFor="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          minLength="8"
-        />
+        <div className="password-input-wrapper">
+          <input
+            type={showPassword ? "text" : "password"}
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            minLength="8"
+          />
+          <button 
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </button>
+        </div>
       </div>
 
-      <div className="form-group">
+      <div className="form-group password-group">
         <label htmlFor="confirmPassword">Confirm Password</label>
-        <input
-          type="password"
-          id="confirmPassword"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          required
-          minLength="8"
-        />
+        <div className="password-input-wrapper">
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            id="confirmPassword"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+            minLength="8"
+          />
+          <button 
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          >
+            {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+          </button>
+        </div>
       </div>
 
       <div className="button-group">
