@@ -1,28 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
-  Title, 
-  Tooltip, 
-  Legend 
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { trendService } from '../services/trendApi';
 import './TrendsPage.css';
-
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
 
 function TrendsPage() {
   const [nutritionTrends, setNutritionTrends] = useState([]);
@@ -35,21 +14,16 @@ function TrendsPage() {
     const fetchTrends = async () => {
       try {
         setLoading(true);
-        setError(null);
-
         const [nutritionData, workoutData] = await Promise.all([
           trendService.getNutritionTrends(timeframe),
           trendService.getWorkoutTrends(timeframe)
         ]);
 
-        // Ensure we have arrays
-        setNutritionTrends(Array.isArray(nutritionData) ? nutritionData : []);
-        setWorkoutTrends(Array.isArray(workoutData) ? workoutData : []);
+        setNutritionTrends(nutritionData || []);
+        setWorkoutTrends(workoutData || []);
       } catch (error) {
         console.error('Error fetching trends:', error);
         setError('Failed to load trends');
-        setNutritionTrends([]);
-        setWorkoutTrends([]);
       } finally {
         setLoading(false);
       }
@@ -58,140 +32,75 @@ function TrendsPage() {
     fetchTrends();
   }, [timeframe]);
 
-  // Prepare chart data with fallback
-  const prepareChartData = (trends, type) => {
-    // Ensure we have data and type exists
-    if (!trends || trends.length === 0) {
-      return {
-        labels: [],
-        datasets: [{
-          label: `${type} Trend`,
-          data: [],
-          borderColor: 'rgb(75, 192, 192)',
-          tension: 0.1
-        }]
-      };
-    }
+  const renderTrendChart = (data, dataKey, color, title) => (
+    <div className="trend-chart">
+      <h3>{title}</h3>
+      <ResponsiveContainer width="100%" height={250}>
+        <AreaChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis dataKey="date" tick={{ fill: '#666' }} />
+          <YAxis tick={{ fill: '#666' }} />
+          <Tooltip 
+            contentStyle={{ 
+              background: 'white', 
+              border: `1px solid ${color}`, 
+              borderRadius: '8px' 
+            }}
+          />
+          <Area 
+            type="monotone" 
+            dataKey={dataKey} 
+            stroke={color} 
+            fill={color} 
+            fillOpacity={0.3}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
 
-    return {
-      labels: trends.map(item => item.date || ''),
-      datasets: [{
-        label: `${type} Trend`,
-        data: trends.map(item => {
-          const value = item[`total_${type}`];
-          return value !== undefined ? value : 0;
-        }),
-        borderColor: type === 'calories' ? 'rgb(255, 99, 132)' : 
-                     type === 'protein' ? 'rgb(54, 162, 235)' : 
-                     type === 'carbs' ? 'rgb(255, 206, 86)' : 
-                     type === 'fats' ? 'rgb(75, 192, 192)' : 
-                     'rgb(153, 102, 255)',
-        backgroundColor: type === 'calories' ? 'rgba(255, 99, 132, 0.2)' : 
-                         type === 'protein' ? 'rgba(54, 162, 235, 0.2)' : 
-                         type === 'carbs' ? 'rgba(255, 206, 86, 0.2)' : 
-                         type === 'fats' ? 'rgba(75, 192, 192, 0.2)' : 
-                         'rgba(153, 102, 255, 0.2)',
-        tension: 0.1,
-        borderWidth: 2,
-        pointRadius: 4
-      }]
-    };
-  };
-
-  // Prepare chart options
-  const getChartOptions = (title) => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: title,
-        font: {
-          size: 16
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          font: {
-            size: 12
-          }
-        }
-      },
-      x: {
-        ticks: {
-          font: {
-            size: 12
-          }
-        }
-      }
-    }
-  });
-
-  // Render loading or error states
-  if (loading) return <div className="loading-error">Loading trends...</div>;
-  if (error) return <div className="loading-error">Error: {error}</div>;
+  if (loading) return <div className="loading">Loading trends...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="trends-page">
-      <h1>Your Fitness Trends</h1>
-
-      {/* Timeframe Selector */}
-      <div className="timeframe-selector">
-        {[7, 30, 90].map(days => (
-          <button 
-            key={days}
-            className={timeframe === days ? 'active' : ''}
-            onClick={() => setTimeframe(days)}
-          >
-            {days} Days
-          </button>
-        ))}
+      <div className="page-header">
+        <h1>Your Fitness Insights</h1>
+        <div className="timeframe-selector">
+          {[7, 30, 90].map(days => (
+            <button 
+              key={days}
+              className={timeframe === days ? 'active' : ''}
+              onClick={() => setTimeframe(days)}
+            >
+              {days} Days
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Nutrition Trends Section */}
-      <div className="trends-section">
+      <div className="trends-section nutrition-trends">
         <h2>Nutrition Trends</h2>
         {nutritionTrends.length === 0 ? (
-          <p className="loading-error">No nutrition data available</p>
+          <p className="no-data">No nutrition data available</p>
         ) : (
           <div className="charts-grid">
-            {['calories', 'protein', 'carbs', 'fats'].map(type => (
-              <div key={type} className="chart-container">
-                <Line 
-                  data={prepareChartData(nutritionTrends, type)} 
-                  options={getChartOptions(`${type.charAt(0).toUpperCase() + type.slice(1)} Over Time`)} 
-                />
-              </div>
-            ))}
+            {renderTrendChart(nutritionTrends, 'total_calories', '#FF6384', 'Daily Calories')}
+            {renderTrendChart(nutritionTrends, 'total_protein', '#36A2EB', 'Protein Intake')}
+            {renderTrendChart(nutritionTrends, 'total_carbs', '#FFCE56', 'Carbohydrate Intake')}
+            {renderTrendChart(nutritionTrends, 'total_fats', '#4BC0C0', 'Fat Intake')}
           </div>
         )}
       </div>
 
-      {/* Workout Trends Section */}
-      <div className="trends-section">
+      <div className="trends-section workout-trends">
         <h2>Workout Trends</h2>
         {workoutTrends.length === 0 ? (
-          <p className="loading-error">No workout data available</p>
+          <p className="no-data">No workout data available</p>
         ) : (
           <div className="charts-grid">
-            <div className="chart-container">
-              <Line 
-                data={prepareChartData(workoutTrends, 'workout_count')}
-                options={getChartOptions('Workout Frequency')}
-              />
-            </div>
-            <div className="chart-container">
-              <Line 
-                data={prepareChartData(workoutTrends, 'calories_burned')}
-                options={getChartOptions('Calories Burned')}
-              />
-            </div>
+            {renderTrendChart(workoutTrends, 'workout_count', '#9966FF', 'Workout Frequency')}
+            {renderTrendChart(workoutTrends, 'calories_burned', '#FF9F40', 'Calories Burned')}
           </div>
         )}
       </div>
