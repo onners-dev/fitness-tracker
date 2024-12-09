@@ -28,10 +28,14 @@ export const trendService = {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      
+      console.log('Workout Trends Response:', response.data); // Debug log
+      
       return response.data || [];
     } catch (error) {
       console.error('Error fetching workout trends:', error);
       return [];
     }
   }
+  
 };

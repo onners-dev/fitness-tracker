@@ -10,10 +10,21 @@ function TrendsPage() {
   const [error, setError] = useState(null);
   const [timeframe, setTimeframe] = useState(30);
 
+  // Date formatting utility function
+  const formatDate = (isoDateString) => {
+    const date = new Date(isoDateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short', 
+      day: 'numeric'
+    });
+  };
+
   useEffect(() => {
     const fetchTrends = async () => {
       try {
         setLoading(true);
+        setError(null);
+
         const [nutritionData, workoutData] = await Promise.all([
           trendService.getNutritionTrends(timeframe),
           trendService.getWorkoutTrends(timeframe)
@@ -23,7 +34,9 @@ function TrendsPage() {
         setWorkoutTrends(workoutData || []);
       } catch (error) {
         console.error('Error fetching trends:', error);
-        setError('Failed to load trends');
+        setError(`Failed to load trends: ${error.message}`);
+        setNutritionTrends([]);
+        setWorkoutTrends([]);
       } finally {
         setLoading(false);
       }
@@ -38,14 +51,22 @@ function TrendsPage() {
       <ResponsiveContainer width="100%" height={250}>
         <AreaChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="date" tick={{ fill: '#666' }} />
-          <YAxis tick={{ fill: '#666' }} />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fill: '#666' }}
+            tickFormatter={(value) => formatDate(value)}
+          />
+          <YAxis 
+            tick={{ fill: '#666' }} 
+            domain={[0, 'auto']}
+          />
           <Tooltip 
             contentStyle={{ 
               background: 'white', 
               border: `1px solid ${color}`, 
               borderRadius: '8px' 
             }}
+            labelFormatter={formatDate}
           />
           <Area 
             type="monotone" 
@@ -99,8 +120,8 @@ function TrendsPage() {
           <p className="no-data">No workout data available</p>
         ) : (
           <div className="charts-grid">
-            {renderTrendChart(workoutTrends, 'workout_count', '#9966FF', 'Workout Frequency')}
-            {renderTrendChart(workoutTrends, 'calories_burned', '#FF9F40', 'Calories Burned')}
+            {renderTrendChart(workoutTrends, 'total_workout_count', '#9966FF', 'Workout Frequency')}
+            {renderTrendChart(workoutTrends, 'total_calories_burned', '#FF9F40', 'Calories Burned')}
           </div>
         )}
       </div>
