@@ -17,6 +17,9 @@ function CalorieTracker() {
     fats: 0
   });
 
+  // New state for portion size tracking
+  const [portionSizes, setPortionSizes] = useState({});
+
   // New states for custom food and contributions
   const [isCustomFoodModalOpen, setIsCustomFoodModalOpen] = useState(false);
   const [customFood, setCustomFood] = useState({
@@ -101,7 +104,6 @@ function CalorieTracker() {
   const addCustomFood = async (e) => {
     e.preventDefault();
     
-    // Validate input
     const { name, calories, protein, carbs, fats } = customFood;
     if (!name || !calories) {
       alert('Please enter at least a name and calories');
@@ -175,34 +177,46 @@ function CalorieTracker() {
     }
   };
 
+  // Updated addMeal to handle portion sizes
   const addMeal = async (food) => {
+    // Get portion size for this specific food, default to 100g
+    const portionSize = portionSizes[food._id] || 100;
+    const portionMultiplier = portionSize / 100;
+  
     const mealData = {
       name: food.product_name,
-      calories: parseFloat(food.nutriments?.energy_100g) || 0,
-      protein: parseFloat(food.nutriments?.proteins_100g) || 0,
-      carbs: parseFloat(food.nutriments?.carbohydrates_100g) || 0,
-      fats: parseFloat(food.nutriments?.fat_100g) || 0,
+      calories: (parseFloat(food.nutriments?.energy_100g) * portionMultiplier) || 0,
+      protein: (parseFloat(food.nutriments?.proteins_100g) * portionMultiplier) || 0,
+      carbs: (parseFloat(food.nutriments?.carbohydrates_100g) * portionMultiplier) || 0,
+      fats: (parseFloat(food.nutriments?.fat_100g) * portionMultiplier) || 0,
       date: selectedDate,
-      serving: '100g'
+      serving: `${portionSize || 100}g`
     };
   
     try {
-      console.log('Attempting to add meal:', mealData);
       const newMeal = await mealService.addMeal(mealData);
-      console.log('Successfully added meal:', newMeal);
       setMeals(prevMeals => [...(Array.isArray(prevMeals) ? prevMeals : []), newMeal]);
       setSearchResults([]);
       setSearchQuery('');
     } catch (error) {
       console.error('Failed to add meal:', error);
-      // Add user feedback
       if (error.response?.status === 401) {
         alert('Please log in again to continue.');
-        // Optionally redirect to login page
       } else {
         alert('Failed to save meal. Please try again.');
       }
     }
+  };
+
+  // Handle portion size changes
+  const handlePortionSizeChange = (foodId, value) => {
+    // Allow empty string or valid number
+    const parsedValue = value === '' ? '' : Number(value);
+    
+    setPortionSizes(prev => ({
+      ...prev,
+      [foodId]: parsedValue
+    }));
   };
 
   const removeMeal = async (id) => {
@@ -286,7 +300,7 @@ function CalorieTracker() {
           )}
         </div>
       )}
-
+      
       {/* Custom Food Modal */}
       {isCustomFoodModalOpen && (
         <div className="custom-food-modal">
@@ -376,7 +390,8 @@ function CalorieTracker() {
         </div>
       )}
 
-      {/* Search Results */}
+
+      {/* Search Results with Portion Size */}
       {searchResults.length > 0 && (
         <div className="search-results">
           {searchResults.map((food) => (
@@ -384,10 +399,22 @@ function CalorieTracker() {
               <div className="food-info">
                 <h4>{food.product_name}</h4>
                 <div className="nutrition-info">
-                  <span>{food.nutriments?.energy_100g || 0} kcal</span>
+                  <span>{food.nutriments?.energy_100g || 0} kcal (per 100g)</span>
                   <span>{food.nutriments?.proteins_100g || 0}g protein</span>
                   <span>{food.nutriments?.carbohydrates_100g || 0}g carbs</span>
                   <span>{food.nutriments?.fat_100g || 0}g fat</span>
+                </div>
+                <div className="portion-selector">
+                  <label>Portion Size:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={portionSizes[food._id] === '' ? '' : (portionSizes[food._id] || 100)}
+                    onChange={(e) => handlePortionSizeChange(food._id, e.target.value)}
+                    placeholder="Portion size"
+                  />
+                  <span>g</span>
                 </div>
               </div>
               <button onClick={() => addMeal(food)}>Add</button>
