@@ -73,8 +73,20 @@ function TrendsPage() {
       <div className="trend-chart">
         <h3>{title}</h3>
         <ResponsiveContainer width="100%" height={250}>
-          <AreaChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <AreaChart 
+            data={data}
+            // Add animation configuration
+            animationBegin={0}
+            animationDuration={1000}
+            animationEasing="ease"
+          >
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="#f0f0f0" 
+              // Add animation for grid
+              animationBegin={0}
+              animationDuration={1000}
+            />
             <XAxis 
               dataKey="date" 
               tick={{ fill: '#666' }}
@@ -83,10 +95,10 @@ function TrendsPage() {
             <YAxis 
               tick={<YAxisTick />}
               domain={[
-                Math.max(0, minValue * 0.8),  // Start slightly below minimum
-                maxValue * 1.2  // Extend to 20% above maximum
+                Math.max(0, minValue * 0.8),
+                maxValue * 1.2
               ]}
-              width={80}  // Increased width to accommodate larger numbers
+              width={80}
               tickFormatter={(value) => 
                 new Intl.NumberFormat('en-US').format(Math.round(value))
               }
@@ -109,6 +121,10 @@ function TrendsPage() {
               stroke={color} 
               fill={color} 
               fillOpacity={0.3}
+              // Add specific area animation
+              animationBegin={0}
+              animationDuration={1000}
+              animationEasing="ease"
             />
           </AreaChart>
         </ResponsiveContainer>
