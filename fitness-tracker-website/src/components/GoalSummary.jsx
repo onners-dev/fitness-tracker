@@ -68,9 +68,9 @@ const GoalSummary = ({ userProfile }) => {
 
   return (
     <div className="dashboard-grid goal-summary">
-      {/* Calorie Goal Card */}
-      <div className="dashboard-card">
-        <h2>Calorie Goal</h2>
+    {/* Calorie Goal Card */}
+    <div className="dashboard-card goal-summary-card goal-summary-first-row">
+      <h2>Calorie Goal</h2>
         <div className="stats">
           <div className="stat-item">
             <span className="stat-label">Daily Intake</span>
@@ -82,7 +82,7 @@ const GoalSummary = ({ userProfile }) => {
       </div>
 
       {/* Workout Goal Card */}
-      <div className="dashboard-card">
+      <div className="dashboard-card goal-summary-card goal-summary-first-row">
         <h2>Workout Goal</h2>
         <div className="stats">
           <div className="stat-item">
@@ -95,7 +95,7 @@ const GoalSummary = ({ userProfile }) => {
       </div>
 
       {/* Primary Focus Card */}
-      <div className="dashboard-card">
+      <div className="dashboard-card goal-summary-card goal-summary-first-row goal-summary-full-width">
         <h2>Primary Focus</h2>
         <div className="stats">
           <div className="stat-item">
