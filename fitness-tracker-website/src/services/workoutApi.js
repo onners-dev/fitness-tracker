@@ -57,7 +57,6 @@ export const workoutPlanService = {
                 }
             });
             
-            console.log('Full Workout Plan Response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Workout Plan Generation Error:', {
@@ -68,6 +67,7 @@ export const workoutPlanService = {
     
             throw error;
         }
+    
     },
 
     getWorkoutPlanExerciseDetails: async (exerciseIds) => {

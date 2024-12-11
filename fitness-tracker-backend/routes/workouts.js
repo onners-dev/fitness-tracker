@@ -88,8 +88,7 @@ router.get('/exercises/details', authorization, async (req, res) => {
                 e.video_url,
                 e.image_url,
                 e.instructions,
-                array_agg(DISTINCT mg.name) AS muscle_groups,
-                array_agg(DISTINCT m.name) AS muscles
+                array_agg(DISTINCT mg.name) AS muscle_groups
             FROM exercises e
             JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
             JOIN muscles m ON em.muscle_id = m.muscle_id
@@ -132,7 +131,6 @@ router.get('/exercises/details', authorization, async (req, res) => {
         client.release();
     }
 });
-
 
 // Log a new workout
 router.post('/', authorization, async (req, res) => {
@@ -237,27 +235,60 @@ router.get('/plans/generate', authorization, async (req, res) => {
     const client = await pool.connect();
 
     try {
+        // Debug logging
+        console.log('Query Parameters:', req.query);
+
         const { 
             fitnessGoal = '', 
             activityLevel = '', 
             primaryFocus = '' 
         } = req.query;
+
+        // Additional logging
+        console.log('Extracted Parameters:', {
+            fitnessGoal,
+            activityLevel,
+            primaryFocus
+        });
+
         const userId = req.user.id;
+
+        // Validate parameters
+        if (!fitnessGoal) {
+            return res.status(400).json({
+                message: 'Fitness goal is required',
+                userProfile: req.query
+            });
+        }
 
         // Dynamic workout days based on activity level
         const workoutDaysMap = {
             'sedentary': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] }
+                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
+                { day: 'Tuesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Thursday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Friday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Saturday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Sunday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] }
             ],
             'lightly_active': [
                 { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] }
+                { day: 'Tuesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
+                { day: 'Friday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Saturday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
+                { day: 'Sunday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] }
             ],
             'moderately_active': [
                 { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
                 { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
+                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
                 { day: 'Thursday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
-                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Obliques'] }
+                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Obliques'] },
+                { day: 'Saturday', muscleGroups: ['Upper Body'], specificMuscles: ['Shoulders'] },
+                { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
             ],
             'very_active': [
                 { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
@@ -299,6 +330,40 @@ router.get('/plans/generate', authorization, async (req, res) => {
 
         // Process each workout day
         for (let dayInfo of workoutDays) {
+            // Special handling for Rest days
+            if (dayInfo.muscleGroups.includes('Rest')) {
+                // Insert plan day for Rest
+                const dayResult = await client.query(
+                    `INSERT INTO workout_plan_days 
+                    (plan_id, day_of_week, focus) 
+                    VALUES ($1, $2, $3) 
+                    RETURNING plan_day_id`,
+                    [planId, dayInfo.day, 'Rest']
+                );
+                const planDayId = dayResult.rows[0].plan_day_id;
+
+                // Create a Rest Day entry
+                const restExercise = {
+                    exercise_id: 0,
+                    name: 'Rest Day',
+                    difficulty: 'Rest',
+                    equipment: 'None',
+                    video_url: 'Rest and recovery',
+                    muscle_groups: ['Rest'],
+                    muscles: ['Rest']
+                };
+
+                // Add to allExercises
+                allExercises.push({
+                    ...restExercise,
+                    sets: 0,
+                    reps: 0,
+                    day: dayInfo.day
+                });
+
+                continue; // Skip to next day
+            }
+
             // Special handling for Recovery days
             if (dayInfo.muscleGroups.includes('Recovery')) {
                 const recoveryExercises = await client.query(
@@ -347,7 +412,7 @@ router.get('/plans/generate', authorization, async (req, res) => {
                         [planDayId, exercise.exercise_id, 2, 12, index + 1]
                     );
 
-                    // Add to allExercises for final plan construction
+                    // Add to allExercises
                     allExercises.push({
                         ...exercise,
                         sets: 2,
@@ -355,10 +420,14 @@ router.get('/plans/generate', authorization, async (req, res) => {
                         day: dayInfo.day
                     });
                 }
-            } else {
-                // Existing logic for non-recovery days
-                const exercisesResult = await client.query(
-                    `WITH detailed_exercises AS (
+
+                continue; // Skip to next day
+            }
+
+            // Existing logic for workout days
+            const exercisesResult = await client.query(
+                `WITH detailed_exercises AS (
+                    ${activityLevel === 'sedentary' ? `
                         SELECT DISTINCT 
                             e.exercise_id, 
                             e.name, 
@@ -372,75 +441,127 @@ router.get('/plans/generate', authorization, async (req, res) => {
                         JOIN muscles m ON em.muscle_id = m.muscle_id
                         JOIN muscle_groups mg ON m.group_id = mg.group_id
                         WHERE 
-                            (
-                                mg.name = ANY($1) OR 
-                                m.name = ANY($1)
-                            )
-                            AND m.name = ANY($2)
-                            AND (
-                                CASE 
-                                    WHEN $3 = 'weight_loss' THEN e.difficulty IN ('Beginner', 'Intermediate')
-                                    WHEN $3 = 'muscle_gain' THEN e.difficulty IN ('Intermediate', 'Advanced')
-                                    ELSE true
-                                END
-                            )
-                            AND (
-                                $4 = 'very_active' OR 
-                                ($4 IN ('moderately_active', 'lightly_active') AND e.difficulty != 'Advanced')
-                            )
+                            e.difficulty = 'Beginner'
+                            AND e.equipment = 'Bodyweight'
+                            AND mg.name = 'Upper Body'
                         GROUP BY 
                             e.exercise_id, 
                             e.name, 
                             e.difficulty,
                             e.equipment,
                             e.video_url
-                    )
-                    SELECT * FROM detailed_exercises
-                    LIMIT 4`,
-                    [
+                        LIMIT 4
+                    ` : `
+                    SELECT DISTINCT 
+                        e.exercise_id, 
+                        e.name, 
+                        e.difficulty,
+                        e.equipment,
+                        e.video_url,
+                        array_agg(DISTINCT mg.name) AS muscle_groups,
+                        array_agg(DISTINCT m.name) AS muscles
+                    FROM exercises e
+                    JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+                    JOIN muscles m ON em.muscle_id = m.muscle_id
+                    JOIN muscle_groups mg ON m.group_id = mg.group_id
+                    WHERE 
+                        (
+                            mg.name = ANY($1) OR 
+                            m.name = ANY($1)
+                        )
+                        AND m.name = ANY($2)
+                        AND (
+                            CASE 
+                                WHEN $3 = 'weight_loss' THEN e.difficulty IN ('Beginner', 'Intermediate')
+                                WHEN $3 = 'muscle_gain' THEN e.difficulty IN ('Intermediate', 'Advanced')
+                                ELSE true
+                            END
+                        )
+                        AND (
+                            $4 = 'very_active' OR 
+                            ($4 IN ('moderately_active', 'lightly_active') AND e.difficulty != 'Advanced')
+                        )
+                    GROUP BY 
+                        e.exercise_id, 
+                        e.name, 
+                        e.difficulty,
+                        e.equipment,
+                        e.video_url
+                    LIMIT 4
+                    `}
+                )
+                SELECT * FROM detailed_exercises`,
+                activityLevel === 'sedentary' 
+                    ? [] 
+                    : [
                         dayInfo.muscleGroups, 
                         dayInfo.specificMuscles, 
                         fitnessGoal, 
                         activityLevel
                     ]
-                );
+            );
 
-                // Log exercise selection details
-                console.log(`Exercises for ${dayInfo.day}:`, {
-                    muscleGroups: dayInfo.muscleGroups,
-                    specificMuscles: dayInfo.specificMuscles,
-                    exerciseCount: exercisesResult.rowCount,
-                    exercises: exercisesResult.rows
-                });
-
-                // Insert plan day
-                const dayResult = await client.query(
-                    `INSERT INTO workout_plan_days 
-                    (plan_id, day_of_week, focus) 
-                    VALUES ($1, $2, $3) 
-                    RETURNING plan_day_id`,
-                    [planId, dayInfo.day, dayInfo.muscleGroups.join(' and ')]
-                );
-                const planDayId = dayResult.rows[0].plan_day_id;
-
-                // Insert exercises for this day
-                for (let [index, exercise] of exercisesResult.rows.entries()) {
-                    const exerciseInsertResult = await client.query(
-                        `INSERT INTO workout_plan_exercises 
-                        (plan_day_id, exercise_id, sets, reps, order_index) 
-                        VALUES ($1, $2, $3, $4, $5)
-                        RETURNING plan_exercise_id`,
-                        [planDayId, exercise.exercise_id, 3, 12, index + 1]
-                    );
-
-                    // Add full exercise details to allExercises
-                    allExercises.push({
-                        ...exercise,
-                        sets: 3,
-                        reps: 12,
-                        day: dayInfo.day
-                    });
+            if (activityLevel === 'sedentary') {
+                // If no exercises found, create default bodyweight exercises
+                if (exercisesResult.rows.length === 0) {
+                    exercisesResult.rows = [
+                        {
+                            exercise_id: 0,
+                            name: 'Wall Push-Ups',
+                            difficulty: 'Beginner',
+                            equipment: 'Bodyweight',
+                            video_url: '',
+                            muscle_groups: ['Upper Body'],
+                            muscles: ['Chest', 'Triceps']
+                        },
+                        {
+                            exercise_id: 1,
+                            name: 'Assisted Dips',
+                            difficulty: 'Beginner',
+                            equipment: 'Bodyweight',
+                            video_url: '',
+                            muscle_groups: ['Upper Body'],
+                            muscles: ['Triceps', 'Chest']
+                        }
+                    ];
                 }
+            }
+
+            // Log exercise selection details
+            console.log(`Exercises for ${dayInfo.day}:`, {
+                muscleGroups: dayInfo.muscleGroups,
+                specificMuscles: dayInfo.specificMuscles,
+                exerciseCount: exercisesResult.rowCount,
+                exercises: exercisesResult.rows
+            });
+
+            // Insert plan day
+            const dayResult = await client.query(
+                `INSERT INTO workout_plan_days 
+                (plan_id, day_of_week, focus) 
+                VALUES ($1, $2, $3) 
+                RETURNING plan_day_id`,
+                [planId, dayInfo.day, dayInfo.muscleGroups.join(' and ')]
+            );
+            const planDayId = dayResult.rows[0].plan_day_id;
+
+            // Insert exercises for this day
+            for (let [index, exercise] of exercisesResult.rows.entries()) {
+                const exerciseInsertResult = await client.query(
+                    `INSERT INTO workout_plan_exercises 
+                    (plan_day_id, exercise_id, sets, reps, order_index) 
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING plan_exercise_id`,
+                    [planDayId, exercise.exercise_id, 3, 12, index + 1]
+                );
+
+                // Add full exercise details to allExercises
+                allExercises.push({
+                    ...exercise,
+                    sets: 3,
+                    reps: 12,
+                    day: dayInfo.day
+                });
             }
         }
 
@@ -478,14 +599,13 @@ router.get('/plans/generate', authorization, async (req, res) => {
         // Rollback transaction in case of error
         await client.query('ROLLBACK');
 
-        // Detailed error logging
-        console.error('Workout Plan Generation Error:', {
+        // More detailed error logging
+        console.error('Full Error Details:', {
             message: error.message,
             stack: error.stack,
-            input: { fitnessGoal, activityLevel, primaryFocus }
+            query: req.query
         });
 
-        // Conditional error response based on environment
         res.status(500).json({ 
             message: 'Error generating workout plan',
             error: error.message,

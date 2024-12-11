@@ -327,3 +327,31 @@
 }
 
 
+.workout-day.current-day {
+  background-color: #e6f2ff; /* Light blue background */
+  border: 2px solid #3498db; /* Highlighted border */
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2); /* Slightly stronger shadow */
+}
+
+.workout-day.current-day h2 {
+  color: #3498db; /* Highlighted day name */
+  font-weight: bold;
+}
+
+.workout-day.current-day p {
+  color: #2980b9; /* Slightly darker text for contrast */
+  font-weight: 600;
+}
+
+.workout-day.current-day::before {
+  content: 'Today';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #3498db;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7em;
+  font-weight: bold;
+}
