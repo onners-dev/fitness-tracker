@@ -45,40 +45,77 @@ function TrendsPage() {
     fetchTrends();
   }, [timeframe]);
 
-  const renderTrendChart = (data, dataKey, color, title) => (
-    <div className="trend-chart">
-      <h3>{title}</h3>
-      <ResponsiveContainer width="100%" height={250}>
-        <AreaChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis 
-            dataKey="date" 
-            tick={{ fill: '#666' }}
-            tickFormatter={(value) => formatDate(value)}
-          />
-          <YAxis 
-            tick={{ fill: '#666' }} 
-            domain={[0, 'auto']}
-          />
-          <Tooltip 
-            contentStyle={{ 
-              background: 'white', 
-              border: `1px solid ${color}`, 
-              borderRadius: '8px' 
-            }}
-            labelFormatter={formatDate}
-          />
-          <Area 
-            type="monotone" 
-            dataKey={dataKey} 
-            stroke={color} 
-            fill={color} 
-            fillOpacity={0.3}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
+  const renderTrendChart = (data, dataKey, color, title) => {
+    // Find the min and max values to set a more appropriate Y-axis domain
+    const dataValues = data.map(item => item[dataKey]);
+    const minValue = Math.min(...dataValues);
+    const maxValue = Math.max(...dataValues);
+  
+    // Custom tick formatter to show full numbers
+    const YAxisTick = ({ x, y, payload }) => {
+      return (
+        <text 
+          x={x} 
+          y={y} 
+          fill="#666" 
+          textAnchor="end" 
+          dominantBaseline="middle"
+        >
+          {new Intl.NumberFormat('en-US', { 
+            notation: 'compact', 
+            compactDisplay: 'short' 
+          }).format(payload.value)}
+        </text>
+      );
+    };
+  
+    return (
+      <div className="trend-chart">
+        <h3>{title}</h3>
+        <ResponsiveContainer width="100%" height={250}>
+          <AreaChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis 
+              dataKey="date" 
+              tick={{ fill: '#666' }}
+              tickFormatter={(value) => formatDate(value)}
+            />
+            <YAxis 
+              tick={<YAxisTick />}
+              domain={[
+                Math.max(0, minValue * 0.8),  // Start slightly below minimum
+                maxValue * 1.2  // Extend to 20% above maximum
+              ]}
+              width={80}  // Increased width to accommodate larger numbers
+              tickFormatter={(value) => 
+                new Intl.NumberFormat('en-US').format(Math.round(value))
+              }
+            />
+            <Tooltip 
+              formatter={(value) => [
+                new Intl.NumberFormat('en-US').format(Math.round(value)), 
+                dataKey
+              ]}
+              contentStyle={{ 
+                background: 'white', 
+                border: `1px solid ${color}`, 
+                borderRadius: '8px' 
+              }}
+              labelFormatter={formatDate}
+            />
+            <Area 
+              type="monotone" 
+              dataKey={dataKey} 
+              stroke={color} 
+              fill={color} 
+              fillOpacity={0.3}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
+  
 
   if (loading) return <div className="loading">Loading trends...</div>;
   if (error) return <div className="error">{error}</div>;
