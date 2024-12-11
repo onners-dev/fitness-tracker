@@ -242,23 +242,41 @@ router.get('/plans/generate', authorization, async (req, res) => {
         } = req.query;
         const userId = req.user.id;
 
-        const workoutDays = [
-            { 
-                day: 'Monday', 
-                muscleGroups: ['Upper Body'], 
-                specificMuscles: ['Chest', 'Triceps'] 
-            },
-            { 
-                day: 'Tuesday', 
-                muscleGroups: ['Upper Body'], 
-                specificMuscles: ['Back', 'Biceps'] 
-            },
-            { 
-                day: 'Wednesday', 
-                muscleGroups: ['Lower Body'], 
-                specificMuscles: ['Calves', 'Hamstrings', 'Quadriceps'] 
-            }
-        ];
+        // Dynamic workout days based on activity level
+        const workoutDaysMap = {
+            'sedentary': [
+                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] }
+            ],
+            'lightly_active': [
+                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
+                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] }
+            ],
+            'moderately_active': [
+                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
+                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
+                { day: 'Thursday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] }
+            ],
+            'very_active': [
+                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
+                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
+                { day: 'Wednesday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
+                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Calves', 'Glutes'] },
+                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Lower Back'] },
+                { day: 'Saturday', muscleGroups: ['Full Body'], specificMuscles: ['Total Body'] }
+            ],
+            'extremely_active': [
+                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
+                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
+                { day: 'Wednesday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
+                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Calves', 'Glutes'] },
+                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Lower Back'] },
+                { day: 'Saturday', muscleGroups: ['Full Body'], specificMuscles: ['Total Body'] },
+                { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
+            ]
+        };
+
+        // Default to very_active if activity level is not recognized
+        const workoutDays = workoutDaysMap[activityLevel] || workoutDaysMap['very_active'];
 
         // Prepare to store all exercises
         const allExercises = [];
@@ -276,7 +294,7 @@ router.get('/plans/generate', authorization, async (req, res) => {
 
         // Process each workout day
         for (let dayInfo of workoutDays) {
-            // Fetch exercises for the day
+            // Fetch exercises for the day (similar to previous implementation)
             const exercisesResult = await client.query(
                 `WITH detailed_exercises AS (
                     SELECT DISTINCT 
