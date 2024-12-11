@@ -110,3 +110,34 @@
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   padding: 15px;
 }
+
+/* Add to TrendsPage.css */
+@keyframes fadeInAndSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.trends-section {
+  animation: fadeInAndSlideUp 0.6s ease-out;
+}
+
+.trends-section:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.chart-grid > div {
+  opacity: 0;
+  animation: fadeInAndSlideUp 0.5s ease-out forwards;
+}
+
+.chart-grid > div:nth-child(1) { animation-delay: 0.3s; }
+.chart-grid > div:nth-child(2) { animation-delay: 0.4s; }
+.chart-grid > div:nth-child(3) { animation-delay: 0.5s; }
+.chart-grid > div:nth-child(4) { animation-delay: 0.6s; }
+
