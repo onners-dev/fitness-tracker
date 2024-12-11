@@ -45,23 +45,27 @@
   gap: 1rem;
 }
 
-/* First row: 2 cards */
-.dashboard-grid > div:nth-child(-n+2) {
+/* First row: 3 cards from GoalSummary */
+.goal-summary-first-row {
+  grid-column: span 4;
+}
+
+.goal-summary-full-width {
+  grid-column: span 12 !important;
+}
+
+/* Second row: 2 cards from Dashboard */
+.dashboard > .dashboard-grid .dashboard-card:nth-child(1),
+.dashboard > .dashboard-grid .dashboard-card:nth-child(2) {
   grid-column: span 6;
 }
 
-/* Middle row: 3 cards, forced into one row */
-.dashboard-grid > div:nth-child(3),
-.dashboard-grid > div:nth-child(4),
-.dashboard-grid > div:nth-child(5) {
+/* Third row: 3 cards from Dashboard */
+.dashboard > .dashboard-grid .dashboard-card:nth-child(3),
+.dashboard > .dashboard-grid .dashboard-card:nth-child(4),
+.dashboard > .dashboard-grid .dashboard-card:nth-child(5) {
   grid-column: span 4;
 }
-
-/* Last row: 3 cards */
-.dashboard-grid > div:nth-child(n+6) {
-  grid-column: span 4;
-}
-
 
 
 
