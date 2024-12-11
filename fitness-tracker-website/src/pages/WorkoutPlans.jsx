@@ -4,7 +4,6 @@ import { userService } from '../services/api';
 import { workoutPlanService } from '../services/workoutApi';
 import './WorkoutPlans.css';
 
-
 const formatGoal = (goal) => {
   const goalMap = {
     'muscle_gain': 'Muscle Gain',
@@ -33,28 +32,31 @@ const ExerciseDetailModal = ({ exercise, onClose }) => {
   if (!exercise) return null;
 
   // Check if instructions is a string and split it, or if it's an array, use it directly
-  const instructions = Array.isArray(exercise.details.instructions) 
-    ? exercise.details.instructions 
-    : (typeof exercise.details.instructions === 'string' 
-      ? exercise.details.instructions.split('. ') 
+  const instructions = typeof exercise.details.instructions === 'string' 
+    ? exercise.details.instructions.split(',').map(step => step.trim())
+    : (Array.isArray(exercise.details.instructions) 
+      ? exercise.details.instructions 
       : []);
 
-  return (
-    <div className="exercise-modal-overlay" onClick={onClose}>
-      <div 
-        className="exercise-modal-content" 
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="modal-close-btn" onClick={onClose}>×</button>
-        <h2>{exercise.details.name}</h2>
-        
-        <div className="modal-exercise-details">
-          <div className="detail-section">
-            <h3>Exercise Information</h3>
-            <p><strong>Muscle Groups:</strong> {exercise.details.muscle_groups?.join(', ')}</p>
-            <p><strong>Equipment:</strong> {exercise.details.equipment}</p>
-            <p><strong>Difficulty:</strong> {exercise.details.difficulty}</p>
-          </div>
+      return (
+        <div className="exercise-modal-overlay" onClick={onClose}>
+          <div 
+            className="exercise-modal-content" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="modal-close-btn" onClick={onClose}>×</button>
+            <h2>{exercise.details.name}</h2>
+            
+            <div className="modal-exercise-details">
+              <div className="detail-section">
+                <h3>Exercise Information</h3>
+                <p>
+                  <strong>Muscles: </strong> 
+                  {exercise.details.muscles?.join(', ') || exercise.details.muscle_groups?.join(', ')}
+                </p>
+                <p><strong>Equipment:</strong> {exercise.details.equipment}</p>
+                <p><strong>Difficulty:</strong> {exercise.details.difficulty}</p>
+              </div>
 
           <div className="detail-section">
             <h3>Workout Details</h3>
@@ -99,7 +101,38 @@ const ExerciseDetailModal = ({ exercise, onClose }) => {
   );
 };
 
-
+// New Day Workouts Modal
+const DayWorkoutsModal = ({ day, exercises, onClose, onExerciseSelect }) => {
+  return (
+    <div className="day-workouts-modal-overlay" onClick={onClose}>
+      <div 
+        className="day-workouts-modal-content" 
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="modal-close-btn" onClick={onClose}>×</button>
+        <h2>{day}</h2>
+        <div className="day-workouts-grid">
+          {exercises.map((exercise, index) => (
+            <div 
+              key={index} 
+              className="day-workout-card"
+              onClick={() => onExerciseSelect(exercise)}
+            >
+              <h3>{exercise.details.name}</h3>
+              <div className="workout-card-details">
+                <p><strong>Muscle Groups:</strong> {exercise.details.muscle_groups?.join(', ')}</p>
+                <div className="workout-sets-reps">
+                  <span><strong>Sets:</strong> {exercise.sets}</span>
+                  <span><strong>Reps:</strong> {exercise.reps}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const WorkoutPlans = () => {
   const navigate = useNavigate();
@@ -108,6 +141,9 @@ const WorkoutPlans = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedExercise, setSelectedExercise] = useState(null);
+  
+  // New state for day modal
+  const [selectedDayWorkouts, setSelectedDayWorkouts] = useState(null);
 
   useEffect(() => {
     const fetchWorkoutPlan = async () => {
@@ -174,19 +210,22 @@ const WorkoutPlans = () => {
 
   const renderExerciseCard = (exercise) => {
     if (!exercise || !exercise.details) return null;
-
+  
     return (
-        <div 
-          key={exercise.exercise_id} 
-          className="exercise-card"
-          onClick={() => setSelectedExercise(exercise)}
-        >
-            <h4>{exercise.details.name}</h4>
-            <div className="exercise-details">
-                <p><strong>Muscle Groups:</strong> {exercise.details.muscle_groups?.join(', ')}</p>
-                <p><strong>Equipment:</strong> {exercise.details.equipment}</p>
-                <p><strong>Difficulty:</strong> {exercise.details.difficulty}</p>
-            </div>
+      <div 
+        key={exercise.exercise_id} 
+        className="exercise-card"
+        onClick={() => setSelectedExercise(exercise)}
+      >
+        <h4>{exercise.details.name}</h4>
+        <div className="exercise-details">
+          <p>
+            <strong>Muscles: </strong> 
+            {exercise.details.muscles?.join(', ') || exercise.details.muscle_groups?.join(', ')}
+          </p>
+          <p><strong>Equipment:</strong> {exercise.details.equipment}</p>
+          <p><strong>Difficulty:</strong> {exercise.details.difficulty}</p>
+        </div>
             <div className="exercise-sets-reps">
                 <span>
                     <strong>Sets:</strong> {exercise.sets}
@@ -246,19 +285,44 @@ const WorkoutPlans = () => {
       <div className="workout-plans-header">
         <h1>Your Personalized Workout Plan</h1>
         <p>
-        Based on your {formatGoal(userProfile.fitness_goal)} goal and {formatActivityLevel(userProfile.activity_level)} activity level        </p>
+          Based on your {formatGoal(userProfile.fitness_goal)} goal and {formatActivityLevel(userProfile.activity_level)} activity level
+        </p>
       </div>
-
+  
       <div className="workout-plan-container">
         {Object.entries(workoutPlan.workouts).map(([day, exercises]) => (
-          <div key={day} className="workout-day">
+          <div 
+            key={day} 
+            className="workout-day"
+            onClick={() => setSelectedDayWorkouts({ day, exercises })}
+          >
             <h2>{day}</h2>
-            <div className="exercises-grid">
-              {Array.isArray(exercises) ? exercises.map(renderExerciseCard) : null}
-            </div>
+            <p>
+              {exercises[0]?.details?.muscle_groups?.join(' and ') + ' Day' || 'Workout Day'}
+            </p>
           </div>
         ))}
       </div>
+  
+      {/* Day Workouts Modal */}
+      {selectedDayWorkouts && (
+        <div className="day-workouts-modal-overlay" onClick={() => setSelectedDayWorkouts(null)}>
+          <div 
+            className="day-workouts-modal-content" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="modal-close-btn" onClick={() => setSelectedDayWorkouts(null)}>×</button>
+            <h2>
+              {selectedDayWorkouts.day} - {
+                selectedDayWorkouts.exercises[0]?.details?.muscle_groups?.join(' and ') || 'Workout'
+              }
+            </h2>
+            <div className="exercises-grid">
+              {selectedDayWorkouts.exercises.map(renderExerciseCard)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {workoutPlan.planNotes && (
         <div className="plan-notes">
