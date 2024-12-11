@@ -282,27 +282,33 @@ const WorkoutPlans = () => {
 
   return (
     <div className="workout-plans-page">
-      <div className="workout-plans-header">
-        <h1>Your Personalized Workout Plan</h1>
-        <p>
-          Based on your {formatGoal(userProfile.fitness_goal)} goal and {formatActivityLevel(userProfile.activity_level)} activity level
-        </p>
-      </div>
-  
-      <div className="workout-plan-container">
-        {Object.entries(workoutPlan.workouts).map(([day, exercises]) => (
+    {/* Existing code */}
+    <div className="workout-plan-container">
+      {Object.entries(workoutPlan.workouts).map(([day, exercises]) => {
+        // Get current day name
+        const currentDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+        
+        return (
           <div 
             key={day} 
-            className="workout-day"
-            onClick={() => setSelectedDayWorkouts({ day, exercises })}
+            className={`workout-day 
+              ${exercises[0]?.muscle_groups?.includes('Rest') ? 'rest-day' : ''}
+              ${day === currentDayName ? 'current-day' : ''}`}
+            onClick={() => 
+              !exercises[0]?.muscle_groups?.includes('Rest') && 
+              setSelectedDayWorkouts({ day, exercises })
+            }
           >
             <h2>{day}</h2>
             <p>
-              {exercises[0]?.details?.muscle_groups?.join(' and ') + ' Day' || 'Workout Day'}
+              {exercises[0]?.muscle_groups?.includes('Rest') 
+                ? 'Rest Day' 
+                : (exercises[0]?.muscles?.join(' and ') + ' Day' || 'Workout Day')}
             </p>
           </div>
-        ))}
-      </div>
+        );
+      })}
+    </div>
   
       {/* Day Workouts Modal */}
       {selectedDayWorkouts && (
