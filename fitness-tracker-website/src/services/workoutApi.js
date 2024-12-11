@@ -98,6 +98,21 @@ export const workoutPlanService = {
             console.error('Error fetching workout plans:', error);
             throw error;
         }
+    },
+
+    // Get workout plan details
+    getUserWorkoutPlans: async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/plans`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching workout plans:', error);
+            throw error;
+        }
     }
 };
 

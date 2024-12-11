@@ -210,3 +210,26 @@
         min-width: 100%;
     }
 }
+
+
+.workout-plan-import {
+    background-color: #f4f4f4;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.workout-plan-import svg {
+    color: #007bff;
+    font-size: 24px;
+}
+
+.workout-plan-import select {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}

@@ -230,6 +230,73 @@ router.post('/', authorization, async (req, res) => {
     }
 });
 
+router.get('/plans', authorization, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const query = `
+            SELECT 
+                uwp.plan_id,  -- Specify the table alias here
+                uwp.fitness_goal, 
+                uwp.activity_level, 
+                uwp.created_at,
+                json_agg(
+                    json_build_object(
+                        'day', wpd.day_of_week,
+                        'exercises', (
+                            SELECT json_agg(
+                                json_build_object(
+                                    'exercise_id', e.exercise_id,
+                                    'name', e.name,
+                                    'sets', wpe.sets,
+                                    'reps', wpe.reps,
+                                    'muscle_groups', array_agg(DISTINCT mg.name)
+                                )
+                            )
+                            FROM workout_plan_exercises wpe
+                            JOIN exercises e ON wpe.exercise_id = e.exercise_id
+                            JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+                            JOIN muscles m ON em.muscle_id = m.muscle_id
+                            JOIN muscle_groups mg ON m.group_id = mg.group_id
+                            WHERE wpe.plan_day_id = wpd.plan_day_id
+                            GROUP BY e.exercise_id
+                        )
+                    )
+                ) AS workouts
+            FROM user_workout_plans uwp
+            JOIN workout_plan_days wpd ON uwp.plan_id = wpd.plan_id
+            WHERE uwp.user_id = $1
+            GROUP BY uwp.plan_id, uwp.fitness_goal, uwp.activity_level, uwp.created_at
+            ORDER BY uwp.created_at DESC
+            LIMIT 5
+        `;
+
+        const result = await client.query(query, [req.user.id]);
+
+        const plans = result.rows.map(plan => ({
+            plan_id: plan.plan_id,
+            fitnessGoal: plan.fitness_goal,
+            activityLevel: plan.activity_level,
+            workouts: plan.workouts.reduce((acc, day) => {
+                acc[day.day] = day.exercises || [];
+                return acc;
+            }, {})
+        }));
+
+        res.json(plans);
+    } catch (error) {
+        console.error('Error fetching workout plans:', error);
+        res.status(500).json({ 
+            message: 'Error fetching workout plans', 
+            error: error.message 
+        });
+    } finally {
+        client.release();
+    }
+});
+
+
+
 
 router.get('/plans/generate', authorization, async (req, res) => {
     const client = await pool.connect();

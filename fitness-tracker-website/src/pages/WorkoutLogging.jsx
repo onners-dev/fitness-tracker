@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { workoutService, exerciseLibraryService } from '../services/workoutApi';
+import { workoutService, exerciseLibraryService, workoutPlanService } from '../services/workoutApi';
 import './WorkoutLogging.css';
 
 function WorkoutLogging() {
@@ -86,6 +86,22 @@ function WorkoutLogging() {
         }));
     };
 
+    const [workoutPlans, setWorkoutPlans] = useState([]);
+    const [selectedPlan, setSelectedPlan] = useState(null);
+
+    useEffect(() => {
+        const fetchWorkoutPlans = async () => {
+            try {
+                const plans = await workoutPlanService.getUserWorkoutPlans();
+                setWorkoutPlans(plans);
+            } catch (error) {
+                console.error('Failed to fetch workout plans', error);
+            }
+        };
+
+        fetchWorkoutPlans();
+    }, []);
+
     useEffect(() => {
         const fetchExercises = async () => {
             setIsLoading(true);
@@ -103,7 +119,7 @@ function WorkoutLogging() {
         fetchExercises();
     }, []);
 
-    // ... (keep your existing handle change functions)
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -156,6 +172,49 @@ function WorkoutLogging() {
             setError(`Failed to log workout: ${error.message}`);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const importPlanExercises = async (planId) => {
+        try {
+            // Find the selected plan
+            const plan = workoutPlans.find(p => p.plan_id === planId);
+            
+            if (!plan) return;
+
+            // Determine the current day of the week
+            const currentDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+            // Get exercises for the current day
+            const dayExercises = plan.workouts[currentDay] || [];
+
+            // Add imported exercises to the current workout
+            const importedExercises = dayExercises.map(exercise => ({
+                exercise_id: exercise.exercise_id,
+                exercise_name: exercise.name,
+                sets: exercise.sets,
+                reps: exercise.reps,
+                weight: null, // User can add weight later
+                notes: `Imported from ${plan.planName || 'Workout Plan'}`
+            }));
+
+            setWorkoutData(prev => ({
+                ...prev,
+                exercises: [
+                    ...prev.exercises,
+                    ...importedExercises
+                ]
+            }));
+
+            // Optional: Set workout type based on plan
+            if (prev.workout_type === '') {
+                setWorkoutData(prev => ({
+                    ...prev,
+                    workout_type: importedExercises[0]?.muscle_groups?.[0] || 'Full Body'
+                }));
+            }
+        } catch (error) {
+            console.error('Error importing plan exercises', error);
         }
     };
 
