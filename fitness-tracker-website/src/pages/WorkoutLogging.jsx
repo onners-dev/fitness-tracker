@@ -35,13 +35,46 @@ function WorkoutLogging() {
         notes: ''
     });
 
-    // Add these methods back
+    const [workoutPlans, setWorkoutPlans] = useState([]);
+    const [selectedPlan, setSelectedPlan] = useState(null);
+
+    useEffect(() => {
+        const fetchWorkoutPlans = async () => {
+            try {
+                const plans = await workoutPlanService.getUserWorkoutPlans();
+                console.log('Fetched Workout Plans:', plans); // Debugging line
+                setWorkoutPlans(plans);
+            } catch (error) {
+                console.error('Failed to fetch workout plans', error);
+                setError('Failed to fetch workout plans');
+            }
+        };
+    
+        fetchWorkoutPlans();
+    }, []);
+
+    useEffect(() => {
+        const fetchExercises = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const exercises = await exerciseLibraryService.getExercises();
+                setExerciseLibrary(exercises);
+            } catch (error) {
+                setError('Failed to load exercise library. Please try again later.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+    
+        fetchExercises();
+    }, []);
+
     const handleWorkoutChange = (e) => {
         const { name, value } = e.target;
         setWorkoutData(prev => ({
             ...prev,
             [name]: value,
-            // Reset workout name if type changes from Custom
             ...(name === 'workout_type' && value !== 'Custom' ? { workout_name: '' } : {})
         }));
     };
@@ -68,7 +101,6 @@ function WorkoutLogging() {
                 }]
             }));
             
-            // Reset current exercise
             setCurrentExercise({
                 exercise_id: '',
                 sets: '',
@@ -86,40 +118,38 @@ function WorkoutLogging() {
         }));
     };
 
-    const [workoutPlans, setWorkoutPlans] = useState([]);
-    const [selectedPlan, setSelectedPlan] = useState(null);
-
-    useEffect(() => {
-        const fetchWorkoutPlans = async () => {
-            try {
-                const plans = await workoutPlanService.getUserWorkoutPlans();
-                setWorkoutPlans(plans);
-            } catch (error) {
-                console.error('Failed to fetch workout plans', error);
-            }
-        };
-
-        fetchWorkoutPlans();
-    }, []);
-
-    useEffect(() => {
-        const fetchExercises = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const exercises = await exerciseLibraryService.getExercises();
-                setExerciseLibrary(exercises);
-            } catch (error) {
-                setError('Failed to load exercise library. Please try again later.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const importPlanExercises = (planId) => {
+        try {
+            const plan = workoutPlans.find(p => p.plan_id.toString() === planId);
+            if (!plan) return;
     
-        fetchExercises();
-    }, []);
-
-
+            const currentDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+            console.log('Current Day:', currentDay); // Debugging line
+    
+            const dayExercises = plan.workouts[currentDay] || [];
+            console.log('Exercises for Today:', dayExercises); // Debugging line
+    
+            const importedExercises = dayExercises.map(exercise => ({
+                exercise_id: exercise.exercise_id,
+                exercise_name: exercise.name,
+                sets: exercise.sets || '',
+                reps: exercise.reps || '',
+                weight: '', // User can add or modify weight
+                notes: `Imported from ${plan.planName || 'Workout Plan'}`
+            }));
+    
+            setWorkoutData(prev => ({
+                ...prev,
+                exercises: importedExercises,
+                workout_type: prev.workout_type || importedExercises[0]?.muscle_groups?.[0] || 'Full Body'
+            }));
+        } catch (error) {
+            console.error('Error importing plan exercises', error);
+        }
+    };
+    
+    
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -153,12 +183,10 @@ function WorkoutLogging() {
 
             await workoutService.logWorkout(submissionData);
             
-            // Success message
             const successMessage = document.getElementById('success-message');
             successMessage.classList.add('show');
             setTimeout(() => successMessage.classList.remove('show'), 3000);
             
-            // Reset form
             setWorkoutData({
                 workout_type: '',
                 workout_name: '',
@@ -172,49 +200,6 @@ function WorkoutLogging() {
             setError(`Failed to log workout: ${error.message}`);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const importPlanExercises = async (planId) => {
-        try {
-            // Find the selected plan
-            const plan = workoutPlans.find(p => p.plan_id === planId);
-            
-            if (!plan) return;
-
-            // Determine the current day of the week
-            const currentDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-
-            // Get exercises for the current day
-            const dayExercises = plan.workouts[currentDay] || [];
-
-            // Add imported exercises to the current workout
-            const importedExercises = dayExercises.map(exercise => ({
-                exercise_id: exercise.exercise_id,
-                exercise_name: exercise.name,
-                sets: exercise.sets,
-                reps: exercise.reps,
-                weight: null, // User can add weight later
-                notes: `Imported from ${plan.planName || 'Workout Plan'}`
-            }));
-
-            setWorkoutData(prev => ({
-                ...prev,
-                exercises: [
-                    ...prev.exercises,
-                    ...importedExercises
-                ]
-            }));
-
-            // Optional: Set workout type based on plan
-            if (prev.workout_type === '') {
-                setWorkoutData(prev => ({
-                    ...prev,
-                    workout_type: importedExercises[0]?.muscle_groups?.[0] || 'Full Body'
-                }));
-            }
-        } catch (error) {
-            console.error('Error importing plan exercises', error);
         }
     };
 
@@ -236,6 +221,31 @@ function WorkoutLogging() {
                 <fieldset className="form-section">
                     <legend>Workout Details</legend>
                     
+                    <div className="workout-plan-import">
+                        <h3>Import from Workout Plan</h3>
+                        <select 
+                            value={selectedPlan || ''}
+                            onChange={(e) => {
+                                const selectedPlanId = e.target.value;
+                                console.log('Selected Plan ID:', selectedPlanId); // Debugging line
+                                setSelectedPlan(selectedPlanId);
+                                importPlanExercises(selectedPlanId);
+                            }}
+                        >
+                            <option value="">Select a Workout Plan</option>
+                            {workoutPlans.map(plan => (
+                                <option 
+                                    key={plan.plan_id} 
+                                    value={plan.plan_id}
+                                >
+                                    {plan.planName || `Plan - ${plan.plan_id}`}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+
+
                     <div className="form-group">
                         <label htmlFor="workout-type">Workout Type *</label>
                         <select

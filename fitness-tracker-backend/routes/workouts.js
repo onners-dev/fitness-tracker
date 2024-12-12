@@ -235,36 +235,49 @@ router.get('/plans', authorization, async (req, res) => {
 
     try {
         const query = `
+            WITH exercise_details AS (
+                SELECT
+                    wpe.plan_day_id,
+                    e.exercise_id,
+                    e.name,
+                    wpe.sets,
+                    wpe.reps,
+                    array_agg(DISTINCT mg.name) AS muscle_groups
+                FROM workout_plan_exercises wpe
+                JOIN exercises e ON wpe.exercise_id = e.exercise_id
+                JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+                JOIN muscles m ON em.muscle_id = m.muscle_id
+                JOIN muscle_groups mg ON m.group_id = mg.group_id
+                GROUP BY wpe.plan_day_id, e.exercise_id, e.name, wpe.sets, wpe.reps
+            )
             SELECT 
-                uwp.plan_id,  -- Specify the table alias here
-                uwp.fitness_goal, 
-                uwp.activity_level, 
+                uwp.plan_id,
+                uwp.fitness_goal,
+                uwp.activity_level,
                 uwp.created_at,
                 json_agg(
                     json_build_object(
                         'day', wpd.day_of_week,
-                        'exercises', (
-                            SELECT json_agg(
-                                json_build_object(
-                                    'exercise_id', e.exercise_id,
-                                    'name', e.name,
-                                    'sets', wpe.sets,
-                                    'reps', wpe.reps,
-                                    'muscle_groups', array_agg(DISTINCT mg.name)
-                                )
-                            )
-                            FROM workout_plan_exercises wpe
-                            JOIN exercises e ON wpe.exercise_id = e.exercise_id
-                            JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                            JOIN muscles m ON em.muscle_id = m.muscle_id
-                            JOIN muscle_groups mg ON m.group_id = mg.group_id
-                            WHERE wpe.plan_day_id = wpd.plan_day_id
-                            GROUP BY e.exercise_id
-                        )
+                        'exercises', ed.exercises
                     )
                 ) AS workouts
             FROM user_workout_plans uwp
             JOIN workout_plan_days wpd ON uwp.plan_id = wpd.plan_id
+            LEFT JOIN (
+                SELECT 
+                    plan_day_id,
+                    json_agg(
+                        json_build_object(
+                            'exercise_id', exercise_id,
+                            'name', name,
+                            'sets', sets,
+                            'reps', reps,
+                            'muscle_groups', muscle_groups
+                        )
+                    ) AS exercises
+                FROM exercise_details
+                GROUP BY plan_day_id
+            ) ed ON wpd.plan_day_id = ed.plan_day_id
             WHERE uwp.user_id = $1
             GROUP BY uwp.plan_id, uwp.fitness_goal, uwp.activity_level, uwp.created_at
             ORDER BY uwp.created_at DESC
@@ -294,6 +307,7 @@ router.get('/plans', authorization, async (req, res) => {
         client.release();
     }
 });
+
 
 
 
