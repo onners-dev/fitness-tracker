@@ -141,53 +141,34 @@ const WorkoutPlans = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedExercise, setSelectedExercise] = useState(null);
-  
-  // New state for day modal
   const [selectedDayWorkouts, setSelectedDayWorkouts] = useState(null);
 
   useEffect(() => {
     const fetchWorkoutPlan = async () => {
       try {
-        // Fetch user profile
         const profile = await userService.getProfile();
         setUserProfile(profile);
 
-        // Generate workout plan based on profile
         const plan = await workoutPlanService.generateWorkoutPlan(profile);
-        
-        // Debug logging
-        console.log('Received Workout Plan:', plan);
-        console.log('Workouts:', plan.workouts);
 
-        // Ensure plan and workouts exist
         if (!plan || !plan.workouts) {
           throw new Error('No workout plan generated');
         }
 
-        // Extract exercise IDs
-        const exerciseIds = Object.values(plan.workouts)
-          .reduce((acc, dayExercises) => {
-            // Ensure dayExercises is an array before mapping
-            return acc.concat(
-              Array.isArray(dayExercises) 
-                ? dayExercises.map(exercise => exercise.exercise_id) 
-                : []
-            );
-          }, []);
-        
-        console.log('Exercise IDs:', exerciseIds);
+        const exerciseIds = Object.values(plan.workouts).reduce((acc, dayExercises) => {
+          return acc.concat(
+            Array.isArray(dayExercises)
+              ? dayExercises.map(exercise => exercise.exercise_id)
+              : []
+          );
+        }, []);
 
-        // Fetch exercise details
         const exerciseDetails = exerciseIds.length > 0 
           ? await workoutPlanService.getWorkoutPlanExerciseDetails(exerciseIds)
           : [];
 
-        console.log('Exercise Details:', exerciseDetails);
-
-        // Merge exercise details into plan
         const enrichedPlan = { ...plan };
         Object.keys(enrichedPlan.workouts).forEach(day => {
-          // Ensure the day's exercises is an array before mapping
           if (Array.isArray(enrichedPlan.workouts[day])) {
             enrichedPlan.workouts[day] = enrichedPlan.workouts[day].map(exercise => {
               const details = exerciseDetails.find(detail => detail.exercise_id === exercise.exercise_id);
@@ -210,7 +191,7 @@ const WorkoutPlans = () => {
 
   const renderExerciseCard = (exercise) => {
     if (!exercise || !exercise.details) return null;
-  
+
     return (
       <div 
         key={exercise.exercise_id} 
@@ -226,25 +207,25 @@ const WorkoutPlans = () => {
           <p><strong>Equipment:</strong> {exercise.details.equipment}</p>
           <p><strong>Difficulty:</strong> {exercise.details.difficulty}</p>
         </div>
-            <div className="exercise-sets-reps">
-                <span>
-                    <strong>Sets:</strong> {exercise.sets}
-                </span>
-                <span>
-                    <strong>Reps:</strong> {exercise.reps}
-                </span>
-            </div>
-            {exercise.details.video_url && (
-                <a 
-                    href={exercise.details.video_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="video-link"
-                >
-                    Watch Tutorial
-                </a>
-            )}
+        <div className="exercise-sets-reps">
+          <span>
+            <strong>Sets:</strong> {exercise.sets}
+          </span>
+          <span>
+            <strong>Reps:</strong> {exercise.reps}
+          </span>
         </div>
+        {exercise.details.video_url && (
+          <a 
+            href={exercise.details.video_url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="video-link"
+          >
+            Watch Tutorial
+          </a>
+        )}
+      </div>
     );
   };
 
@@ -280,37 +261,41 @@ const WorkoutPlans = () => {
     </div>
   );
 
+  // Define the correct order of the days
+  const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
   return (
     <div className="workout-plans-page">
-    {/* Existing code */}
-    <div className="workout-plan-container">
-      {Object.entries(workoutPlan.workouts).map(([day, exercises]) => {
-        // Get current day name
-        const currentDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-        
-        return (
-          <div 
-            key={day} 
-            className={`workout-day 
-              ${exercises[0]?.muscle_groups?.includes('Rest') ? 'rest-day' : ''}
-              ${day === currentDayName ? 'current-day' : ''}`}
-            onClick={() => 
-              !exercises[0]?.muscle_groups?.includes('Rest') && 
-              setSelectedDayWorkouts({ day, exercises })
-            }
-          >
-            <h2>{day}</h2>
-            <p>
-              {exercises[0]?.muscle_groups?.includes('Rest') 
-                ? 'Rest Day' 
-                : (exercises[0]?.muscles?.join(' and ') + ' Day' || 'Workout Day')}
-            </p>
-          </div>
-        );
-      })}
-    </div>
-  
-      {/* Day Workouts Modal */}
+      <div className="workout-plan-container">
+        {dayOrder.map(day => {
+          const exercises = workoutPlan.workouts[day] || [];
+          const currentDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+          const isRestDay = exercises.length > 0 && exercises[0]?.muscle_groups?.includes('Rest');
+
+          return (
+            <div 
+              key={day} 
+              className={`workout-day 
+                ${isRestDay ? 'rest-day' : ''}
+                ${day === currentDayName ? 'current-day' : ''}`}
+              onClick={() => 
+                !isRestDay && 
+                setSelectedDayWorkouts({ day, exercises })
+              }
+            >
+              <h2>{day}</h2>
+              <p>
+                {isRestDay 
+                  ? 'Rest Day' 
+                  : (exercises.length > 0 
+                      ? `${exercises[0].muscles?.join(' and ') || 'Workout'} Day` 
+                      : 'No Exercises')}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
       {selectedDayWorkouts && (
         <div className="day-workouts-modal-overlay" onClick={() => setSelectedDayWorkouts(null)}>
           <div 
@@ -337,7 +322,6 @@ const WorkoutPlans = () => {
         </div>
       )}
 
-      {/* Exercise Detail Modal */}
       {selectedExercise && (
         <ExerciseDetailModal 
           exercise={selectedExercise} 
