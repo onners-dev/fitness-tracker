@@ -316,22 +316,8 @@ router.get('/plans/generate', authorization, async (req, res) => {
     const client = await pool.connect();
 
     try {
-        // Debug logging
-        console.log('Query Parameters:', req.query);
-
-        const { 
-            fitnessGoal = '', 
-            activityLevel = '', 
-            primaryFocus = '' 
-        } = req.query;
-
-        // Additional logging
-        console.log('Extracted Parameters:', {
-            fitnessGoal,
-            activityLevel,
-            primaryFocus
-        });
-
+        // Extract query parameters
+        const { fitnessGoal, activityLevel, primaryFocus } = req.query;
         const userId = req.user.id;
 
         // Validate parameters
@@ -342,7 +328,63 @@ router.get('/plans/generate', authorization, async (req, res) => {
             });
         }
 
-        // Dynamic workout days based on activity level
+        // Check for existing plan
+        const existingPlanQuery = `
+            SELECT plan_id, fitness_goal, activity_level, created_at
+            FROM user_workout_plans
+            WHERE user_id = $1 AND fitness_goal = $2 AND activity_level = $3
+            ORDER BY created_at DESC
+            LIMIT 1
+        `;
+        const existingPlanResult = await client.query(existingPlanQuery, [userId, fitnessGoal, activityLevel]);
+
+        if (existingPlanResult.rows.length > 0) {
+            const existingPlan = existingPlanResult.rows[0];
+            console.log('Returning existing workout plan:', existingPlan.plan_id);
+
+            // Fetch workouts for the existing plan
+            const workoutsQuery = `
+                WITH muscle_groups_agg AS (
+                    SELECT 
+                        e.exercise_id,
+                        array_agg(DISTINCT mg.name) AS muscle_groups
+                    FROM exercises e
+                    JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+                    JOIN muscles m ON em.muscle_id = m.muscle_id
+                    JOIN muscle_groups mg ON m.group_id = mg.group_id
+                    GROUP BY e.exercise_id
+                )
+                SELECT wpd.day_of_week, json_agg(
+                    json_build_object(
+                        'exercise_id', e.exercise_id,
+                        'name', e.name,
+                        'sets', wpe.sets,
+                        'reps', wpe.reps,
+                        'muscle_groups', mg.muscle_groups
+                    )
+                ) AS exercises
+                FROM workout_plan_days wpd
+                JOIN workout_plan_exercises wpe ON wpd.plan_day_id = wpe.plan_day_id
+                JOIN exercises e ON wpe.exercise_id = e.exercise_id
+                JOIN muscle_groups_agg mg ON e.exercise_id = mg.exercise_id
+                WHERE wpd.plan_id = $1
+                GROUP BY wpd.day_of_week
+            `;
+            const workoutsResult = await client.query(workoutsQuery, [existingPlan.plan_id]);
+
+            const workouts = workoutsResult.rows.reduce((acc, row) => {
+                acc[row.day_of_week] = row.exercises;
+                return acc;
+            }, {});
+
+            return res.json({
+                workoutPlanId: existingPlan.plan_id,
+                workouts,
+                planNotes: generatePlanNotes(fitnessGoal, activityLevel, primaryFocus)
+            });
+        }
+
+        // If no existing plan, generate a new one
         const workoutDaysMap = {
             'sedentary': [
                 { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
@@ -390,12 +432,8 @@ router.get('/plans/generate', authorization, async (req, res) => {
                 { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
             ]
         };
-        
 
-        // Default to very_active if activity level is not recognized
         const workoutDays = workoutDaysMap[activityLevel] || workoutDaysMap['very_active'];
-
-        // Prepare to store all exercises
         const allExercises = [];
 
         // Insert workout plan
@@ -485,15 +523,13 @@ router.get('/plans/generate', authorization, async (req, res) => {
 
                 // Insert recovery exercises
                 for (let [index, exercise] of recoveryExercises.rows.entries()) {
-                    const exerciseInsertResult = await client.query(
+                    await client.query(
                         `INSERT INTO workout_plan_exercises 
                         (plan_day_id, exercise_id, sets, reps, order_index) 
-                        VALUES ($1, $2, $3, $4, $5)
-                        RETURNING plan_exercise_id`,
+                        VALUES ($1, $2, $3, $4, $5)`,
                         [planDayId, exercise.exercise_id, 2, 12, index + 1]
                     );
 
-                    // Add to allExercises
                     allExercises.push({
                         ...exercise,
                         sets: 2,
@@ -507,79 +543,48 @@ router.get('/plans/generate', authorization, async (req, res) => {
 
             // Existing logic for workout days
             const exercisesResult = await client.query(
-                `WITH detailed_exercises AS (
-                    ${activityLevel === 'sedentary' ? `
-                        SELECT DISTINCT 
-                            e.exercise_id, 
-                            e.name, 
-                            e.difficulty,
-                            e.equipment,
-                            e.video_url,
-                            array_agg(DISTINCT mg.name) AS muscle_groups,
-                            array_agg(DISTINCT m.name) AS muscles
-                        FROM exercises e
-                        JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                        JOIN muscles m ON em.muscle_id = m.muscle_id
-                        JOIN muscle_groups mg ON m.group_id = mg.group_id
-                        WHERE 
-                            e.difficulty = 'Beginner'
-                            AND e.equipment = 'Bodyweight'
-                            AND mg.name = 'Upper Body'
-                        GROUP BY 
-                            e.exercise_id, 
-                            e.name, 
-                            e.difficulty,
-                            e.equipment,
-                            e.video_url
-                        LIMIT 4
-                    ` : `
-                    SELECT DISTINCT 
+                `WITH exercise_muscles_agg AS (
+                    SELECT 
                         e.exercise_id, 
-                        e.name, 
-                        e.difficulty,
-                        e.equipment,
-                        e.video_url,
                         array_agg(DISTINCT mg.name) AS muscle_groups,
                         array_agg(DISTINCT m.name) AS muscles
                     FROM exercises e
                     JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
                     JOIN muscles m ON em.muscle_id = m.muscle_id
                     JOIN muscle_groups mg ON m.group_id = mg.group_id
-                    WHERE 
-                        (
-                            mg.name = ANY($1) OR 
-                            m.name = ANY($1)
-                        )
-                        AND m.name = ANY($2)
-                        AND (
-                            CASE 
-                                WHEN $3 = 'weight_loss' THEN e.difficulty IN ('Beginner', 'Intermediate')
-                                WHEN $3 = 'muscle_gain' THEN e.difficulty IN ('Intermediate', 'Advanced')
-                                ELSE true
-                            END
-                        )
-                        AND (
-                            $4 = 'very_active' OR 
-                            ($4 IN ('moderately_active', 'lightly_active') AND e.difficulty != 'Advanced')
-                        )
-                    GROUP BY 
-                        e.exercise_id, 
-                        e.name, 
-                        e.difficulty,
-                        e.equipment,
-                        e.video_url
-                    LIMIT 4
-                    `}
+                    GROUP BY e.exercise_id
                 )
-                SELECT * FROM detailed_exercises`,
-                activityLevel === 'sedentary' 
-                    ? [] 
-                    : [
-                        dayInfo.muscleGroups, 
-                        dayInfo.specificMuscles, 
-                        fitnessGoal, 
-                        activityLevel
-                    ]
+                SELECT DISTINCT 
+                    e.exercise_id, 
+                    e.name, 
+                    e.difficulty,
+                    e.equipment,
+                    e.video_url,
+                    em.muscle_groups,
+                    em.muscles
+                FROM exercises e
+                JOIN exercise_muscles_agg em ON e.exercise_id = em.exercise_id
+                WHERE 
+                    (em.muscle_groups && $1 OR em.muscles && $1)
+                    AND em.muscles && $2
+                    AND (
+                        CASE 
+                            WHEN $3 = 'weight_loss' THEN e.difficulty IN ('Beginner', 'Intermediate')
+                            WHEN $3 = 'muscle_gain' THEN e.difficulty IN ('Intermediate', 'Advanced')
+                            ELSE true
+                        END
+                    )
+                    AND (
+                        $4 = 'very_active' OR 
+                        ($4 IN ('moderately_active', 'lightly_active') AND e.difficulty != 'Advanced')
+                    )
+                LIMIT 4`,
+                [
+                    dayInfo.muscleGroups, 
+                    dayInfo.specificMuscles, 
+                    fitnessGoal, 
+                    activityLevel
+                ]
             );
 
             if (activityLevel === 'sedentary') {
@@ -628,15 +633,13 @@ router.get('/plans/generate', authorization, async (req, res) => {
 
             // Insert exercises for this day
             for (let [index, exercise] of exercisesResult.rows.entries()) {
-                const exerciseInsertResult = await client.query(
+                await client.query(
                     `INSERT INTO workout_plan_exercises 
                     (plan_day_id, exercise_id, sets, reps, order_index) 
-                    VALUES ($1, $2, $3, $4, $5)
-                    RETURNING plan_exercise_id`,
+                    VALUES ($1, $2, $3, $4, $5)`,
                     [planDayId, exercise.exercise_id, 3, 12, index + 1]
                 );
 
-                // Add full exercise details to allExercises
                 allExercises.push({
                     ...exercise,
                     sets: 3,
@@ -677,10 +680,7 @@ router.get('/plans/generate', authorization, async (req, res) => {
         });
         
     } catch (error) {
-        // Rollback transaction in case of error
         await client.query('ROLLBACK');
-
-        // More detailed error logging
         console.error('Full Error Details:', {
             message: error.message,
             stack: error.stack,
