@@ -362,12 +362,66 @@ function WorkoutLogging() {
                     
                     <div className="exercises-list">
                         {workoutData.exercises.map((exercise, index) => (
-                            <div key={index} className="exercise-card">
+                            <div key={index} className="exercise-card editable">
                                 <h3>{exercise.exercise_name}</h3>
                                 <div className="exercise-details">
-                                    <span>{exercise.sets} sets</span>
-                                    <span>{exercise.reps} reps</span>
-                                    {exercise.weight && <span>{exercise.weight} kg</span>}
+                                    <div className="editable-field">
+                                        <label>Sets:</label>
+                                        <input
+                                            type="number"
+                                            value={exercise.sets}
+                                            onChange={(e) => {
+                                                const newExercises = [...workoutData.exercises];
+                                                newExercises[index] = {
+                                                    ...newExercises[index],
+                                                    sets: e.target.value
+                                                };
+                                                setWorkoutData(prev => ({
+                                                    ...prev,
+                                                    exercises: newExercises
+                                                }));
+                                            }}
+                                            min="1"
+                                        />
+                                    </div>
+                                    <div className="editable-field">
+                                        <label>Reps:</label>
+                                        <input
+                                            type="number"
+                                            value={exercise.reps}
+                                            onChange={(e) => {
+                                                const newExercises = [...workoutData.exercises];
+                                                newExercises[index] = {
+                                                    ...newExercises[index],
+                                                    reps: e.target.value
+                                                };
+                                                setWorkoutData(prev => ({
+                                                    ...prev,
+                                                    exercises: newExercises
+                                                }));
+                                            }}
+                                            min="1"
+                                        />
+                                    </div>
+                                    <div className="editable-field">
+                                        <label>Weight (kg):</label>
+                                        <input
+                                            type="number"
+                                            value={exercise.weight || ''}
+                                            onChange={(e) => {
+                                                const newExercises = [...workoutData.exercises];
+                                                newExercises[index] = {
+                                                    ...newExercises[index],
+                                                    weight: e.target.value
+                                                };
+                                                setWorkoutData(prev => ({
+                                                    ...prev,
+                                                    exercises: newExercises
+                                                }));
+                                            }}
+                                            min="0"
+                                        />
+                                    </div>
                                 </div>
                                 <button 
                                     type="button" 
