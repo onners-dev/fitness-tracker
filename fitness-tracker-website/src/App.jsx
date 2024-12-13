@@ -18,6 +18,7 @@ import TrendsPage from './pages/TrendsPage';
 import WorkoutLogging from './pages/WorkoutLogging';
 import Settings from './pages/Settings';
 import WorkoutPlans from './pages/WorkoutPlans';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/about" element={<About />} />
+            <Route path="*" element={<NotFound />} />
 
             {/* Protected Routes */}
             <Route 
@@ -115,6 +117,7 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />
