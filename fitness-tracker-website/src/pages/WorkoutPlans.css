@@ -355,3 +355,20 @@
   font-size: 0.7em;
   font-weight: bold;
 }
+
+
+.start-logging-button {
+  margin-bottom: 20px; /* Space below the button */
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.start-logging-button:hover {
+  background-color: #2980b9;
+}
+
