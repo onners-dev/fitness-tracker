@@ -14,6 +14,16 @@
   font-weight: bold;
   text-decoration: none;
   color: #333;
+  outline: none; /* Remove default focus outline */
+  transition: color 0.3s ease;
+}
+
+.logo:focus {
+  outline: none; /* Explicitly remove focus outline */
+}
+
+.logo:hover {
+  color: var(--primary-color); /* Optional: add a color change on hover */
 }
 
 nav {

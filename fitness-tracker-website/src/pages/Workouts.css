@@ -62,10 +62,10 @@
 
 /* Filters Section */
 .filters-section {
-  background: white;
+  background: var(--background-light);
   padding: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid #e0e0e0;
   margin-bottom: 1.5rem;
 }
 
@@ -83,45 +83,56 @@
 }
 
 .filter label {
-  font-weight: 600;
-  color: #34495e;
+  font-weight: 500;
+  color: var(--text-dark);
 }
 
 .filter select {
-  padding: 0.6rem;
-  border: 1px solid #bdc3c7;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  min-width: 180px;
-  transition: border-color 0.3s ease;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius-md);
+  font-size: 1rem;
+  min-width: 200px;
+  background-color: white;
+  color: var(--text-dark);
+  transition: 
+    border-color 0.3s ease, 
+    box-shadow 0.3s ease;
 }
 
 .filter select:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
 .sort-button {
-  padding: 0.6rem 1.2rem;
-  background-color: #f1f2f6;
-  border: 1px solid #bdc3c7;
-  border-radius: 6px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.3s ease;
+  padding: 0.75rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: 
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
 .sort-button:hover {
-  background-color: #dfe4ea;
+  background-color: #3a7bd5;
+  transform: translateY(-2px);
 }
 
 .results-count {
   margin-top: 1rem;
-  color: #7f8c8d;
+  color: var(--text-muted);
   font-size: 0.9rem;
+  text-align: right;
 }
+
 
 /* Muscle Groups Grid */
 .muscle-groups-grid {
@@ -438,17 +449,23 @@
 .log-exercise-btn {
   width: 100%;
   padding: 12px;
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  transition: 
+    background-color 0.3s ease,
+    transform 0.2s ease;
+  margin-top: 1rem;
 }
 
 .log-exercise-btn:hover {
-  background-color: #0056b3;
+  background-color: #3a7bd5;
+  transform: translateY(-2px);
 }
+
 
 .exercises-grid .exercise-card {
   cursor: pointer;
