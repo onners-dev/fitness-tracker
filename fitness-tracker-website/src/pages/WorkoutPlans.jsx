@@ -101,38 +101,7 @@ const ExerciseDetailModal = ({ exercise, onClose }) => {
   );
 };
 
-// New Day Workouts Modal
-const DayWorkoutsModal = ({ day, exercises, onClose, onExerciseSelect }) => {
-  return (
-    <div className="day-workouts-modal-overlay" onClick={onClose}>
-      <div 
-        className="day-workouts-modal-content" 
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="modal-close-btn" onClick={onClose}>×</button>
-        <h2>{day}</h2>
-        <div className="day-workouts-grid">
-          {exercises.map((exercise, index) => (
-            <div 
-              key={index} 
-              className="day-workout-card"
-              onClick={() => onExerciseSelect(exercise)}
-            >
-              <h3>{exercise.details.name}</h3>
-              <div className="workout-card-details">
-                <p><strong>Muscle Groups:</strong> {exercise.details.muscle_groups?.join(', ')}</p>
-                <div className="workout-sets-reps">
-                  <span><strong>Sets:</strong> {exercise.sets}</span>
-                  <span><strong>Reps:</strong> {exercise.reps}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
+
 
 const WorkoutPlans = () => {
   const navigate = useNavigate();
@@ -264,6 +233,8 @@ const WorkoutPlans = () => {
   // Define the correct order of the days
   const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+
+
   return (
     <div className="workout-plans-page">
       <div className="workout-plan-container">
@@ -297,23 +268,46 @@ const WorkoutPlans = () => {
       </div>
 
       {selectedDayWorkouts && (
-        <div className="day-workouts-modal-overlay" onClick={() => setSelectedDayWorkouts(null)}>
-          <div 
-            className="day-workouts-modal-content" 
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button className="modal-close-btn" onClick={() => setSelectedDayWorkouts(null)}>×</button>
-            <h2>
-              {selectedDayWorkouts.day} - {
-                selectedDayWorkouts.exercises[0]?.details?.muscle_groups?.join(' and ') || 'Workout'
-              }
-            </h2>
-            <div className="exercises-grid">
-              {selectedDayWorkouts.exercises.map(renderExerciseCard)}
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="day-workouts-modal-overlay" onClick={() => setSelectedDayWorkouts(null)}>
+    <div 
+      className="day-workouts-modal-content" 
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button className="modal-close-btn" onClick={() => setSelectedDayWorkouts(null)}>×</button>
+      <h2>
+        {selectedDayWorkouts.day} - {
+          selectedDayWorkouts.exercises[0]?.details?.muscle_groups?.join(' and ') || 'Workout'
+        }
+      </h2>
+      
+      {/* Add Start Logging Button Here */}
+      <button 
+        onClick={() => {
+          navigate('/workout-logging', { 
+            state: { 
+              day: selectedDayWorkouts.day, 
+              exercises: selectedDayWorkouts.exercises.map(exercise => ({
+                exercise_id: exercise.exercise_id,
+                exercise_name: exercise.details.name,
+                sets: exercise.sets,
+                reps: exercise.reps,
+                muscle_groups: exercise.details.muscle_groups
+              }))
+            } 
+          });
+        }} 
+        className="start-logging-button"
+        disabled={selectedDayWorkouts.exercises.length === 0}
+      >
+        Start Logging Workout
+      </button>
+      
+      <div className="exercises-grid">
+        {selectedDayWorkouts.exercises.map(renderExerciseCard)}
+      </div>
+    </div>
+  </div>
+)}
 
       {workoutPlan.planNotes && (
         <div className="plan-notes">

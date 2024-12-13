@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { workoutService, exerciseLibraryService, workoutPlanService } from '../services/workoutApi';
+import { useLocation } from 'react-router-dom';
 import './WorkoutLogging.css';
 
 function WorkoutLogging() {
@@ -13,6 +14,28 @@ function WorkoutLogging() {
         'Cardio',
         'Custom'
     ];
+
+    const location = useLocation();
+
+    useEffect(() => {
+        // Check if there's state passed from WorkoutPlans
+        const { state } = location;
+        if (state && state.exercises) {
+            // Automatically populate exercises from the passed state
+            setWorkoutData(prevData => ({
+                ...prevData,
+                workout_type: state.day || 'Full Body',
+                date: new Date().toISOString().split('T')[0],
+                exercises: state.exercises.map(exercise => ({
+                    exercise_id: exercise.exercise_id,
+                    exercise_name: exercise.exercise_name,
+                    sets: exercise.sets,
+                    reps: exercise.reps,
+                    muscle_groups: exercise.muscle_groups
+                }))
+            }));
+        }
+    }, [location]);
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
