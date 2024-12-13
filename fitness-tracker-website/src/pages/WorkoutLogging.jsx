@@ -18,24 +18,37 @@ function WorkoutLogging() {
     const location = useLocation();
 
     useEffect(() => {
-        // Check if there's state passed from WorkoutPlans
+        // Check if there's state passed from WorkoutPlans or Workouts
         const { state } = location;
         if (state && state.exercises) {
-            // Automatically populate exercises from the passed state
-            setWorkoutData(prevData => ({
-                ...prevData,
-                workout_type: state.day || 'Full Body',
-                date: new Date().toISOString().split('T')[0],
-                exercises: state.exercises.map(exercise => ({
-                    exercise_id: exercise.exercise_id,
-                    exercise_name: exercise.exercise_name,
-                    sets: exercise.sets,
-                    reps: exercise.reps,
-                    muscle_groups: exercise.muscle_groups
-                }))
-            }));
+            // Check if the request is from WorkoutPlans (auto-add exercises)
+            const isFromWorkoutPlans = state.source === 'workoutPlans';
+    
+            if (isFromWorkoutPlans) {
+                // Automatically populate and add exercises from WorkoutPlans
+                setWorkoutData(prevData => ({
+                    ...prevData,
+                    workout_type: state.day || 'Full Body',
+                    date: new Date().toISOString().split('T')[0],
+                    exercises: state.exercises.map(exercise => ({
+                        exercise_id: exercise.exercise_id,
+                        exercise_name: exercise.exercise_name,
+                        sets: exercise.sets || '',
+                        reps: exercise.reps || '',
+                        muscle_groups: exercise.muscle_groups
+                    }))
+                }));
+            } else {
+                // Pre-select the exercise in the dropdown for Workouts
+                setCurrentExercise(prev => ({
+                    ...prev,
+                    exercise_id: state.exercises[0].exercise_id.toString()
+                }));
+            }
         }
     }, [location]);
+    
+    
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);

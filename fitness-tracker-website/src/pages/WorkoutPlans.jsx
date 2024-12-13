@@ -285,6 +285,7 @@ const WorkoutPlans = () => {
         onClick={() => {
           navigate('/workout-logging', { 
             state: { 
+              source: 'workoutPlans',
               day: selectedDayWorkouts.day, 
               exercises: selectedDayWorkouts.exercises.map(exercise => ({
                 exercise_id: exercise.exercise_id,

@@ -4,6 +4,69 @@ import { FaStar } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import './Workouts.css';
 
+const ExerciseDetailModal = ({ exercise, onClose }) => {
+  const navigate = useNavigate();
+
+  const handleLogExercise = () => {
+    navigate('/workout-logging', { 
+      state: { 
+        source: 'workouts',
+        exercises: [{
+          exercise_id: exercise.exercise_id,
+          exercise_name: exercise.name,
+          sets: '', // No sets or reps pre-filled
+          reps: '',
+          muscle_groups: exercise.muscle_groups
+        }]
+      } 
+    });
+  };
+
+  if (!exercise) return null;
+
+  return (
+    <div className="exercise-modal-overlay" onClick={onClose}>
+      <div 
+        className="exercise-modal-content" 
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="modal-close-btn" onClick={onClose}>×</button>
+        <h2>{exercise.name}</h2>
+        
+        <div className="exercise-modal-details">
+          <div className="detail-section">
+            <h3>Exercise Information</h3>
+            <p><strong>Equipment:</strong> {exercise.equipment}</p>
+            <p><strong>Difficulty:</strong> {exercise.difficulty}</p>
+            <p><strong>Muscle Groups:</strong> {exercise.muscle_groups?.join(', ')}</p>
+          </div>
+
+          {exercise.description && (
+            <div className="detail-section">
+              <h3>Description</h3>
+              <p>{exercise.description}</p>
+            </div>
+          )}
+
+          {exercise.instructions && (
+            <div className="detail-section">
+              <h3>Instructions</h3>
+              <p>{exercise.instructions}</p>
+            </div>
+          )}
+
+          <button 
+            className="log-exercise-btn"
+            onClick={handleLogExercise}
+          >
+            Log This Exercise
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Workouts = () => {
   const [muscleGroups, setMuscleGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -17,6 +80,7 @@ const Workouts = () => {
   });
   const [favorites, setFavorites] = useState([]);
   const [sortOrder, setSortOrder] = useState('asc');
+  const [selectedExerciseForModal, setSelectedExerciseForModal] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,7 +131,6 @@ const Workouts = () => {
     }
   }, [selectedMuscle?.muscle_id]);
   
-
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
@@ -231,25 +294,14 @@ const Workouts = () => {
           <div className="exercises-grid">
             {filteredAndSortedExercises.length > 0 ? (
               filteredAndSortedExercises.map((exercise) => (
-                <div key={exercise.exercise_id} className="exercise-card">
-                  <div className="exercise-header">
-                    <h3>{exercise.name}</h3>
-                    <FaStar
-                      className={`favorite-icon ${favorites.includes(exercise.exercise_id) ? 'favorited' : ''}`}
-                      onClick={() => toggleFavorite(exercise.exercise_id)}
-                    />
-                  </div>
+                <div 
+                  key={exercise.exercise_id} 
+                  className="exercise-card"
+                  onClick={() => setSelectedExerciseForModal(exercise)}
+                >
+                  <h3>{exercise.name}</h3>
                   <p><strong>Equipment:</strong> {exercise.equipment}</p>
                   <p><strong>Difficulty:</strong> {exercise.difficulty}</p>
-                  {exercise.description && (
-                    <p className="exercise-description">{exercise.description}</p>
-                  )}
-                  {exercise.instructions && (
-                    <div className="exercise-instructions">
-                      <strong>Instructions:</strong>
-                      <p>{exercise.instructions}</p>
-                    </div>
-                  )}
                 </div>
               ))
             ) : (
@@ -297,6 +349,13 @@ const Workouts = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {selectedExerciseForModal && (
+        <ExerciseDetailModal 
+          exercise={selectedExerciseForModal} 
+          onClose={() => setSelectedExerciseForModal(null)}
+        />
       )}
     </div>
   );
