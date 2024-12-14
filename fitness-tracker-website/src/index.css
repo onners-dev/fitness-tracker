@@ -1,15 +1,42 @@
 /* Design Tokens */
 :root {
-  /* Color Palette */
-  --primary-color: #4a90e2;
-  --secondary-color: #28a745;
-  --accent-color: #3498db;
-  --background-light: #f8f9fa;
-  --background-dark: #f4f7f6;
-  
+  /* Pastel Primary Colors */
+  --primary-color: #6FA6D6;       /* Soft Blue */
+  --primary-light: #A5C4E3;       /* Lighter Blue */
+  --primary-dark: #4D8AB3;        /* Darker Blue */
+
+  /* Pastel Secondary Colors */
+  --secondary-color: #8FBC8F;     /* Soft Green */
+  --secondary-light: #B5D6B2;     /* Lighter Green */
+  --secondary-dark: #6B9F6B;      /* Darker Green */
+
+  /* Pastel Accent Colors */
+  --accent-color: #F0A0A0;        /* Soft Coral/Pink */
+  --accent-light: #F5C0C0;        /* Lighter Coral */
+  --accent-dark: #D68F8F;         /* Darker Coral */
+
+  /* Neutral Pastel Colors */
+  --neutral-100: #F7F7F7;         /* Lightest Gray */
+  --neutral-200: #E9E9E9;         /* Light Gray */
+  --neutral-300: #D1D1D1;         /* Medium Light Gray */
+  --neutral-400: #B0B0B0;         /* Medium Gray */
+  --neutral-500: #808080;         /* Dark Gray */
+  --neutral-600: #404040;         /* Darkest Gray */
+
+  /* Background Colors */
+  --background-light: #F0F4F8;    /* Soft Light Blue-Gray */
+  --background-dark: #E6EAF0;     /* Slightly Darker Blue-Gray */
+
   /* Text Colors */
-  --text-dark: #333333;
-  --text-muted: #6c757d;
+  --text-dark: #3D3D3D;           /* Soft Dark Text */
+  --text-muted: #6C7A89;          /* Muted Text */
+  --text-light: #FFFFFF;          /* Light Text */
+
+  /* Fitness-Specific Pastel Colors */
+  --calories-color: #F4A460;      /* Soft Orange */
+  --workout-color: #87CEFA;       /* Light Sky Blue */
+  --nutrition-color: #98FB98;     /* Pale Green */
+  --progress-color: #DDA0DD;      /* Plum */
   
   /* Typography */
   --font-family-base: 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
