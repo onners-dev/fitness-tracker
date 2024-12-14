@@ -1,9 +1,29 @@
+:root {
+  /* Pastel Color Palette */
+  --pastel-blue: #6FA6D6;
+  --pastel-blue-light: #A5C4E3;
+  --pastel-blue-dark: #4D8AB3;
+  
+  --pastel-green: #8FBC8F;
+  --pastel-green-light: #B5D6B2;
+  --pastel-green-dark: #6B9F6B;
+  
+  --pastel-coral: #F0A0A0;
+  --pastel-gray-light: #F7F7F7;
+  --pastel-gray-medium: #E9E9E9;
+  
+  /* Soft Neutral Colors */
+  --soft-text-dark: #2C3E50;
+  --soft-text-medium: #4A5568;
+  --soft-background: #F0F4F8;
+}
+
 .settings-page {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 100px);
-  background-color: var(--background-light);
+  background-color: var(--soft-background);
   padding: 2rem 0;
 }
 
@@ -12,22 +32,23 @@
   width: 90%;
   max-width: 1200px;
   background-color: white;
-  box-shadow: var(--box-shadow-md);
-  border-radius: var(--border-radius-lg);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  border-radius: 12px;
+  border: 1px solid var(--pastel-gray-medium);
   overflow: hidden;
 }
 
 .settings-sidebar {
   width: 250px;
-  background-color: var(--background-light);
+  background-color: var(--pastel-gray-light);
   padding: 2rem 1rem;
-  border-right: 1px solid #e9ecef;
+  border-right: 1px solid var(--pastel-gray-medium);
 }
 
 .settings-sidebar h1 {
   margin-bottom: 2rem;
   text-align: center;
-  color: var(--text-dark);
+  color: var(--pastel-blue-dark);
 }
 
 .settings-sidebar nav {
@@ -46,18 +67,18 @@
       background-color 0.3s ease, 
       color 0.3s ease,
       transform 0.2s ease;
-  border-radius: var(--border-radius-md);
-  color: var(--text-muted);
+  border-radius: 8px;
+  color: var(--soft-text-medium);
   font-weight: 500;
 }
 
 .settings-sidebar button:hover {
-  background-color: rgba(74, 144, 226, 0.1);
-  color: var(--primary-color);
+  background-color: var(--pastel-blue-light);
+  color: var(--pastel-blue-dark);
 }
 
 .settings-sidebar button.active {
-  background-color: var(--primary-color);
+  background-color: var(--pastel-blue);
   color: white;
   transform: translateX(5px);
 }
@@ -68,10 +89,10 @@
 }
 
 .settings-section h2 {
-  border-bottom: 2px solid var(--background-light);
+  border-bottom: 2px solid var(--pastel-blue-light);
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
-  color: var(--text-dark);
+  color: var(--pastel-blue-dark);
 }
 
 .form-group {
@@ -81,7 +102,7 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: var(--text-dark);
+  color: var(--soft-text-dark);
   font-weight: 500;
 }
 
@@ -89,8 +110,8 @@
 .form-group select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius-md);
+  border: 1px solid var(--pastel-gray-medium);
+  border-radius: 8px;
   transition: 
       border-color 0.3s ease, 
       box-shadow 0.3s ease;
@@ -99,39 +120,39 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+  border-color: var(--pastel-blue);
+  box-shadow: 0 0 0 3px rgba(165, 196, 227, 0.3);
 }
 
 .error {
-  color: #dc3545;
+  color: var(--pastel-coral);
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
 
 .success-message {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--pastel-green-light);
+  color: var(--soft-text-dark);
   padding: 1rem;
-  border-radius: var(--border-radius-md);
+  border-radius: 8px;
   margin-bottom: 1rem;
 }
 
 .error-message {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--pastel-coral);
+  color: white;
   padding: 1rem;
-  border-radius: var(--border-radius-md);
+  border-radius: 8px;
   margin-bottom: 1rem;
 }
 
 .save-button {
   width: 100%;
   padding: 1rem;
-  background-color: var(--primary-color);
+  background-color: var(--pastel-blue);
   color: white;
   border: none;
-  border-radius: var(--border-radius-md);
+  border-radius: 8px;
   cursor: pointer;
   transition: 
       background-color 0.3s ease,
@@ -140,7 +161,7 @@
 }
 
 .save-button:hover {
-  background-color: #3a7bd5;
+  background-color: var(--pastel-blue-dark);
   transform: translateY(-2px);
 }
 
@@ -152,7 +173,7 @@
   .settings-sidebar {
       width: 100%;
       border-right: none;
-      border-bottom: 1px solid #e9ecef;
+      border-bottom: 1px solid var(--pastel-gray-medium);
       display: flex;
       flex-direction: column;
       align-items: center;
