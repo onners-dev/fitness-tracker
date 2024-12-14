@@ -292,23 +292,32 @@ const Workouts = () => {
           {exercises.length > 0 && renderFiltersAndSort()}
 
           <div className="exercises-grid">
-            {filteredAndSortedExercises.length > 0 ? (
-              filteredAndSortedExercises.map((exercise) => (
-                <div 
-                  key={exercise.exercise_id} 
-                  className="exercise-card"
-                  onClick={() => setSelectedExerciseForModal(exercise)}
-                >
+          {filteredAndSortedExercises.length > 0 ? (
+            filteredAndSortedExercises.map((exercise) => (
+              <div 
+                key={exercise.exercise_id} 
+                className="exercise-card"
+                onClick={() => setSelectedExerciseForModal(exercise)}
+              >
+                <div className="exercise-header">
                   <h3>{exercise.name}</h3>
-                  <p><strong>Equipment:</strong> {exercise.equipment}</p>
-                  <p><strong>Difficulty:</strong> {exercise.difficulty}</p>
+                  <FaStar
+                    className={`favorite-icon ${favorites.includes(exercise.exercise_id) ? 'favorited' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent opening modal when clicking star
+                      toggleFavorite(exercise.exercise_id);
+                    }}
+                  />
                 </div>
-              ))
-            ) : (
-              <div className="no-exercises">
-                No exercises found with current filters
+                <p><strong>Equipment:</strong> {exercise.equipment}</p>
+                <p><strong>Difficulty:</strong> {exercise.difficulty}</p>
               </div>
-            )}
+            ))
+          ) : (
+            <div className="no-exercises">
+              No exercises found with current filters
+            </div>
+          )}
           </div>
         </div>
       )}
