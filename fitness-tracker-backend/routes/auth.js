@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
+console.log('JWT_SECRET:', process.env.JWT_SECRET); 
+
 // Register new user
 router.post('/register', async (req, res) => {
   try {
@@ -14,6 +16,11 @@ router.post('/register', async (req, res) => {
           email, 
           password 
       } = req.body;
+
+       // Ensure all fields are provided
+      if (!firstName || !lastName || !email || !password || !dateOfBirth || !gender) {
+        return res.status(400).json({ message: 'All fields are required' });
+      }
 
       // Check if user exists
       const userExists = await pool.query(
