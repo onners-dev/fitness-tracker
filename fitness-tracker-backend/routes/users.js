@@ -152,7 +152,7 @@ router.put('/profile', authorization, async (req, res) => {
       // Calculate date of birth from age
       const dateOfBirth = new Date();
       dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
-      
+
       updateFields.push(`date_of_birth = $${paramCount}`);
       values.push(dateOfBirth);
       paramCount++;
@@ -169,7 +169,7 @@ router.put('/profile', authorization, async (req, res) => {
         WHERE user_id = $${paramCount}
         RETURNING *
       `;
-
+      
       await pool.query(query, values);
     }
 
@@ -220,5 +220,6 @@ router.put('/profile', authorization, async (req, res) => {
     res.status(500).json({ message: 'Error updating profile' });
   }
 });
+
 
 module.exports = router;
