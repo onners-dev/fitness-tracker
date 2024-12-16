@@ -1,2 +1,5 @@
+# In fitness-tracker-backend/.gitignore
+node_modules/
 .env
+*.local
 dbConfig.js
