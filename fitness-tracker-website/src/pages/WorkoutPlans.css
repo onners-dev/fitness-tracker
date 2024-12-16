@@ -391,3 +391,32 @@
   background-color: var(--pastel-blue-dark);
 }
 
+/* Ensure modals are above the header */
+.modal-overlay, .exercise-modal-overlay, .day-workouts-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1500; /* Ensure this is higher than the header's z-index */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto; /* Allow scrolling within the modal if needed */
+}
+
+.modal-content, .exercise-modal-content, .day-workouts-modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
+  z-index: 1600; /* Ensure content is above the overlay */
+}
+
+/* Prevent scrolling when modal is open */
+body.modal-open {
+  overflow: hidden;
+}

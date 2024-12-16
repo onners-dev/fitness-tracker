@@ -7,6 +7,16 @@ import './Workouts.css';
 const ExerciseDetailModal = ({ exercise, onClose }) => {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Add class to body to prevent scrolling
+    document.body.classList.add('modal-open');
+    
+    // Cleanup function to remove class when modal is closed
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
+
   const handleLogExercise = () => {
     navigate('/workout-logging', { 
       state: { 

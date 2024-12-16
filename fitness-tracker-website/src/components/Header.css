@@ -11,6 +11,9 @@
   --pastel-coral: #F0A0A0;
   --pastel-gray-light: #F7F7F7;
   --pastel-gray-medium: #E9E9E9;
+  
+  /* Add this if not already defined */
+  --soft-background: #FFFFFF;
 }
 
 .header {
@@ -22,6 +25,7 @@
   background-color: var(--soft-background);
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   position: relative;
+  z-index: 1020; /* Ensure header is above other elements */
 }
 
 .logo {
@@ -41,7 +45,8 @@
   color: var(--pastel-blue);
 }
 
-nav {
+/* Desktop Navigation Styles */
+.desktop-nav {
   display: flex;
   gap: 2rem;
   align-items: center;
@@ -177,32 +182,132 @@ nav {
   background-color: var(--pastel-gray-light);
 }
 
-/* Responsive Styles */
-@media (min-width: 1024px) {
-  .header {
-    padding: 1.5rem 10%;
-  }
-  
-  .logo {
-    font-size: 2rem;
-  }
-  
-  .link, .header-dropdown {
-    font-size: 1.2rem;
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 30px;
+  height: 25px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1200;
+}
+
+.mobile-menu-toggle span {
+  width: 100%;
+  height: 3px;
+  background: var(--pastel-blue-dark);
+  border-radius: 10px;
+  transition: all 0.3s linear;
+}
+
+/* Mobile Navigation Styles */
+@media (max-width: 768px) {
+  .desktop-nav {
+    display: none;
   }
 
-  .signup-button {
-    font-size: 1.2rem;
-    padding: 0.6rem 1.5rem;
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .mobile-nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .mobile-nav-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-nav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 80%;
+    height: 100vh;
+    background-color: white;
+    z-index: 1100;
+    transition: transform 0.3s ease;
+    transform: translateX(100%);
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    overflow-y: auto;
+  }
+
+  .mobile-nav.open {
+    transform: translateX(0);
+  }
+
+  .mobile-nav-content {
+    padding: 20px;
+  }
+
+  .mobile-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--pastel-gray-medium);
+  }
+
+  .mobile-nav-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--pastel-blue-dark);
+  }
+
+  .mobile-dropdown {
+    margin-bottom: 15px;
+  }
+
+  .mobile-dropdown > span {
+    display: block;
+    font-weight: bold;
+    color: var(--pastel-blue-dark);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--pastel-gray-medium);
+  }
+
+  .mobile-dropdown-content {
+    padding-left: 15px;
+  }
+
+  .mobile-dropdown-content a {
+    display: block;
+    padding: 10px 0;
+    color: var(--pastel-blue-dark);
+    text-decoration: none;
+    border-bottom: 1px solid var(--pastel-gray-light);
+  }
+
+  .mobile-signout {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--pastel-coral);
+    color: white;
+    border: none;
+    text-align: left;
+    margin-top: 20px;
   }
 }
 
-@media (max-width: 768px) {
-  .auth-buttons {
-    gap: 1rem;
-  }
-  
-  .signup-button {
-    padding: 0.4rem 1rem;
+/* Responsive Adjustments */
+@media (min-width: 769px) {
+  .mobile-menu-toggle {
+    display: none;
   }
 }

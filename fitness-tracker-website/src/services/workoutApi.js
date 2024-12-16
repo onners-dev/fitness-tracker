@@ -1,12 +1,12 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL + '/workouts';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const workoutService = {
     // Log a new workout
     logWorkout: async (workoutData) => {
         try {
-            const response = await axios.post(`${BASE_URL}`, workoutData, {
+            const response = await axios.post(`${BASE_URL}/workouts`, workoutData, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'Content-Type': 'application/json'
@@ -22,7 +22,7 @@ export const workoutService = {
     // Get workouts
     getWorkouts: async (startDate, endDate) => {
         try {
-            const response = await axios.get(`${BASE_URL}`, {
+            const response = await axios.get(`${BASE_URL}/workouts/`, {
                 params: { startDate, endDate },
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -46,7 +46,7 @@ export const workoutPlanService = {
                 primaryFocus: userProfile.primary_focus || ''
             });
             
-            const response = await axios.get(`${BASE_URL}/plans/generate`, {
+            const response = await axios.get(`${BASE_URL}/workouts/plans/generate`, {
                 params: {
                     fitnessGoal: userProfile.fitness_goal,
                     activityLevel: userProfile.activity_level,
@@ -72,7 +72,7 @@ export const workoutPlanService = {
 
     getWorkoutPlanExerciseDetails: async (exerciseIds) => {
         try {
-            const response = await axios.get(`${BASE_URL}/exercises/details`, {
+            const response = await axios.get(`${BASE_URL}/workouts/exercises/details`, {
                 params: { exerciseIds: exerciseIds.join(',') },
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -88,7 +88,7 @@ export const workoutPlanService = {
     // New method to fetch user's workout plans
     getUserWorkoutPlans: async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/plans`, {
+            const response = await axios.get(`${BASE_URL}/workouts/plans`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -103,7 +103,7 @@ export const workoutPlanService = {
     // Get workout plan details
     getUserWorkoutPlans: async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/plans`, {
+            const response = await axios.get(`${BASE_URL}/workouts/plans`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -121,7 +121,7 @@ export const exerciseLibraryService = {
     // Fetch exercises by muscle group or other filters
     getExercises: async (filters = {}) => {
         try {
-            const response = await axios.get('https://arcus.fit/api/exercises', { 
+            const response = await axios.get(`${BASE_URL}/exercises`, { 
                 params: filters,
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
