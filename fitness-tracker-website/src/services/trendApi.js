@@ -1,9 +1,11 @@
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 export const trendService = {
   getNutritionTrends: async (days = 7) => {
     try {
-      const response = await axios.get(`${API_URL}/trends/nutrition`, {
+      const response = await axios.get(`${BASE_URL}/trends/nutrition`, {
         params: { days },
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -22,7 +24,7 @@ export const trendService = {
   // Get workout trends
   getWorkoutTrends: async (days = 30) => {
     try {
-      const response = await axios.get(`${API_URL}/trends/workouts`, {
+      const response = await axios.get(`${BASE_URL}/trends/workouts`, {
         params: { days },
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
