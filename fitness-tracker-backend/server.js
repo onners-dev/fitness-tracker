@@ -10,8 +10,18 @@ const app = express();
 app.use(express.json());  // Middleware to parse JSON requests
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://arcus.fit'], // Frontend origin (assuming it's running on port 3000, adjust as needed)
+  origin: [
+      'http://localhost:3000',   // React development server
+      'http://localhost:5173',   // Vite development server
+      'http://127.0.0.1:3000',   // Alternative localhost for React
+      'http://127.0.0.1:5173',   // Alternative localhost for Vite
+      'http://arcus.fit',        // Production domain
+      'https://arcus.fit'        // HTTPS production domain
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
