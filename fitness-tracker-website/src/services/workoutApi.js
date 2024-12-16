@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api/workouts';
+const BASE_URL = import.meta.env.VITE_API_URL + '/workouts';
 
 export const workoutService = {
     // Log a new workout
@@ -121,7 +121,7 @@ export const exerciseLibraryService = {
     // Fetch exercises by muscle group or other filters
     getExercises: async (filters = {}) => {
         try {
-            const response = await axios.get('http://localhost:5000/api/exercises', { 
+            const response = await axios.get('https://arcus.fit/api/exercises', { 
                 params: filters,
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
