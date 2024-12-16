@@ -22,7 +22,7 @@ export const trendService = {
   // Get workout trends
   getWorkoutTrends: async (days = 30) => {
     try {
-      const response = await axios.get('https://arcus.fit/api/trends/workouts', {
+      const response = await axios.get(`${API_URL}/trends/workouts`, {
         params: { days },
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
