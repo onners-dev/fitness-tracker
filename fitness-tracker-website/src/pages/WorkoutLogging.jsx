@@ -17,41 +17,9 @@ function WorkoutLogging() {
 
     const location = useLocation();
 
-    useEffect(() => {
-        // Check if there's state passed from WorkoutPlans or Workouts
-        const { state } = location;
-        if (state && state.exercises) {
-            // Check if the request is from WorkoutPlans (auto-add exercises)
-            const isFromWorkoutPlans = state.source === 'workoutPlans';
-    
-            if (isFromWorkoutPlans) {
-                // Automatically populate and add exercises from WorkoutPlans
-                setWorkoutData(prevData => ({
-                    ...prevData,
-                    workout_type: state.day || 'Full Body',
-                    date: new Date().toISOString().split('T')[0],
-                    exercises: state.exercises.map(exercise => ({
-                        exercise_id: exercise.exercise_id,
-                        exercise_name: exercise.exercise_name,
-                        sets: exercise.sets || '',
-                        reps: exercise.reps || '',
-                        muscle_groups: exercise.muscle_groups
-                    }))
-                }));
-            } else {
-                // Pre-select the exercise in the dropdown for Workouts
-                setCurrentExercise(prev => ({
-                    ...prev,
-                    exercise_id: state.exercises[0].exercise_id.toString()
-                }));
-            }
-        }
-    }, [location]);
-    
-    
-
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(false); // New state for success message
     const [workoutData, setWorkoutData] = useState({
         workout_type: '', 
         workout_name: '', 
@@ -105,6 +73,37 @@ function WorkoutLogging() {
     
         fetchExercises();
     }, []);
+
+    useEffect(() => {
+        // Check if there's state passed from WorkoutPlans or Workouts
+        const { state } = location;
+        if (state && state.exercises) {
+            // Check if the request is from WorkoutPlans (auto-add exercises)
+            const isFromWorkoutPlans = state.source === 'workoutPlans';
+    
+            if (isFromWorkoutPlans) {
+                // Automatically populate and add exercises from WorkoutPlans
+                setWorkoutData(prevData => ({
+                    ...prevData,
+                    workout_type: state.day || 'Full Body',
+                    date: new Date().toISOString().split('T')[0],
+                    exercises: state.exercises.map(exercise => ({
+                        exercise_id: exercise.exercise_id,
+                        exercise_name: exercise.exercise_name,
+                        sets: exercise.sets || '',
+                        reps: exercise.reps || '',
+                        muscle_groups: exercise.muscle_groups
+                    }))
+                }));
+            } else {
+                // Pre-select the exercise in the dropdown for Workouts
+                setCurrentExercise(prev => ({
+                    ...prev,
+                    exercise_id: state.exercises[0].exercise_id.toString()
+                }));
+            }
+        }
+    }, [location]);
 
     const handleWorkoutChange = (e) => {
         const { name, value } = e.target;
@@ -183,9 +182,6 @@ function WorkoutLogging() {
             console.error('Error importing plan exercises', error);
         }
     };
-    
-    
-    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -219,9 +215,8 @@ function WorkoutLogging() {
 
             await workoutService.logWorkout(submissionData);
             
-            const successMessage = document.getElementById('success-message');
-            successMessage.classList.add('show');
-            setTimeout(() => successMessage.classList.remove('show'), 3000);
+            setSuccess(true); // Show success message
+            setTimeout(() => setSuccess(false), 3000); // Hide after 3 seconds
             
             setWorkoutData({
                 workout_type: '',
@@ -249,9 +244,11 @@ function WorkoutLogging() {
                 </div>
             )}
             
-            <div id="success-message" className="success-message" role="alert">
-                Workout logged successfully!
-            </div>
+            {success && ( // Conditionally render success message
+                <div className="success-message" role="alert">
+                    Workout logged successfully!
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="workout-form">
                 <fieldset className="form-section">
@@ -279,8 +276,6 @@ function WorkoutLogging() {
                             ))}
                         </select>
                     </div>
-
-
 
                     <div className="form-group">
                         <label htmlFor="workout-type">Workout Type *</label>
