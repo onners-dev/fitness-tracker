@@ -2,9 +2,16 @@ const express = require('express');
 const path = require('path');
 const pool = require('./db');  // Assuming the db configuration is here
 require('dotenv').config();
+console.log(process.env.NODE_ENV); 
+const fs = require('fs');
+const cors = require('cors')
 
 const app = express();
 app.use(express.json());  // Middleware to parse JSON requests
+
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://arcus.fit'], // Frontend origin (assuming it's running on port 3000, adjust as needed)
+}));
 
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
@@ -31,26 +38,31 @@ const routes = [
 
 const loadRoute = (routePath, routeName) => {
   try {
-    const fullPath = path.resolve(__dirname, routePath);
-    console.log(`Attempting to load route from: ${fullPath}`);  // Debugging line
+    // Ensure fullPath is defined using path.resolve for absolute paths
+    const fullPath = path.resolve(__dirname, routePath); 
+
+    console.log(`Attempting to load route from: ${fullPath}`);
 
     // Clear module cache to avoid issues with reloading
     delete require.cache[require.resolve(fullPath)];
 
     const route = require(fullPath);
-    
+    console.log(route); 
+
     if (!route || typeof route.use !== 'function') {
       console.error(`Invalid route module for ${routeName}`);
       return null;
     }
 
-    console.log(`Route ${routeName} loaded successfully`); // Debugging line
+    console.log(`Route ${routeName} loaded successfully`);
     return route;
   } catch (err) {
     console.error(`Error loading ${routeName}:`, err);
     return null;
   }
 };
+
+
 
 routes.forEach(({ path, name, apiPath }) => {
   const route = loadRoute(path, name);
@@ -83,6 +95,9 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Loaded' : 'Not Loaded');
+
 
 // Capture and log any unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
