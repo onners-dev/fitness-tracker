@@ -102,6 +102,10 @@ const Signup = () => {
       
       if (response) {
         console.log('Registration successful', response);
+        
+        // Set first-time setup flag
+        localStorage.setItem('firstTimeSetup', 'true');
+        
         navigate('/verify-email', { 
           state: { 
             email: formData.email, 

@@ -6,6 +6,7 @@ import './EmailVerification.css';
 const EmailVerification = () => {
   const [message, setMessage] = useState('Verifying...');
   const [isLoading, setIsLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
   const [isResendDisabled, setIsResendDisabled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,13 +25,25 @@ const EmailVerification = () => {
       try {
         const response = await authService.verifyEmail(token);
         
-        // Explicitly set isVerified in localStorage
+        // Set verification state and local storage
+        setIsVerified(true);
         localStorage.setItem('isVerified', 'true');
         
-        setMessage(response.message);
-        setTimeout(() => navigate('/profile-setup'), 3000);
+        // Check if this is a first-time verification
+        const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
+        
+        if (isFirstTimeSetup) {
+          // Automatically redirect to profile setup for first-time users
+          localStorage.removeItem('firstTimeSetup');
+          navigate('/profile-setup');
+        } else {
+          // For existing users, show verification success
+          setMessage(response.message);
+          setIsLoading(false);
+        }
       } catch (error) {
         setMessage(error.response?.data?.message || 'Verification failed. Please try again.');
+        setIsVerified(false);
         setIsLoading(false);
       }
     };
@@ -61,6 +74,10 @@ const EmailVerification = () => {
     }
   };
 
+  const handleContinueToLogin = () => {
+    navigate('/login');
+  };
+
   return (
     <div className="email-verification-page">
       <div className="email-verification-container">
@@ -71,8 +88,19 @@ const EmailVerification = () => {
         ) : (
           <div className="verification-message">
             <h2>{message}</h2>
-            {(message.includes('failed') || message.includes('No verification')) && (
-              <>
+            
+            {isVerified ? (
+              <div className="verified-actions">
+                <p>Your email has been successfully verified!</p>
+                <button 
+                  onClick={handleContinueToLogin} 
+                  className="continue-button"
+                >
+                  Continue to Login
+                </button>
+              </div>
+            ) : (
+              <div className="unverified-actions">
                 <button 
                   onClick={handleResendEmail} 
                   className="resend-button"
@@ -86,7 +114,7 @@ const EmailVerification = () => {
                 >
                   Go Back to Signup
                 </button>
-              </>
+              </div>
             )}
           </div>
         )}
