@@ -103,9 +103,7 @@ const Signup = () => {
       if (response) {
         console.log('Registration successful', response);
         
-        // Set first-time setup flag
-        localStorage.setItem('firstTimeSetup', 'true');
-        
+        // Navigate to email verification without automatic setup flag
         navigate('/verify-email', { 
           state: { 
             email: formData.email, 
@@ -122,6 +120,7 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
+  
   
 
   const renderStep1 = () => (

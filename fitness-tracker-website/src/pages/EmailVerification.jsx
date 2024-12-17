@@ -4,118 +4,79 @@ import { authService } from '../services/api';
 import './EmailVerification.css';
 
 const EmailVerification = () => {
-  const [message, setMessage] = useState('Verifying...');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isVerified, setIsVerified] = useState(false);
+  const [message, setMessage] = useState('Verification Pending');
+  const [isLoading, setIsLoading] = useState(false);
   const [isResendDisabled, setIsResendDisabled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Check if email and token are available from signup
+  const initialEmail = location.state?.email;
+  const initialToken = location.state?.token;
+
   useEffect(() => {
-    const verifyEmail = async () => {
-      const token = location.state?.token || new URLSearchParams(location.search).get('token');
-      const email = location.state?.email;
-  
-      if (!token) {
-        setMessage('No verification token found');
-        setIsLoading(false);
-        return;
-      }
-  
-      try {
-        const response = await authService.verifyEmail(token);
-        
-        // Set verification state and local storage
-        setIsVerified(true);
-        localStorage.setItem('isVerified', 'true');
-        
-        // Check if this is a first-time verification
-        const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
-        
-        if (isFirstTimeSetup) {
-          // Automatically redirect to profile setup for first-time users
-          localStorage.removeItem('firstTimeSetup');
-          navigate('/profile-setup');
-        } else {
-          // For existing users, show verification success
-          setMessage(response.message);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        setMessage(error.response?.data?.message || 'Verification failed. Please try again.');
-        setIsVerified(false);
-        setIsLoading(false);
-      }
-    };
-  
-    verifyEmail();
-  }, [location, navigate]);
-  
+    // If no initial email or token, redirect to signup
+    if (!initialEmail || !initialToken) {
+      navigate('/signup');
+    }
+  }, [initialEmail, initialToken, navigate]);
 
   const handleResendEmail = async () => {
     try {
+      setIsLoading(true);
       setIsResendDisabled(true);
-      const email = location.state?.email;
       
-      if (!email) {
+      if (!initialEmail) {
         setMessage('Email not found. Please register again.');
         return;
       }
       
-      const response = await authService.resendVerificationEmail(email);
+      const response = await authService.resendVerificationEmail(initialEmail);
       
       setMessage(response.message);
       
       // Re-enable resend after 60 seconds
-      setTimeout(() => setIsResendDisabled(false), 60000);
+      setTimeout(() => {
+        setIsResendDisabled(false);
+        setIsLoading(false);
+      }, 60000);
     } catch (error) {
       setMessage('Failed to resend verification email. Please try again later.');
       setIsResendDisabled(false);
+      setIsLoading(false);
     }
-  };
-
-  const handleContinueToLogin = () => {
-    navigate('/login');
   };
 
   return (
     <div className="email-verification-page">
       <div className="email-verification-container">
-        {isLoading ? (
-          <div className="loading-spinner">
-            <p>Loading...</p>
-          </div>
-        ) : (
-          <div className="verification-message">
-            <h2>{message}</h2>
-            
-            {isVerified ? (
-              <div className="verified-actions">
-                <p>Your email has been successfully verified!</p>
-                <button 
-                  onClick={handleContinueToLogin} 
-                  className="continue-button"
-                >
-                  Continue to Login
-                </button>
-              </div>
-            ) : (
-              <div className="unverified-actions">
-                <button 
-                  onClick={handleResendEmail} 
-                  className="resend-button"
-                  disabled={isResendDisabled}
-                >
-                  {isResendDisabled ? 'Resend in 60s' : "Didn't receive an email? Resend"}
-                </button>
-                <button 
-                  onClick={() => navigate('/signup')} 
-                  className="retry-button"
-                >
-                  Go Back to Signup
-                </button>
-              </div>
-            )}
+        <h2>Verify Your Email</h2>
+        
+        <div className="verification-instructions">
+          <p>We've sent a verification email to <strong>{initialEmail}</strong></p>
+          <p>Please check your inbox and click the verification link to activate your account.</p>
+        </div>
+
+        <div className="verification-actions">
+          <button 
+            onClick={handleResendEmail} 
+            className="resend-button"
+            disabled={isResendDisabled || isLoading}
+          >
+            {isResendDisabled ? 'Resend in 60s' : "Didn't receive an email? Resend"}
+          </button>
+
+          <button 
+            onClick={() => navigate('/signup')} 
+            className="back-button"
+          >
+            Back to Signup
+          </button>
+        </div>
+
+        {message !== 'Verification Pending' && (
+          <div className="message-container">
+            <p>{message}</p>
           </div>
         )}
       </div>

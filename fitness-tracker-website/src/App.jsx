@@ -20,6 +20,7 @@ import Settings from './pages/Settings';
 import WorkoutPlans from './pages/WorkoutPlans';
 import NotFound from './pages/NotFound';
 import EmailVerification from './pages/EmailVerification';
+import EmailVerified from './pages/EmailVerified'
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/about" element={<About />} />
             <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/email-verified" element={<EmailVerified />} />
             <Route path="*" element={<NotFound />} />
 
             {/* Protected Routes */}
