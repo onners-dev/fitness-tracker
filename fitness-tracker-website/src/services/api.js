@@ -104,13 +104,20 @@ export const authService = {
 
     verifyCode: async (email, code) => {
         try {
-            const response = await api.post('/auth/verify-code', { email, code });
-            return response.data;
+          const response = await api.post('/auth/verify-code', { email, code });
+          
+          // Explicitly set token and verification status
+          if (response.data.token) {
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('isVerified', 'true');
+          }
+          
+          return response.data;
         } catch (error) {
-            console.error('Code verification error:', error);
-            throw error;
+          console.error('Code verification error:', error);
+          throw error;
         }
-    },
+      },
 
     resendVerificationCode: async (email) => {
         try {

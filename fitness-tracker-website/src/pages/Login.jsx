@@ -56,13 +56,16 @@ const Login = () => {
         credentials.password
       );
       
-      // Check if user is verified
+      // Ensure token is set
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
+  
+      // Check verification and first-time setup
       if (response.user.email_verified) {
         try {
-          // Fetch user profile to check completeness
           const userProfile = await userService.getProfile();
           
-          // If profile is not complete, set first-time setup flag
           if (!userProfile || !userProfile.is_profile_complete) {
             localStorage.setItem('firstTimeSetup', 'true');
             navigate('/profile-setup');
@@ -72,11 +75,9 @@ const Login = () => {
           }
         } catch (profileError) {
           console.error('Profile fetch error:', profileError);
-          // Fallback to dashboard or handle error
           navigate('/dashboard');
         }
       } else {
-        // Not verified, go to email verification
         navigate('/verify-email', { 
           state: { 
             email: credentials.email 
@@ -88,6 +89,7 @@ const Login = () => {
       // Error handling remains the same
     }
   };
+  
 
   return (
     <div className="login-page">

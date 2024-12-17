@@ -5,28 +5,38 @@ const ProtectedRoute = ({ children }) => {
   const isVerified = localStorage.getItem('isVerified') === 'true';
   const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
 
-  console.log('ProtectedRoute Checks:', {
-    token,
-    isVerified,
-    isFirstTimeSetup
+  console.log('ProtectedRoute Detailed Checks:', {
+    token: token,
+    tokenType: typeof token,
+    isVerified: isVerified,
+    isFirstTimeSetup: isFirstTimeSetup
   });
 
-  // If not logged in, redirect to login page
-  if (!token) {
+  // More robust token checking
+  const isValidToken = token && 
+                       token !== 'null' && 
+                       token !== 'undefined' && 
+                       typeof token === 'string';
+
+  // If no valid token, redirect to login
+  if (!isValidToken) {
+    console.log('Invalid token, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  // If first-time setup is needed, redirect to profile setup
+  // If first-time setup is needed, allow access to profile setup
   if (isFirstTimeSetup) {
-    return <Navigate to="/profile-setup" replace />;
+    console.log('First-time setup needed, allowing profile setup access');
+    return children;
   }
 
-  // If not verified, redirect to verification page
+  // If not verified, redirect to verification
   if (!isVerified) {
+    console.log('Not verified, redirecting to email verification');
     return <Navigate to="/verify-email" replace />;
   }
 
-  // If logged in, verified, and not in first-time setup, show the protected component
+  // If all checks pass, show the component
   return children;
 };
 

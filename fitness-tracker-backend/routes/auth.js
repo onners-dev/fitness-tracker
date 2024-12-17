@@ -130,12 +130,28 @@ router.post('/verify-code', async (req, res) => {
       [email]
     );
 
-    res.status(200).json({ message: 'Email verified successfully' });
+    // Generate a new token for the verified user
+    const user = result.rows[0];
+    const token = jwt.sign(
+      { 
+        user_id: user.user_id, 
+        email: user.email 
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1d' }
+    );
+
+    res.status(200).json({ 
+      message: 'Email verified successfully',
+      token, // Send back a new token
+      email_verified: true
+    });
   } catch (error) {
     console.error('Code verification error:', error);
     res.status(500).json({ message: 'Server error during verification' });
   }
 });
+
 
 // Login Route
 router.post('/login', async (req, res) => {

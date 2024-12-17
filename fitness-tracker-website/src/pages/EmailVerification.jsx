@@ -31,22 +31,29 @@ const EmailVerification = () => {
     try {
       const response = await authService.verifyCode(email, verificationCode);
       
+      // Explicitly set token if it was received
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
+      
       // Set verification status
       localStorage.setItem('isVerified', 'true');
       
-      // Only set first-time setup if from signup
+      // Set first-time setup if from signup
       if (fromSignup) {
         localStorage.setItem('firstTimeSetup', 'true');
         navigate('/profile-setup');
       } else {
-        navigate('/login');
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Verification error:', error);
       setMessage(error.response?.data?.message || 'Verification failed');
+    } finally {
       setIsLoading(false);
     }
   };
+  
   
   const handleResendCode = async () => {
     try {
