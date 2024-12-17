@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const pool = require('../db');
 
 module.exports = async (req, res, next) => {
     try {
@@ -20,16 +21,21 @@ module.exports = async (req, res, next) => {
         
         console.log('Decoded token full details:', decoded);
 
-        // Check for both userId and user_id
-        const userId = decoded.userId || decoded.user_id || decoded.id;
-        
-        if (!userId) {
-            console.log('No user ID found in token');
-            return res.status(401).json({ message: 'Invalid token format' });
+        // Find user by email
+        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [decoded.email]);
+        const user = userResult.rows[0];
+
+        if (!user) {
+            console.log('No user found for the email');
+            return res.status(401).json({ message: 'User not found' });
         }
 
-        // Set req.user.id to the user ID
-        req.user = { id: userId };
+        // Set req.user with comprehensive user information
+        req.user = { 
+            id: user.user_id, 
+            email: user.email,
+            email_verified: user.email_verified === 't'
+        };
         
         console.log('Authorized user:', req.user);
         

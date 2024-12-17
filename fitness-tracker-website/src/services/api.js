@@ -46,14 +46,13 @@ export const authService = {
         const response = await api.post('/auth/login', { email, password });
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
-            // Set verification status
-            localStorage.setItem('isVerified', response.data.user.email_verified === 't' ? 'true' : 'false');
+            localStorage.setItem('isVerified', response.data.user.email_verified.toString());
         }
         return {
             ...response.data,
             user: {
                 ...response.data.user,
-                email_verified: response.data.user.email_verified === 't'
+                email_verified: response.data.user.email_verified
             }
         };
     },

@@ -35,7 +35,14 @@ router.post('/register', async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+      const verificationToken = jwt.sign(
+        { 
+          user_id: newUser.rows[0].user_id, 
+          email: email 
+        }, 
+        process.env.JWT_SECRET, 
+        { expiresIn: '1d' }
+      );
 
       const newUser = await client.query(
         'INSERT INTO users (email, password_hash, verification_token) VALUES ($1, $2, $3) RETURNING user_id',
@@ -168,9 +175,6 @@ router.post('/login', async (req, res) => {
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
 
-    console.log('User Found:', user); // Debug log
-    console.log('Email Verified:', user.email_verified); // Debug log
-
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -180,16 +184,21 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ user_id: user.user_id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
-    await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = $1', [user.user_id]);
+    const token = jwt.sign(
+      { 
+        user_id: user.user_id, 
+        email: user.email 
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1d' }
+    );
 
     res.json({
       token,
       user: {
         user_id: user.user_id,
         email: user.email,
-        email_verified: user.email_verified === 't' // Convert 't' to true
+        email_verified: user.email_verified === 't'
       }
     });
   } catch (err) {
