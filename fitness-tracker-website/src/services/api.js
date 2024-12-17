@@ -43,7 +43,7 @@ export const authService = {
 
     verifyEmail: async (token) => {
         try {
-            const response = await api.get('/verify-email', { 
+            const response = await api.get('/auth/verify-email', { 
                 params: { token } 
             });
             return response.data;
