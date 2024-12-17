@@ -35,7 +35,7 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/about" element={<About />} />
-            <Route path="/email-verification" element={<EmailVerification />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
             <Route path="*" element={<NotFound />} />
 
             {/* Protected Routes */}

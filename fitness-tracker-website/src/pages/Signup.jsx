@@ -102,8 +102,7 @@ const Signup = () => {
       
       if (response) {
         console.log('Registration successful', response);
-        alert('Registration successful! Please check your email to verify your account.');
-        navigate('/login');
+        navigate('/verify-email'); // Redirect to EmailVerification page
       } else {
         setError('Registration failed');
       }
