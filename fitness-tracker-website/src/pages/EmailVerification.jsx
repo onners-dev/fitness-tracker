@@ -7,6 +7,12 @@ const EmailVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Add these state variables
+  const [verificationCode, setVerificationCode] = useState('');
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResendDisabled, setIsResendDisabled] = useState(false);
+
   const email = location.state?.email;
   const fromSignup = location.state?.fromSignup || false;
   const initialToken = location.state?.token;

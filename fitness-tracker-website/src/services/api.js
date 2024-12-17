@@ -13,13 +13,12 @@ const api = axios.create({
 // Add token to requests if it exists
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
-    console.log('Token being sent:', token); // Debug log
-    console.log('Token type:', typeof token); // Check token type
-    console.log('Current path:', window.location.pathname); // Check current route
     
-    if (token && token !== 'null' && token !== 'undefined') {
+    // More robust token checking
+    if (token && token !== 'null' && token !== 'undefined' && typeof token === 'string') {
         config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
 });
 

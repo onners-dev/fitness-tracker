@@ -73,10 +73,7 @@ const Login = () => {
       localStorage.removeItem('firstTimeSetup');
       
       // Set verification status
-      localStorage.setItem('isVerified', 
-        (response.user.email_verified === true || 
-         response.user.email_verified === 't').toString()
-      );
+      localStorage.setItem('token', response.data.token || '');
 
       // Determine navigation based on verification status
       if (response.user.email_verified) {
