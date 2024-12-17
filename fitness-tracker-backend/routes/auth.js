@@ -12,15 +12,14 @@ const transporter = nodemailer.createTransport({
   path: '/usr/sbin/sendmail'
 });
 
-// Register new user
+// Add a function to generate a random 6-digit code
+function generateVerificationCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 router.post('/register', async (req, res) => {
   try {
     const { firstName, lastName, gender, dateOfBirth, email, password } = req.body;
-    console.log('Registration attempt:', { email, firstName, lastName });
-
-    if (!firstName || !lastName || !email || !password || !dateOfBirth || !gender) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
 
     const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
@@ -35,18 +34,17 @@ router.post('/register', async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      const verificationToken = jwt.sign(
-        { 
-          user_id: newUser.rows[0].user_id, 
-          email: email 
-        }, 
-        process.env.JWT_SECRET, 
-        { expiresIn: '1d' }
-      );
+      // Generate a 6-digit verification code
+      const verificationCode = generateVerificationCode();
 
       const newUser = await client.query(
-        'INSERT INTO users (email, password_hash, verification_token) VALUES ($1, $2, $3) RETURNING user_id',
-        [email, hashedPassword, verificationToken]
+        'INSERT INTO users (email, password_hash, verification_code, verification_code_expires_at) VALUES ($1, $2, $3, $4) RETURNING user_id',
+        [
+          email, 
+          hashedPassword, 
+          verificationCode, 
+          new Date(Date.now() + 15 * 60 * 1000) // Code expires in 15 minutes
+        ]
       );
 
       await client.query(
@@ -56,13 +54,12 @@ router.post('/register', async (req, res) => {
 
       await client.query('COMMIT');
 
-      // Send verification email
-      const verificationLink = `http://arcus.fit/verify-email?token=${verificationToken}`;
+      // Send verification email with code
       const mailOptions = {
         from: 'no-reply@arcus.fit',
         to: email,
         subject: 'Verify Your Email with Arcus',
-        text: `Please verify your email by clicking the link: ${verificationLink}`
+        text: `Your verification code is: ${verificationCode}. This code will expire in 15 minutes.`
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
@@ -75,7 +72,7 @@ router.post('/register', async (req, res) => {
 
       res.status(201).json({
         message: 'User registered successfully. Please verify your email.',
-        token: verificationToken
+        email: email
       });
     } catch (err) {
       await client.query('ROLLBACK');
@@ -90,65 +87,67 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Verify email
-router.get('/auth/verify-email', async (req, res) => {
-  const { token } = req.query;
-
+// New route to verify code
+router.post('/verify-code', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users WHERE verification_token = $1', [token]);
+    const { email, code } = req.body;
+
+    const result = await pool.query(
+      `SELECT * FROM users 
+       WHERE email = $1 
+       AND verification_code = $2 
+       AND verification_code_expires_at > CURRENT_TIMESTAMP`,
+      [email, code]
+    );
 
     if (result.rows.length === 0) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
+      return res.status(400).json({ message: 'Invalid or expired code' });
     }
 
-    await pool.query('UPDATE users SET email_verified = true WHERE verification_token = $1', [token]);
+    // Mark email as verified and clear verification code
+    await pool.query(
+      `UPDATE users 
+       SET email_verified = true, 
+           verification_code = NULL, 
+           verification_code_expires_at = NULL 
+       WHERE email = $1`,
+      [email]
+    );
 
-    // Redirect to the email verified page with the token
-    res.redirect(`http://arcus.fit/verify-email?verified=true&token=${token}`);
+    res.status(200).json({ message: 'Email verified successfully' });
   } catch (error) {
-    console.error('Verification error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Code verification error:', error);
+    res.status(500).json({ message: 'Server error during verification' });
   }
 });
 
-
-
-
-// Resend verification email
+// Resend verification code
 router.post('/resend-verification', async (req, res) => {
   try {
     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
-    }
+    // Generate a new verification code
+    const verificationCode = generateVerificationCode();
 
-    // Check if user exists
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    const user = userResult.rows[0];
+    // Update the verification code in the database
+    await pool.query(
+      `UPDATE users 
+       SET verification_code = $1, 
+           verification_code_expires_at = $2 
+       WHERE email = $3 AND email_verified = false`,
+      [
+        verificationCode, 
+        new Date(Date.now() + 15 * 60 * 1000), // Code expires in 15 minutes
+        email
+      ]
+    );
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Check if email is already verified
-    if (user.email_verified) {
-      return res.status(400).json({ message: 'Email is already verified' });
-    }
-
-    // Generate a new verification token
-    const newVerificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
-    // Update the verification token in the database
-    await pool.query('UPDATE users SET verification_token = $1 WHERE email = $2', [newVerificationToken, email]);
-
-    // Send verification email
-    const verificationLink = `http://arcus.fit/verify-email?token=${newVerificationToken}`;
+    // Send new verification email
     const mailOptions = {
       from: 'no-reply@arcus.fit',
       to: email,
-      subject: 'Verify Your Email with Arcus - Resent Verification',
-      text: `Please verify your email by clicking the link: ${verificationLink}`
+      subject: 'New Verification Code for Arcus',
+      text: `Your new verification code is: ${verificationCode}. This code will expire in 15 minutes.`
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -157,14 +156,14 @@ router.post('/resend-verification', async (req, res) => {
         return res.status(500).json({ message: 'Failed to send verification email' });
       }
       
-      res.status(200).json({ message: 'Verification email resent successfully' });
+      res.status(200).json({ message: 'Verification code resent successfully' });
     });
-
   } catch (error) {
     console.error('Resend verification error:', error);
     res.status(500).json({ message: 'Server error during resend verification' });
   }
 });
+
 
 
 // Login

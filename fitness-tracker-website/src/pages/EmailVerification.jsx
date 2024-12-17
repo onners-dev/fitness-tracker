@@ -4,76 +4,56 @@ import { authService } from '../services/api';
 import './EmailVerification.css';
 
 const EmailVerification = () => {
-  const [message, setMessage] = useState('Verification Pending');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
   const [isResendDisabled, setIsResendDisabled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Check if email and token are available from signup
-  const initialEmail = location.state?.email;
-  const initialToken = location.state?.token;
-  const verificationStatus = new URLSearchParams(location.search).get('verified');
-  const tokenFromUrl = new URLSearchParams(location.search).get('token');
+  // Get email from location state or redirect to signup
+  const email = location.state?.email;
 
   useEffect(() => {
-    const verifyEmail = async () => {
-      // If verification status is true, attempt to verify
-      if (verificationStatus === 'true' && tokenFromUrl) {
-        try {
-          const response = await authService.verifyEmail(tokenFromUrl);
-          
-          setIsVerified(true);
-          setMessage('Email verified successfully!');
-          
-          // Set up first-time setup flag
-          localStorage.setItem('firstTimeSetup', 'true');
-          localStorage.setItem('isVerified', 'true');
-        } catch (error) {
-          setMessage('Verification failed. Please try again.');
-          setIsVerified(false);
-        }
-      }
-    };
-
-    // If no initial email or token, and no verification in progress
-    if (!initialEmail && !initialToken && verificationStatus !== 'true') {
+    if (!email) {
       navigate('/signup');
-      return;
     }
+  }, [email, navigate]);
 
-    verifyEmail();
-  }, [initialEmail, initialToken, verificationStatus, tokenFromUrl, navigate]);
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const handleResendEmail = async () => {
     try {
-      setIsLoading(true);
-      setIsResendDisabled(true);
+      const response = await authService.verifyCode(email, verificationCode);
       
-      if (!initialEmail) {
-        setMessage('Email not found. Please register again.');
-        return;
-      }
-      
-      const response = await authService.resendVerificationEmail(initialEmail);
-      
+      // Set verification status
+      localStorage.setItem('isVerified', 'true');
+      localStorage.setItem('firstTimeSetup', 'true');
+
       setMessage(response.message);
       
-      // Re-enable resend after 60 seconds
-      setTimeout(() => {
-        setIsResendDisabled(false);
-        setIsLoading(false);
-      }, 60000);
+      // Navigate to profile setup
+      setTimeout(() => navigate('/profile-setup'), 2000);
     } catch (error) {
-      setMessage('Failed to resend verification email. Please try again later.');
-      setIsResendDisabled(false);
+      setMessage(error.response?.data?.message || 'Verification failed');
       setIsLoading(false);
     }
   };
 
-  const handleContinueToProfileSetup = () => {
-    navigate('/profile-setup');
+  const handleResendCode = async () => {
+    try {
+      setIsResendDisabled(true);
+      const response = await authService.resendVerificationCode(email);
+      
+      setMessage(response.message);
+      
+      // Re-enable resend after 60 seconds
+      setTimeout(() => setIsResendDisabled(false), 60000);
+    } catch (error) {
+      setMessage('Failed to resend verification code');
+      setIsResendDisabled(false);
+    }
   };
 
   return (
@@ -81,41 +61,39 @@ const EmailVerification = () => {
       <div className="email-verification-container">
         <h2>Verify Your Email</h2>
         
-        {!isVerified ? (
-          <>
-            <div className="verification-instructions">
-              <p>We've sent a verification email to <strong>{initialEmail}</strong></p>
-              <p>Please check your inbox and click the verification link to activate your account.</p>
-            </div>
+        <div className="verification-instructions">
+          <p>We've sent a 6-digit verification code to <strong>{email}</strong></p>
+          <p>Please enter the code below to verify your email</p>
+        </div>
 
-            <div className="verification-actions">
-              <button 
-                onClick={handleResendEmail} 
-                className="resend-button"
-                disabled={isResendDisabled || isLoading}
-              >
-                {isResendDisabled ? 'Resend in 60s' : "Didn't receive an email? Resend"}
-              </button>
+        <form onSubmit={handleVerifyCode} className="verification-form">
+          <input 
+            type="text" 
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            placeholder="Enter 6-digit code"
+            maxLength="6"
+            required
+          />
+          
+          <button 
+            type="submit" 
+            disabled={isLoading || verificationCode.length !== 6}
+          >
+            {isLoading ? 'Verifying...' : 'Verify'}
+          </button>
+        </form>
 
-              <button 
-                onClick={() => navigate('/signup')} 
-                className="back-button"
-              >
-                Back to Signup
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="verified-container">
-            <p>{message}</p>
-            <button 
-              onClick={handleContinueToProfileSetup} 
-              className="continue-button"
-            >
-              Continue to Profile Setup
-            </button>
-          </div>
-        )}
+        {message && <div className="verification-message">{message}</div>}
+
+        <div className="verification-actions">
+          <button 
+            onClick={handleResendCode}
+            disabled={isResendDisabled}
+          >
+            {isResendDisabled ? 'Resend in 60s' : 'Resend Code'}
+          </button>
+        </div>
       </div>
     </div>
   );

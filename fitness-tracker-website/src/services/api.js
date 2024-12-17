@@ -70,24 +70,22 @@ export const authService = {
         localStorage.removeItem('isVerified');
     },
 
-    verifyEmail: async (token) => {
+    verifyCode: async (email, code) => {
         try {
-            const response = await api.get('/auth/verify-email', { 
-                params: { token } 
-            });
+            const response = await api.post('/auth/verify-code', { email, code });
             return response.data;
         } catch (error) {
-            console.error('Email verification error:', error);
+            console.error('Code verification error:', error);
             throw error;
         }
     },
 
-    resendVerificationEmail: async (email) => {
+    resendVerificationCode: async (email) => {
         try {
             const response = await api.post('/auth/resend-verification', { email });
             return response.data;
         } catch (error) {
-            console.error('Resend verification email error:', error);
+            console.error('Resend verification code error:', error);
             throw error;
         }
     }
