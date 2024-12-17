@@ -39,7 +39,30 @@ export const authService = {
 
     logout: () => {
         localStorage.removeItem('token');
+    },
+
+    verifyEmail: async (token) => {
+        try {
+            const response = await api.get('/auth/verify-email', { 
+                params: { token } 
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Email verification error:', error);
+            throw error;
+        }
+    },
+
+    resendVerificationEmail: async (email) => {
+        try {
+            const response = await api.post('/auth/resend-verification', { email });
+            return response.data;
+        } catch (error) {
+            console.error('Resend verification email error:', error);
+            throw error;
+        }
     }
+
 };
 
 // User services

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { authService } from '../services/api';
 import './EmailVerification.css';
 
 const EmailVerification = () => {
@@ -10,13 +10,11 @@ const EmailVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Log the location state to debug
-  console.log('Location State:', location.state);
-
   useEffect(() => {
     const verifyEmail = async () => {
       // Use location state or fallback to URL query parameter
       const token = location.state?.token || new URLSearchParams(location.search).get('token');
+      const email = location.state?.email;
 
       if (!token) {
         setMessage('No verification token found');
@@ -25,11 +23,9 @@ const EmailVerification = () => {
       }
 
       try {
-        const response = await axios.get(`/api/verify-email`, {
-          params: { token }
-        });
+        const response = await authService.verifyEmail(token);
         
-        setMessage(response.data.message);
+        setMessage(response.message);
         setTimeout(() => navigate('/profile-setup'), 3000);
       } catch (error) {
         setMessage(error.response?.data?.message || 'Verification failed. Please try again.');
@@ -50,9 +46,9 @@ const EmailVerification = () => {
         return;
       }
       
-      await axios.post('/api/resend-verification', { email });
+      const response = await authService.resendVerificationEmail(email);
       
-      setMessage('Verification email resent. Please check your inbox.');
+      setMessage(response.message);
       
       // Re-enable resend after 60 seconds
       setTimeout(() => setIsResendDisabled(false), 60000);
