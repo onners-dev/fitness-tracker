@@ -24,7 +24,10 @@ const Login = () => {
     try {
       const response = await authService.login(credentials.email, credentials.password);
       
-      // Set isVerified based on the user's verification status
+      console.log('Login Response:', response); // Debug log
+      console.log('Email Verified:', response.user.email_verified); // Debug log
+      
+      // Ensure we're setting a string 'true' or 'false'
       localStorage.setItem('isVerified', response.user.email_verified.toString());
       
       // Navigate based on verification status
@@ -38,9 +41,11 @@ const Login = () => {
         });
       }
     } catch (err) {
+      console.error('Login Error:', err); // Detailed error logging
       setError(err.response?.data?.message || 'An error occurred');
     }
   };
+  
   
 
   const handleLogin = async (e) => {

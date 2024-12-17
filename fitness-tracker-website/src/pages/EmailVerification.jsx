@@ -12,16 +12,15 @@ const EmailVerification = () => {
 
   useEffect(() => {
     const verifyEmail = async () => {
-      // Use location state or fallback to URL query parameter
       const token = location.state?.token || new URLSearchParams(location.search).get('token');
       const email = location.state?.email;
-
+  
       if (!token) {
         setMessage('No verification token found');
         setIsLoading(false);
         return;
       }
-
+  
       try {
         const response = await authService.verifyEmail(token);
         
@@ -35,9 +34,10 @@ const EmailVerification = () => {
         setIsLoading(false);
       }
     };
-
+  
     verifyEmail();
   }, [location, navigate]);
+  
 
   const handleResendEmail = async () => {
     try {

@@ -166,6 +166,9 @@ router.post('/login', async (req, res) => {
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
 
+    console.log('User Found:', user); // Debug log
+    console.log('Email Verified:', user.email_verified); // Debug log
+
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -184,7 +187,7 @@ router.post('/login', async (req, res) => {
       user: {
         user_id: user.user_id,
         email: user.email,
-        email_verified: user.email_verified || false // Add this line
+        email_verified: user.email_verified === 't' // Convert 't' to true
       }
     });
   } catch (err) {
@@ -192,6 +195,8 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
+
   
 
 module.exports = router;

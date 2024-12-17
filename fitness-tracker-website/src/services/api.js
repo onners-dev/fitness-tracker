@@ -30,10 +30,12 @@ export const authService = {
             ...response.data,
             user: {
                 ...response.data.user,
-                email_verified: response.data.user.email_verified || false
+                // Convert 't' to true, everything else to false
+                email_verified: response.data.user.email_verified === 't'
             }
         };
     },
+    
     
 
     register: async (userData) => {
