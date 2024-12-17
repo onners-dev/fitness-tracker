@@ -65,7 +65,10 @@ router.post('/register', async (req, res) => {
         }
       });
 
-      res.status(201).json({ message: 'User registered successfully. Please verify your email.' });
+      res.status(201).json({
+        message: 'User registered successfully. Please verify your email.',
+        token: verificationToken
+      });
     } catch (err) {
       await client.query('ROLLBACK');
       console.error('Registration transaction error:', err);
@@ -99,23 +102,61 @@ router.get('/verify-email', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-    const { token } = req.query;
-  
-    try {
-      const result = await pool.query('SELECT * FROM users WHERE verification_token = $1', [token]);
-  
-      if (result.rows.length === 0) {
-        return res.status(400).json({ message: 'Invalid or expired token' });
-      }
-  
-      await pool.query('UPDATE users SET email_verified = true WHERE verification_token = $1', [token]);
-  
-      res.status(200).json({ message: 'Email verified successfully' });
-    } catch (error) {
-      console.error('Verification error:', error);
-      res.status(500).json({ message: 'Server error' });
+
+
+
+// Resend verification email
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
     }
-  });
+
+    // Check if user exists
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = userResult.rows[0];
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if email is already verified
+    if (user.email_verified) {
+      return res.status(400).json({ message: 'Email is already verified' });
+    }
+
+    // Generate a new verification token
+    const newVerificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    // Update the verification token in the database
+    await pool.query('UPDATE users SET verification_token = $1 WHERE email = $2', [newVerificationToken, email]);
+
+    // Send verification email
+    const verificationLink = `http://arcus.fit/verify-email?token=${newVerificationToken}`;
+    const mailOptions = {
+      from: 'no-reply@arcus.fit',
+      to: email,
+      subject: 'Verify Your Email with Arcus - Resent Verification',
+      text: `Please verify your email by clicking the link: ${verificationLink}`
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending verification email:', error);
+        return res.status(500).json({ message: 'Failed to send verification email' });
+      }
+      
+      res.status(200).json({ message: 'Verification email resent successfully' });
+    });
+
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ message: 'Server error during resend verification' });
+  }
+});
+
 
 // Login
 router.post('/login', async (req, res) => {

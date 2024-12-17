@@ -10,10 +10,17 @@ const EmailVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Get email and token from location state
+  const email = location.state?.email;
+  const token = location.state?.token;
+
   useEffect(() => {
     const verifyEmail = async () => {
-      const params = new URLSearchParams(location.search);
-      const token = params.get('token');
+      // If no token is present, redirect to signup
+      if (!token) {
+        navigate('/signup');
+        return;
+      }
 
       try {
         const response = await axios.get(`/api/verify-email?token=${token}`);
@@ -27,13 +34,11 @@ const EmailVerification = () => {
     };
 
     verifyEmail();
-  }, [location, navigate]);
+  }, [token, navigate]);
 
   const handleResendEmail = async () => {
     try {
       setIsResendDisabled(true);
-      const params = new URLSearchParams(location.search);
-      const email = params.get('email'); // Assume email is passed in URL
       
       await axios.post('/api/resend-verification', { email });
       

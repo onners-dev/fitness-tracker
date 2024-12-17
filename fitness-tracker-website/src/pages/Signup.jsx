@@ -85,9 +85,9 @@ const Signup = () => {
     if (!validateStep1() || !validateStep2()) {
       return;
     }
-
+  
     setIsLoading(true);
-
+  
     try {
       const age = calculateAge(formData.dateOfBirth);
       const response = await authService.register({
@@ -102,7 +102,13 @@ const Signup = () => {
       
       if (response) {
         console.log('Registration successful', response);
-        navigate('/verify-email'); // Redirect to EmailVerification page
+        // Add state to pass email and token
+        navigate('/verify-email', { 
+          state: { 
+            email: formData.email, 
+            token: response.token 
+          } 
+        });
       } else {
         setError('Registration failed');
       }
@@ -113,6 +119,7 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
+  
 
   const renderStep1 = () => (
     <form onSubmit={(e) => {
