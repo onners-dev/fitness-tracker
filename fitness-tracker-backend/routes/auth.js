@@ -185,12 +185,20 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    // Explicitly convert 't' to true
+    const isEmailVerified = user.email_verified === 't' || user.email_verified === true;
+
+    console.log('Login User Data:', {
+      email_verified: user.email_verified,
+      converted_verified: isEmailVerified
+    });
+
     res.json({
       token,
       user: {
         user_id: user.user_id,
         email: user.email,
-        email_verified: user.email_verified === 't'
+        email_verified: isEmailVerified
       }
     });
   } catch (err) {

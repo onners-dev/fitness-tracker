@@ -46,16 +46,24 @@ export const authService = {
         const response = await api.post('/auth/login', { email, password });
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
-            localStorage.setItem('isVerified', response.data.user.email_verified.toString());
+            
+            // Explicitly convert to string 'true' or 'false'
+            localStorage.setItem('isVerified', 
+                (response.data.user.email_verified === true || 
+                 response.data.user.email_verified === 't').toString()
+            );
         }
         return {
             ...response.data,
             user: {
                 ...response.data.user,
-                email_verified: response.data.user.email_verified
+                // Ensure consistent boolean conversion
+                email_verified: response.data.user.email_verified === true || 
+                                response.data.user.email_verified === 't'
             }
         };
     },
+    
 
     register: async (userData) => {
         try {

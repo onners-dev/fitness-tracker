@@ -24,14 +24,8 @@ const Login = () => {
     try {
       const response = await authService.login(credentials.email, credentials.password);
       
-      console.log('Login Response:', response);
-      console.log('Email Verified:', response.user.email_verified);
-      
-      // Always set verification status
-      localStorage.setItem('isVerified', response.user.email_verified.toString());
-      
-      // Remove first-time setup flag if not needed
-      localStorage.removeItem('firstTimeSetup');
+      console.log('Full Login Response:', response);
+      console.log('Email Verified (Frontend):', response.user.email_verified);
       
       // Navigate based on verification status
       if (response.user.email_verified) {
