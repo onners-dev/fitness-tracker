@@ -5,75 +5,73 @@ const authorization = require('../middleware/authorization');
 const pool = require('../db');
 
 router.get('/profile', authorization, async (req, res) => {
-    try {
-        console.log('Profile request received');
-        console.log('User ID from authorization:', req.user);
+  try {
+      const userId = req.user.id;
 
-        if (!req.user || !req.user.id) {
-            console.error('No user ID found in request');
-            return res.status(400).json({ message: 'User ID is required' });
-        }
+      const result = await pool.query(
+          `SELECT 
+              u.user_id,
+              u.email,
+              up.first_name,
+              up.last_name,
+              up.date_of_birth AS age,
+              up.gender,
+              up.height,
+              up.current_weight,
+              up.target_weight,
+              up.fitness_goal,
+              up.activity_level,
+              up.primary_focus
+          FROM users u
+          JOIN user_profiles up ON u.user_id = up.user_id
+          WHERE u.user_id = $1`, 
+          [userId]
+      );
 
-        const userId = req.user.id;
-        console.log('Fetching profile for userId:', userId);
+      if (result.rows.length === 0) {
+          return res.status(404).json({ message: 'User not found' });
+      }
 
-        const result = await pool.query(
-            `SELECT 
-                u.user_id,
-                u.email,
-                up.first_name,
-                up.last_name,
-                up.date_of_birth AS age,
-                up.gender,
-                up.height,
-                up.current_weight,
-                up.target_weight,
-                up.fitness_goal,
-                up.activity_level,
-                up.primary_focus
-            FROM users u
-            JOIN user_profiles up ON u.user_id = up.user_id
-            WHERE u.user_id = $1`, 
-            [userId]
-        );
+      const profile = result.rows[0];
 
-        console.log('Query result:', result.rows);
+      // Add profile completeness check
+      const isProfileComplete = !!(
+          profile.height &&
+          profile.current_weight &&
+          profile.fitness_goal &&
+          profile.activity_level &&
+          profile.primary_focus
+      );
 
-        if (result.rows.length === 0) {
-            console.error('No user found with ID:', userId);
-            return res.status(404).json({ message: 'User not found' });
-        }
+      // Prepare the response
+      const userProfile = {
+          id: profile.user_id,
+          email: profile.email,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          age: profile.age ? new Date().getFullYear() - new Date(profile.age).getFullYear() : null,
+          gender: profile.gender,
+          height: profile.height,
+          current_weight: profile.current_weight,
+          target_weight: profile.target_weight,
+          fitness_goal: profile.fitness_goal,
+          activity_level: profile.activity_level,
+          primary_focus: profile.primary_focus,
+          // Add profile completeness flag
+          is_profile_complete: isProfileComplete
+      };
 
-        // Prepare the response, renaming some fields to match frontend expectations
-        const userProfile = {
-            id: result.rows[0].user_id,
-            email: result.rows[0].email,
-            first_name: result.rows[0].first_name,
-            last_name: result.rows[0].last_name,
-            age: result.rows[0].age ? new Date().getFullYear() - new Date(result.rows[0].age).getFullYear() : null,
-            gender: result.rows[0].gender,
-            height: result.rows[0].height,
-            current_weight: result.rows[0].current_weight,
-            target_weight: result.rows[0].target_weight,
-            fitness_goal: result.rows[0].fitness_goal,
-            activity_level: result.rows[0].activity_level,
-            primary_focus: result.rows[0].primary_focus
-        };
-
-        res.json(userProfile);
-    } catch (error) {
-        console.error('FULL Error details:', error);
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-
-        res.status(500).json({ 
-            message: 'Server error', 
-            errorName: error.name,
-            errorMessage: error.message 
-        });
-    }
+      res.json(userProfile);
+  } catch (error) {
+      console.error('FULL Error details:', error);
+      res.status(500).json({ 
+          message: 'Server error', 
+          errorName: error.name,
+          errorMessage: error.message 
+      });
+  }
 });
+
 
 // Update profile route
 router.put('/profile', authorization, async (req, res) => {

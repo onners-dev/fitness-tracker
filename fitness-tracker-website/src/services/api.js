@@ -127,23 +127,20 @@ export const authService = {
 export const userService = {
     getProfile: async () => {
         try {
-            // Only attempt to get profile if a token exists
-            const token = localStorage.getItem('token');
-            if (!token) {
-                return null;
-            }
-            
-            const response = await api.get('/users/profile');
-            return response.data;
+          const response = await api.get('/users/profile');
+          return response.data;
         } catch (error) {
-            // Silently handle 401 errors
-            if (error.response?.status === 401) {
-                return null;
-            }
-            console.error('Profile fetch error:', error);
+          console.error('Profile fetch error:', error);
+          
+          // If 401 (unauthorized) or profile not found, return null
+          if (error.response?.status === 401 || error.response?.status === 404) {
             return null;
+          }
+          
+          // For other errors, throw
+          throw error;
         }
-    },
+      },
   
     updateProfile: async (profileData) => {
         try {

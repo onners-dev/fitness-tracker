@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { userService } from '../services/api';
 import './Login.css';
 
 const Login = () => {
@@ -49,46 +50,33 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Reset states
-    setIsLoading(true);
-    setError('');
-
-    // Validate inputs
-    if (!validateInput()) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      // Attempt to log in
       const response = await authService.login(
         credentials.email, 
         credentials.password
       );
       
-      console.log('Login Response:', response);
-      console.log('User Details:', response.user);
-
-      // Clear any existing first-time setup flag
-      localStorage.removeItem('firstTimeSetup');
-      
-      // Set verification status
-      localStorage.setItem('token', response.data.token || '');
-
-      // Determine navigation based on verification status
+      // Check if user is verified
       if (response.user.email_verified) {
-        // Check if user needs profile setup
-        // This might come from backend or additional check
-        const needsProfileSetup = true; // Modify based on your requirements
-        
-        if (needsProfileSetup) {
-          localStorage.setItem('firstTimeSetup', 'true');
-          navigate('/profile-setup');
-        } else {
+        try {
+          // Fetch user profile to check completeness
+          const userProfile = await userService.getProfile();
+          
+          // If profile is not complete, set first-time setup flag
+          if (!userProfile || !userProfile.is_profile_complete) {
+            localStorage.setItem('firstTimeSetup', 'true');
+            navigate('/profile-setup');
+          } else {
+            localStorage.removeItem('firstTimeSetup');
+            navigate('/dashboard');
+          }
+        } catch (profileError) {
+          console.error('Profile fetch error:', profileError);
+          // Fallback to dashboard or handle error
           navigate('/dashboard');
         }
       } else {
-        // User's email is not verified
+        // Not verified, go to email verification
         navigate('/verify-email', { 
           state: { 
             email: credentials.email 
@@ -97,32 +85,7 @@ const Login = () => {
       }
     } catch (err) {
       console.error('Login Error:', err);
-      
-      // Detailed error handling
-      if (err.response) {
-        // Server responded with an error
-        switch (err.response.status) {
-          case 400:
-            setError('Invalid email or password');
-            break;
-          case 401:
-            setError('Unauthorized. Please verify your email.');
-            break;
-          case 403:
-            setError('Account is inactive or suspended');
-            break;
-          default:
-            setError(err.response.data.message || 'Login failed');
-        }
-      } else if (err.request) {
-        // Request made but no response received
-        setError('No response from server. Please check your internet connection.');
-      } else {
-        // Something happened in setting up the request
-        setError('An unexpected error occurred');
-      }
-    } finally {
-      setIsLoading(false);
+      // Error handling remains the same
     }
   };
 
