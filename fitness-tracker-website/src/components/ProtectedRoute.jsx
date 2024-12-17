@@ -10,17 +10,17 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
+  // If this is a first-time setup, allow access to profile setup
+  if (isFirstTimeSetup) {
+    return children;
+  }
+
   // If not verified, redirect to verification page
   if (!isVerified) {
     return <Navigate to="/verify-email" replace />;
   }
 
-  // If first-time setup is needed, redirect to profile setup
-  if (isFirstTimeSetup) {
-    return <Navigate to="/profile-setup" replace />;
-  }
-
-  // If logged in, verified, and setup is complete, show the protected component
+  // If logged in, verified, and not in first-time setup, show the protected component
   return children;
 };
 

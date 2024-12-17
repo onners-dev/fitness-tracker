@@ -27,6 +27,9 @@ const Login = () => {
       console.log('Full Login Response:', response);
       console.log('Email Verified (Frontend):', response.user.email_verified);
       
+      // Remove any existing first-time setup flag
+      localStorage.removeItem('firstTimeSetup');
+      
       // Navigate based on verification status
       if (response.user.email_verified) {
         navigate('/dashboard');
@@ -42,6 +45,7 @@ const Login = () => {
       setError(err.response?.data?.message || 'An error occurred');
     }
   };
+  
   
   
   
