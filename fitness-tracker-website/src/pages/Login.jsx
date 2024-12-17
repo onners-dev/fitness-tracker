@@ -55,8 +55,10 @@ const Login = () => {
         credentials.email, 
         credentials.password
       );
-    
-      // Ensure verification status is set
+      
+      // Existing token should still be valid from registration
+      const existingToken = localStorage.getItem('token');
+      
       localStorage.setItem('isVerified', 
         (response.user.email_verified === true || 
          response.user.email_verified === 't').toString()
@@ -81,7 +83,6 @@ const Login = () => {
       // Error handling
     }
   };
-  
   
   
   
