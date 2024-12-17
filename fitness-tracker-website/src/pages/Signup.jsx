@@ -102,7 +102,6 @@ const Signup = () => {
       
       if (response) {
         console.log('Registration successful', response);
-        // Add state to pass email and token
         navigate('/verify-email', { 
           state: { 
             email: formData.email, 

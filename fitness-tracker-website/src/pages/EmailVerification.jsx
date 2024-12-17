@@ -10,35 +10,45 @@ const EmailVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get email and token from location state
-  const email = location.state?.email;
-  const token = location.state?.token;
+  // Log the location state to debug
+  console.log('Location State:', location.state);
 
   useEffect(() => {
     const verifyEmail = async () => {
-      // If no token is present, redirect to signup
+      // Use location state or fallback to URL query parameter
+      const token = location.state?.token || new URLSearchParams(location.search).get('token');
+
       if (!token) {
-        navigate('/signup');
+        setMessage('No verification token found');
+        setIsLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get(`/api/verify-email?token=${token}`);
+        const response = await axios.get(`/api/verify-email`, {
+          params: { token }
+        });
+        
         setMessage(response.data.message);
         setTimeout(() => navigate('/profile-setup'), 3000);
       } catch (error) {
-        setMessage('Verification failed. Please try again.');
-      } finally {
+        setMessage(error.response?.data?.message || 'Verification failed. Please try again.');
         setIsLoading(false);
       }
     };
 
     verifyEmail();
-  }, [token, navigate]);
+  }, [location, navigate]);
 
   const handleResendEmail = async () => {
     try {
       setIsResendDisabled(true);
+      const email = location.state?.email;
+      
+      if (!email) {
+        setMessage('Email not found. Please register again.');
+        return;
+      }
       
       await axios.post('/api/resend-verification', { email });
       
@@ -62,7 +72,7 @@ const EmailVerification = () => {
         ) : (
           <div className="verification-message">
             <h2>{message}</h2>
-            {(message.includes('failed') || message.includes('Verification')) && (
+            {(message.includes('failed') || message.includes('No verification')) && (
               <>
                 <button 
                   onClick={handleResendEmail} 
@@ -72,10 +82,10 @@ const EmailVerification = () => {
                   {isResendDisabled ? 'Resend in 60s' : "Didn't receive an email? Resend"}
                 </button>
                 <button 
-                  onClick={() => window.location.reload()} 
+                  onClick={() => navigate('/signup')} 
                   className="retry-button"
                 >
-                  Retry Verification
+                  Go Back to Signup
                 </button>
               </>
             )}
