@@ -104,7 +104,7 @@ const Signup = () => {
         navigate('/verify-email', { 
           state: { 
             email: response.email,
-            fromSignup: true  // Add this flag
+            fromSignup: true  // Crucial flag
           } 
         });
       } else {
@@ -117,11 +117,6 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
-  
-  
-  
-  
-  
   
 
   const renderStep1 = () => (

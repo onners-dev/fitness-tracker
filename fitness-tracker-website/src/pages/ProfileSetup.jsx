@@ -73,9 +73,8 @@ const ProfileSetup = () => {
 
       await userService.updateProfile(profileData);
 
-      // Remove first-time setup flag
       localStorage.removeItem('firstTimeSetup');
-  
+
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred');

@@ -24,9 +24,6 @@ const Login = () => {
     try {
       const response = await authService.login(credentials.email, credentials.password);
       
-      console.log('Full Login Response:', response);
-      console.log('Email Verified (Frontend):', response.user.email_verified);
-      
       // Remove any existing first-time setup flag
       localStorage.removeItem('firstTimeSetup');
       
@@ -47,37 +44,6 @@ const Login = () => {
   };
   
   
-  
-  
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-  
-    try {
-      const response = await authService.login(email, password);
-      
-      // Set isVerified based on the user's verification status
-      localStorage.setItem('isVerified', response.user.email_verified || 'false');
-      
-      // Navigate based on verification status
-      if (response.user.email_verified) {
-        navigate('/dashboard');
-      } else {
-        navigate('/verify-email', { 
-          state: { 
-            email: email 
-          } 
-        });
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-
   return (
     <div className="login-page">
       <div className="login-container">
