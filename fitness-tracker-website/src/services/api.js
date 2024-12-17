@@ -43,7 +43,7 @@ export const authService = {
 
     verifyEmail: async (token) => {
         try {
-            const response = await api.get('/auth/verify-email', { 
+            const response = await api.get('/verify-email', { 
                 params: { token } 
             });
             return response.data;
@@ -55,7 +55,7 @@ export const authService = {
 
     resendVerificationEmail: async (email) => {
         try {
-            const response = await api.post('/auth/resend-verification', { email });
+            const response = await api.post('/resend-verification', { email });
             return response.data;
         } catch (error) {
             console.error('Resend verification email error:', error);
