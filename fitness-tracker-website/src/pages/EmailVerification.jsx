@@ -15,23 +15,36 @@ const EmailVerification = () => {
   const initialEmail = location.state?.email;
   const initialToken = location.state?.token;
   const verificationStatus = new URLSearchParams(location.search).get('verified');
+  const tokenFromUrl = new URLSearchParams(location.search).get('token');
 
   useEffect(() => {
-    // If no initial email or token, redirect to signup
-    if (!initialEmail || !initialToken) {
+    const verifyEmail = async () => {
+      // If verification status is true, attempt to verify
+      if (verificationStatus === 'true' && tokenFromUrl) {
+        try {
+          const response = await authService.verifyEmail(tokenFromUrl);
+          
+          setIsVerified(true);
+          setMessage('Email verified successfully!');
+          
+          // Set up first-time setup flag
+          localStorage.setItem('firstTimeSetup', 'true');
+          localStorage.setItem('isVerified', 'true');
+        } catch (error) {
+          setMessage('Verification failed. Please try again.');
+          setIsVerified(false);
+        }
+      }
+    };
+
+    // If no initial email or token, and no verification in progress
+    if (!initialEmail && !initialToken && verificationStatus !== 'true') {
       navigate('/signup');
       return;
     }
 
-    // Check if verification happened
-    if (verificationStatus === 'true') {
-      setIsVerified(true);
-      setMessage('Email verified successfully!');
-      
-      // Set up first-time setup flag
-      localStorage.setItem('firstTimeSetup', 'true');
-    }
-  }, [initialEmail, initialToken, verificationStatus, navigate]);
+    verifyEmail();
+  }, [initialEmail, initialToken, verificationStatus, tokenFromUrl, navigate]);
 
   const handleResendEmail = async () => {
     try {
