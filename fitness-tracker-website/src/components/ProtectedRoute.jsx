@@ -5,12 +5,11 @@ const ProtectedRoute = ({ children }) => {
   const isVerified = localStorage.getItem('isVerified') === 'true';
   const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
 
-  // If first-time setup is needed, allow access to profile setup
+  // More flexible routing logic
   if (isFirstTimeSetup) {
-    return children;
+    return children;  // Allow access to profile setup
   }
 
-  // Standard token and verification checks
   if (!token) {
     return <Navigate to="/login" replace />;
   }

@@ -78,9 +78,10 @@ const Login = () => {
       }
     } catch (err) {
       console.error('Login Error:', err);
-      // Error handling remains the same
+      // Error handling
     }
   };
+  
   
   
   

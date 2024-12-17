@@ -30,10 +30,8 @@ const EmailVerification = () => {
     try {
       const response = await authService.verifyCode(email, verificationCode);
       
-      // Set verification status
+      // Explicitly set verification status
       localStorage.setItem('isVerified', 'true');
-      
-      // Always set first-time setup for new users
       localStorage.setItem('firstTimeSetup', 'true');
       
       navigate('/profile-setup');

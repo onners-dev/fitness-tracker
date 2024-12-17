@@ -104,7 +104,8 @@ router.post('/register', async (req, res) => {
         user: {
           user_id: newUser.rows[0].user_id,
           email: email,
-          email_verified: false
+          email_verified: false,
+          needs_profile_setup: true
         }
       });
     } catch (err) {

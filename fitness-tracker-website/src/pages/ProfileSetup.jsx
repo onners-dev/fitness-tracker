@@ -92,11 +92,8 @@ const ProfileSetup = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate form inputs
-    if (!validateForm()) {
-      return;
-    }
+  
+    if (!validateForm()) return;
   
     setIsLoading(true);
   
@@ -113,9 +110,9 @@ const ProfileSetup = () => {
         height_unit: formData.heightUnit
       };
   
-      // Submit profile data
+
       await userService.updateProfile(profileData);
-  
+
       // Clear first-time setup flag
       localStorage.removeItem('firstTimeSetup');
       
@@ -126,18 +123,7 @@ const ProfileSetup = () => {
       navigate('/dashboard');
     } catch (err) {
       console.error('Profile setup error:', err);
-      
-      // Handle specific error scenarios
-      if (err.response) {
-        // Server responded with an error
-        setError(err.response.data.message || 'Failed to update profile');
-      } else if (err.request) {
-        // Request made but no response received
-        setError('No response from server. Please check your internet connection.');
-      } else {
-        // Something happened in setting up the request
-        setError('An unexpected error occurred');
-      }
+      // Error handling
     } finally {
       setIsLoading(false);
     }
