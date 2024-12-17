@@ -4,22 +4,19 @@ import { authService } from '../services/api';
 import './EmailVerification.css';
 
 const EmailVerification = () => {
-  const [verificationCode, setVerificationCode] = useState('');
-  const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResendDisabled, setIsResendDisabled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get email from location state or redirect to signup
   const email = location.state?.email;
   const fromSignup = location.state?.fromSignup || false;
+  const initialToken = location.state?.token;
 
   useEffect(() => {
-    if (!email) {
-      navigate('/signup');
+    // If token exists from signup, store it
+    if (initialToken) {
+      localStorage.setItem('token', initialToken);
     }
-  }, [email, navigate]);
+  }, [initialToken]);
 
   const handleVerifyCode = async (e) => {
     e.preventDefault();
@@ -28,10 +25,10 @@ const EmailVerification = () => {
     try {
       const response = await authService.verifyCode(email, verificationCode);
       
-      // Explicitly set verification status
+      // Set verification status
       localStorage.setItem('isVerified', 'true');
       
-      // Set first-time setup flag ONLY if from signup
+      // Only set first-time setup if from signup
       if (fromSignup) {
         localStorage.setItem('firstTimeSetup', 'true');
         navigate('/profile-setup');

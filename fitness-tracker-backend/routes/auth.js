@@ -12,29 +12,47 @@ const transporter = nodemailer.createTransport({
   path: '/usr/sbin/sendmail'
 });
 
-// Add a function to generate a random 6-digit code
+// Generate random verification code
 function generateVerificationCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// User Registration Route
 router.post('/register', async (req, res) => {
   try {
-    const { firstName, lastName, gender, dateOfBirth, email, password } = req.body;
+    const { 
+      firstName, 
+      lastName, 
+      gender, 
+      dateOfBirth, 
+      email, 
+      password 
+    } = req.body;
 
+    // Validate input
+    if (!firstName || !lastName || !email || !password || !dateOfBirth || !gender) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Check if user already exists
     const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-
     if (userExists.rows.length > 0) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Generate a 6-digit verification code BEFORE inserting user
+    // Generate verification code
     const verificationCode = generateVerificationCode();
 
+    const client = await pool.connect();
     try {
-      const newUser = await pool.query(
+      await client.query('BEGIN');
+
+      // Create user
+      const newUser = await client.query(
         'INSERT INTO users (email, password_hash, verification_code, verification_code_expires_at) VALUES ($1, $2, $3, $4) RETURNING user_id',
         [
           email, 
@@ -44,12 +62,15 @@ router.post('/register', async (req, res) => {
         ]
       );
 
-      await pool.query(
+      // Create user profile
+      await client.query(
         `INSERT INTO user_profiles (user_id, first_name, last_name, date_of_birth, gender) VALUES ($1, $2, $3, $4, $5)`,
         [newUser.rows[0].user_id, firstName, lastName, dateOfBirth, gender]
       );
 
-      // Send verification email with code
+      await client.query('COMMIT');
+
+      // Send verification email
       const mailOptions = {
         from: 'no-reply@arcus.fit',
         to: email,
@@ -70,8 +91,11 @@ router.post('/register', async (req, res) => {
         email: email
       });
     } catch (err) {
+      await client.query('ROLLBACK');
       console.error('Registration transaction error:', err);
       res.status(500).json({ message: 'Server error during registration' });
+    } finally {
+      client.release();
     }
   } catch (err) {
     console.error('Registration error:', err);
@@ -79,8 +103,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-
-// New route to verify code
+// Email Verification Route
 router.post('/verify-code', async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -114,68 +137,27 @@ router.post('/verify-code', async (req, res) => {
   }
 });
 
-// Resend verification code
-router.post('/resend-verification', async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    // Generate a new verification code
-    const verificationCode = generateVerificationCode();
-
-    // Update the verification code in the database
-    await pool.query(
-      `UPDATE users 
-       SET verification_code = $1, 
-           verification_code_expires_at = $2 
-       WHERE email = $3 AND email_verified = false`,
-      [
-        verificationCode, 
-        new Date(Date.now() + 15 * 60 * 1000), // Code expires in 15 minutes
-        email
-      ]
-    );
-
-    // Send new verification email
-    const mailOptions = {
-      from: 'no-reply@arcus.fit',
-      to: email,
-      subject: 'New Verification Code for Arcus',
-      text: `Your new verification code is: ${verificationCode}. This code will expire in 15 minutes.`
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending verification email:', error);
-        return res.status(500).json({ message: 'Failed to send verification email' });
-      }
-      
-      res.status(200).json({ message: 'Verification code resent successfully' });
-    });
-  } catch (error) {
-    console.error('Resend verification error:', error);
-    res.status(500).json({ message: 'Server error during resend verification' });
-  }
-});
-
-
-
-// Login
+// Login Route
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Find user
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
 
+    // Check if user exists
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Create JWT token
     const token = jwt.sign(
       { 
         user_id: user.user_id, 
@@ -185,13 +167,8 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // Explicitly convert 't' to true
+    // Convert verification status
     const isEmailVerified = user.email_verified === 't' || user.email_verified === true;
-
-    console.log('Login User Data:', {
-      email_verified: user.email_verified,
-      converted_verified: isEmailVerified
-    });
 
     res.json({
       token,
@@ -206,8 +183,5 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-
-
-  
 
 module.exports = router;

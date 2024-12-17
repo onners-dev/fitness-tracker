@@ -14,7 +14,10 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     console.log('Token being sent:', token); // Debug log
-    if (token) {
+    console.log('Token type:', typeof token); // Check token type
+    console.log('Current path:', window.location.pathname); // Check current route
+    
+    if (token && token !== 'null' && token !== 'undefined') {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -43,25 +46,45 @@ api.interceptors.response.use(
 // Auth services
 export const authService = {
     login: async (email, password) => {
-        const response = await api.post('/auth/login', { email, password });
-        if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
+        try {
+            const response = await api.post('/auth/login', { email, password });
             
-            // Explicitly convert to string 'true' or 'false'
-            localStorage.setItem('isVerified', 
-                (response.data.user.email_verified === true || 
-                 response.data.user.email_verified === 't').toString()
-            );
-        }
-        return {
-            ...response.data,
-            user: {
-                ...response.data.user,
-                // Ensure consistent boolean conversion
-                email_verified: response.data.user.email_verified === true || 
-                                response.data.user.email_verified === 't'
+            console.log('Login Response:', response.data);
+            
+            if (response.data.token) {
+                // Explicitly set token
+                localStorage.setItem('token', response.data.token);
+                
+                // Explicitly set verification status
+                localStorage.setItem('isVerified', 
+                    (response.data.user.email_verified === true || 
+                     response.data.user.email_verified === 't').toString()
+                );
+            } else {
+                console.error('No token received in login response');
+                localStorage.removeItem('token');
             }
-        };
+            
+            return {
+                ...response.data,
+                user: {
+                    ...response.data.user,
+                    email_verified: response.data.user.email_verified === true || 
+                                    response.data.user.email_verified === 't'
+                }
+            };
+        } catch (error) {
+            console.error('Login API Error:', {
+                message: error.response?.data?.message,
+                status: error.response?.status,
+                data: error.response?.data
+            });
+            
+            // Clear token on login failure
+            localStorage.removeItem('token');
+            
+            throw error;
+        }
     },
     
 
