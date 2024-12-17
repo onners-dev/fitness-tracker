@@ -19,24 +19,43 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Add response interceptor to handle unauthorized requests
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        // If the error is 401 (Unauthorized)
+        if (error.response && error.response.status === 401) {
+            const currentPath = window.location.pathname;
+            const ignorePaths = ['/verify-email', '/signup', '/login'];
+            
+            // Clear token if unauthorized on protected routes
+            if (!ignorePaths.some(path => currentPath.includes(path))) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('isVerified');
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 // Auth services
 export const authService = {
     login: async (email, password) => {
         const response = await api.post('/auth/login', { email, password });
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
+            // Set verification status
+            localStorage.setItem('isVerified', response.data.user.email_verified === 't' ? 'true' : 'false');
         }
         return {
             ...response.data,
             user: {
                 ...response.data.user,
-                // Convert 't' to true, everything else to false
                 email_verified: response.data.user.email_verified === 't'
             }
         };
     },
-    
-    
 
     register: async (userData) => {
         const response = await api.post('/auth/register', userData);
@@ -48,6 +67,7 @@ export const authService = {
 
     logout: () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('isVerified');
     },
 
     verifyEmail: async (token) => {
@@ -71,15 +91,21 @@ export const authService = {
             throw error;
         }
     }
-    
-
 };
 
 // User services
 export const userService = {
     getProfile: async () => {
-        const response = await api.get('/users/profile');
-        return response.data;
+        try {
+            const response = await api.get('/users/profile');
+            return response.data;
+        } catch (error) {
+            // Only log non-401 errors
+            if (error.response?.status !== 401) {
+                console.error('Error fetching profile', error);
+            }
+            return null;
+        }
     },
   
     updateProfile: async (profileData) => {
@@ -106,36 +132,66 @@ export const userService = {
 // Exercise services
 export const exerciseService = {
     getMuscleGroups: async () => {
-        const response = await api.get('/exercises/muscle-groups');
-        return response.data;
+        try {
+            const response = await api.get('/exercises/muscle-groups');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching muscle groups', error);
+            return [];
+        }
     },
 
     getMuscles: async (groupId) => {
-        const response = await api.get(`/exercises/muscles/${groupId}`);
-        return response.data;
+        try {
+            const response = await api.get(`/exercises/muscles/${groupId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching muscles', error);
+            return [];
+        }
     },
 
     getExercises: async (muscleId) => {
-        const response = await api.get(`/exercises/by-muscle/${muscleId}`);
-        return response.data;
+        try {
+            const response = await api.get(`/exercises/by-muscle/${muscleId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching exercises', error);
+            return [];
+        }
     }
 };
 
 // Favorite services
 export const favoriteService = {
     addFavorite: async (exerciseId) => {
-        const response = await api.post('/favorites/add', { exerciseId });
-        return response.data;
+        try {
+            const response = await api.post('/favorites/add', { exerciseId });
+            return response.data;
+        } catch (error) {
+            console.error('Error adding favorite', error);
+            throw error;
+        }
     },
 
     removeFavorite: async (exerciseId) => {
-        const response = await api.delete('/favorites/remove', { data: { exerciseId } });
-        return response.data;
+        try {
+            const response = await api.delete('/favorites/remove', { data: { exerciseId } });
+            return response.data;
+        } catch (error) {
+            console.error('Error removing favorite', error);
+            throw error;
+        }
     },
 
     getFavorites: async () => {
-        const response = await api.get('/favorites');
-        return response.data;
+        try {
+            const response = await api.get('/favorites');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching favorites', error);
+            return [];
+        }
     }
 };
 
