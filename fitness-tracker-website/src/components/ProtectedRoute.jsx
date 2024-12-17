@@ -12,22 +12,21 @@ const ProtectedRoute = ({ children }) => {
     isFirstTimeSetup: isFirstTimeSetup
   });
 
-  // More robust token checking
+  // More flexible token checking for first-time setup
   const isValidToken = token && 
                        token !== 'null' && 
-                       token !== 'undefined' && 
-                       typeof token === 'string';
+                       token !== 'undefined';
 
-  // If no valid token, redirect to login
-  if (!isValidToken) {
-    console.log('Invalid token, redirecting to login');
-    return <Navigate to="/login" replace />;
-  }
-
-  // If first-time setup is needed, allow access to profile setup
+  // If first-time setup is needed, allow access regardless of token nuances
   if (isFirstTimeSetup) {
     console.log('First-time setup needed, allowing profile setup access');
     return children;
+  }
+
+  // Stricter token validation for other routes
+  if (!isValidToken) {
+    console.log('Invalid token, redirecting to login');
+    return <Navigate to="/login" replace />;
   }
 
   // If not verified, redirect to verification

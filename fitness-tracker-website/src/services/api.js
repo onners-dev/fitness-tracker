@@ -10,17 +10,23 @@ const api = axios.create({
     }
 });
 
-// Add token to requests if it exists
+// Token interceptor
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     
     // More robust token checking
-    if (token && token !== 'null' && token !== 'undefined' && typeof token === 'string') {
-        config.headers.Authorization = `Bearer ${token}`;
+    if (token && 
+        token !== 'null' && 
+        token !== 'undefined' && 
+        typeof token === 'string') {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     
     return config;
-});
+  }, (error) => {
+    return Promise.reject(error);
+  });
+  
 
 // Add response interceptor to handle unauthorized requests
 api.interceptors.response.use(

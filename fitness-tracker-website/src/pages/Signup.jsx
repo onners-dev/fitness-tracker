@@ -100,11 +100,17 @@ const Signup = () => {
         age: age
       });
       
+      // Store the token if received
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
+      
       if (response.email) {
         navigate('/verify-email', { 
           state: { 
             email: response.email,
-            fromSignup: true  // Crucial flag
+            fromSignup: true,
+            token: response.token  // Pass token to verification page
           } 
         });
       } else {

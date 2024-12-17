@@ -7,7 +7,6 @@ const EmailVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Add these state variables
   const [verificationCode, setVerificationCode] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -17,8 +16,8 @@ const EmailVerification = () => {
   const fromSignup = location.state?.fromSignup || false;
   const initialToken = location.state?.token;
 
+  // Use effect to handle initial token
   useEffect(() => {
-    // If token exists from signup, store it
     if (initialToken) {
       localStorage.setItem('token', initialToken);
     }
@@ -27,25 +26,22 @@ const EmailVerification = () => {
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-  
+
     try {
       const response = await authService.verifyCode(email, verificationCode);
       
-      // Explicitly set token if it was received
+      // Ensure token is set
       if (response.token) {
         localStorage.setItem('token', response.token);
       }
-      
+
       // Set verification status
       localStorage.setItem('isVerified', 'true');
       
-      // Set first-time setup if from signup
-      if (fromSignup) {
-        localStorage.setItem('firstTimeSetup', 'true');
-        navigate('/profile-setup');
-      } else {
-        navigate('/dashboard');
-      }
+      // Always set first-time setup for new users
+      localStorage.setItem('firstTimeSetup', 'true');
+      
+      navigate('/profile-setup');
     } catch (error) {
       console.error('Verification error:', error);
       setMessage(error.response?.data?.message || 'Verification failed');

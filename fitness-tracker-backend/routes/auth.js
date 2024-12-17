@@ -134,19 +134,20 @@ router.post('/verify-code', async (req, res) => {
     const user = result.rows[0];
     const token = jwt.sign(
       { 
-        user_id: user.user_id, 
-        email: user.email 
+        user_id: newUser.rows[0].user_id, 
+        email: email 
       }, 
       process.env.JWT_SECRET, 
       { expiresIn: '1d' }
     );
 
-    res.status(200).json({ 
-      message: 'Email verified successfully',
-      token, // Send back a new token
-      email_verified: true
+    // Send back token with registration response
+    res.status(201).json({
+      message: 'User registered successfully. Please verify your email.',
+      email: email,
+      token: token  // Add this line
     });
-  } catch (error) {
+  } catch (err) {
     console.error('Code verification error:', error);
     res.status(500).json({ message: 'Server error during verification' });
   }
