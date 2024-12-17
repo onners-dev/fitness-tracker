@@ -24,15 +24,23 @@ const Login = () => {
     try {
       const response = await authService.login(credentials.email, credentials.password);
       
-      console.log('Login Response:', response); // Debug log
-      console.log('Email Verified:', response.user.email_verified); // Debug log
+      console.log('Login Response:', response);
+      console.log('Email Verified:', response.user.email_verified);
       
       // Ensure we're setting a string 'true' or 'false'
       localStorage.setItem('isVerified', response.user.email_verified.toString());
       
-      // Navigate based on verification status
+      // Check if this is a first-time user
+      const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
+      
+      // Navigate based on verification status and first-time setup
       if (response.user.email_verified) {
-        navigate('/dashboard');
+        if (isFirstTimeSetup) {
+          navigate('/profile-setup');
+          localStorage.removeItem('firstTimeSetup');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         navigate('/verify-email', { 
           state: { 
@@ -41,7 +49,7 @@ const Login = () => {
         });
       }
     } catch (err) {
-      console.error('Login Error:', err); // Detailed error logging
+      console.error('Login Error:', err);
       setError(err.response?.data?.message || 'An error occurred');
     }
   };

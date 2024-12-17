@@ -33,8 +33,8 @@ const EmailVerification = () => {
   
       setMessage(response.message);
       
-      // Navigate to profile setup
-      setTimeout(() => navigate('/profile-setup'), 2000);
+      // Navigate directly to profile setup
+      navigate('/profile-setup');
     } catch (error) {
       console.error('Verification error:', error);
       setMessage(error.response?.data?.message || 'Verification failed');
