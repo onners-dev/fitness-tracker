@@ -13,6 +13,7 @@ const EmailVerification = () => {
 
   // Get email from location state or redirect to signup
   const email = location.state?.email;
+  const fromSignup = location.state?.fromSignup || false;
 
   useEffect(() => {
     if (!email) {
@@ -29,12 +30,20 @@ const EmailVerification = () => {
       
       // Set verification status
       localStorage.setItem('isVerified', 'true');
-      localStorage.setItem('firstTimeSetup', 'true');
+      
+      // Only set first-time setup if from signup
+      if (fromSignup) {
+        localStorage.setItem('firstTimeSetup', 'true');
+      }
   
       setMessage(response.message);
       
-      // Navigate directly to profile setup
-      navigate('/profile-setup');
+      // Navigate based on origin
+      if (fromSignup) {
+        navigate('/profile-setup');
+      } else {
+        navigate('/login');
+      }
     } catch (error) {
       console.error('Verification error:', error);
       setMessage(error.response?.data?.message || 'Verification failed');
@@ -42,7 +51,6 @@ const EmailVerification = () => {
     }
   };
   
-
   const handleResendCode = async () => {
     try {
       setIsResendDisabled(true);

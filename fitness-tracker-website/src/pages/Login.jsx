@@ -27,20 +27,15 @@ const Login = () => {
       console.log('Login Response:', response);
       console.log('Email Verified:', response.user.email_verified);
       
-      // Ensure we're setting a string 'true' or 'false'
+      // Always set verification status
       localStorage.setItem('isVerified', response.user.email_verified.toString());
       
-      // Check if this is a first-time user
-      const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
+      // Remove first-time setup flag if not needed
+      localStorage.removeItem('firstTimeSetup');
       
-      // Navigate based on verification status and first-time setup
+      // Navigate based on verification status
       if (response.user.email_verified) {
-        if (isFirstTimeSetup) {
-          navigate('/profile-setup');
-          localStorage.removeItem('firstTimeSetup');
-        } else {
-          navigate('/dashboard');
-        }
+        navigate('/dashboard');
       } else {
         navigate('/verify-email', { 
           state: { 
@@ -53,6 +48,7 @@ const Login = () => {
       setError(err.response?.data?.message || 'An error occurred');
     }
   };
+  
   
   
 
