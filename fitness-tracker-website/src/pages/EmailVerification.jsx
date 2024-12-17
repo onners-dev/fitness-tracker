@@ -34,12 +34,6 @@ const EmailVerification = () => {
       // Only set first-time setup if from signup
       if (fromSignup) {
         localStorage.setItem('firstTimeSetup', 'true');
-      }
-  
-      setMessage(response.message);
-      
-      // Navigate based on origin
-      if (fromSignup) {
         navigate('/profile-setup');
       } else {
         navigate('/login');

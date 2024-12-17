@@ -104,7 +104,7 @@ const Signup = () => {
         navigate('/verify-email', { 
           state: { 
             email: response.email,
-            fromSignup: true  // Add a flag
+            fromSignup: true  // Add this flag
           } 
         });
       } else {
@@ -117,6 +117,7 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
+  
   
   
   
