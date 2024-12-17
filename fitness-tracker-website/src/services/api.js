@@ -26,8 +26,15 @@ export const authService = {
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
         }
-        return response.data;
+        return {
+            ...response.data,
+            user: {
+                ...response.data.user,
+                email_verified: response.data.user.email_verified || false
+            }
+        };
     },
+    
 
     register: async (userData) => {
         const response = await api.post('/auth/register', userData);
@@ -55,13 +62,14 @@ export const authService = {
 
     resendVerificationEmail: async (email) => {
         try {
-            const response = await api.post('/resend-verification', { email });
+            const response = await api.post('/auth/resend-verification', { email });
             return response.data;
         } catch (error) {
             console.error('Resend verification email error:', error);
             throw error;
         }
     }
+    
 
 };
 

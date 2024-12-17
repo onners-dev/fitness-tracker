@@ -160,45 +160,38 @@ router.post('/resend-verification', async (req, res) => {
 
 // Login
 router.post('/login', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-      const user = userResult.rows[0];
-  
-      if (!user) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-      }
-  
-      if (!user.email_verified) {
-        return res.status(400).json({ message: 'Please verify your email before logging in' });
-      }
-  
-      if (!user.is_active || user.account_status !== 'active') {
-        return res.status(403).json({ message: 'Account is inactive or suspended' });
-      }
-  
-      const validPassword = await bcrypt.compare(password, user.password_hash);
-      if (!validPassword) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-      }
-  
-      const token = jwt.sign({ user_id: user.user_id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-  
-      await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = $1', [user.user_id]);
-  
-      res.json({
-        token,
-        user: {
-          user_id: user.user_id,
-          email: user.email
-        }
-      });
-    } catch (err) {
-      console.error('Login error:', err);
-      res.status(500).send('Server error');
+  try {
+    const { email, password } = req.body;
+
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = userResult.rows[0];
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
-  });
+
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ user_id: user.user_id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    await pool.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = $1', [user.user_id]);
+
+    res.json({
+      token,
+      user: {
+        user_id: user.user_id,
+        email: user.email,
+        email_verified: user.email_verified || false // Add this line
+      }
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).send('Server error');
+  }
+});
   
 
 module.exports = router;

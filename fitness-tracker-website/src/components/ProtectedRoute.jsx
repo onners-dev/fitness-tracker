@@ -1,9 +1,10 @@
 import { Navigate } from 'react-router-dom';
+import { authService } from '../services/api';
 
 const ProtectedRoute = ({ children }) => {
   // Check if user is logged in and verified
   const token = localStorage.getItem('token');
-  const isVerified = localStorage.getItem('isVerified'); // Assume this is set after verification
+  const isVerified = localStorage.getItem('isVerified') === 'true';
 
   // If not logged in, redirect to login page
   if (!token) {
@@ -11,7 +12,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   // If not verified, redirect to a verification notice page
-  if (isVerified !== 'true') {
+  if (!isVerified) {
     return <Navigate to="/verify-email" replace />;
   }
 

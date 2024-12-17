@@ -25,6 +25,9 @@ const EmailVerification = () => {
       try {
         const response = await authService.verifyEmail(token);
         
+        // Explicitly set isVerified in localStorage
+        localStorage.setItem('isVerified', 'true');
+        
         setMessage(response.message);
         setTimeout(() => navigate('/profile-setup'), 3000);
       } catch (error) {

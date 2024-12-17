@@ -22,12 +22,54 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await authService.login(credentials.email, credentials.password);
-      navigate('/dashboard');
+      const response = await authService.login(credentials.email, credentials.password);
+      
+      // Set isVerified based on the user's verification status
+      localStorage.setItem('isVerified', response.user.email_verified.toString());
+      
+      // Navigate based on verification status
+      if (response.user.email_verified) {
+        navigate('/dashboard');
+      } else {
+        navigate('/verify-email', { 
+          state: { 
+            email: credentials.email 
+          } 
+        });
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred');
     }
   };
+  
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+  
+    try {
+      const response = await authService.login(email, password);
+      
+      // Set isVerified based on the user's verification status
+      localStorage.setItem('isVerified', response.user.email_verified || 'false');
+      
+      // Navigate based on verification status
+      if (response.user.email_verified) {
+        navigate('/dashboard');
+      } else {
+        navigate('/verify-email', { 
+          state: { 
+            email: email 
+          } 
+        });
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
 
   return (
     <div className="login-page">
