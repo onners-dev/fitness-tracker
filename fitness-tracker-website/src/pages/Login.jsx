@@ -56,34 +56,32 @@ const Login = () => {
         credentials.password
       );
     
-      // Check verification and first-time setup
-      if (response.user.email_verified) {
-        try {
-          const userProfile = await userService.getProfile();
-          
-          if (!userProfile || !userProfile.is_profile_complete) {
-            localStorage.setItem('firstTimeSetup', 'true');
-            navigate('/profile-setup');
-          } else {
-            localStorage.removeItem('firstTimeSetup');
-            navigate('/dashboard');
-          }
-        } catch (profileError) {
-          console.error('Profile fetch error:', profileError);
+      // Ensure verification status is set
+      localStorage.setItem('isVerified', 
+        (response.user.email_verified === true || 
+         response.user.email_verified === 't').toString()
+      );
+  
+      try {
+        const userProfile = await userService.getProfile();
+        
+        if (!userProfile || !userProfile.is_profile_complete) {
+          localStorage.setItem('firstTimeSetup', 'true');
+          navigate('/profile-setup');
+        } else {
+          localStorage.removeItem('firstTimeSetup');
           navigate('/dashboard');
         }
-      } else {
-        navigate('/verify-email', { 
-          state: { 
-            email: credentials.email 
-          } 
-        });
+      } catch (profileError) {
+        console.error('Profile fetch error:', profileError);
+        navigate('/dashboard');
       }
     } catch (err) {
       console.error('Login Error:', err);
       // Error handling remains the same
     }
   };
+  
   
   
 

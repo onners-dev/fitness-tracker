@@ -97,9 +97,9 @@ const ProfileSetup = () => {
     if (!validateForm()) {
       return;
     }
-
+  
     setIsLoading(true);
-
+  
     try {
       // Prepare profile data for submission
       const profileData = {
@@ -112,13 +112,16 @@ const ProfileSetup = () => {
         weight_unit: formData.weightUnit,
         height_unit: formData.heightUnit
       };
-
+  
       // Submit profile data
       await userService.updateProfile(profileData);
-
+  
       // Clear first-time setup flag
       localStorage.removeItem('firstTimeSetup');
-
+      
+      // Set verification to true
+      localStorage.setItem('isVerified', 'true');
+  
       // Navigate to dashboard
       navigate('/dashboard');
     } catch (err) {
@@ -139,6 +142,7 @@ const ProfileSetup = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="profile-setup-page">

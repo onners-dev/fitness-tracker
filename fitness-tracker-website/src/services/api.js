@@ -134,8 +134,11 @@ export const userService = {
         } catch (error) {
           console.error('Profile fetch error:', error);
           
-          // If 401 (unauthorized) or profile not found, return null
-          if (error.response?.status === 401 || error.response?.status === 404) {
+          // If 401 (unauthorized), clear token and redirect
+          if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('isVerified');
+            window.location.href = '/login';
             return null;
           }
           
