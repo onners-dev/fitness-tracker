@@ -6,6 +6,7 @@ import './EmailVerification.css';
 const EmailVerification = () => {
   const [message, setMessage] = useState('Verification Pending');
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [isResendDisabled, setIsResendDisabled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -13,13 +14,24 @@ const EmailVerification = () => {
   // Check if email and token are available from signup
   const initialEmail = location.state?.email;
   const initialToken = location.state?.token;
+  const verificationStatus = new URLSearchParams(location.search).get('verified');
 
   useEffect(() => {
     // If no initial email or token, redirect to signup
     if (!initialEmail || !initialToken) {
       navigate('/signup');
+      return;
     }
-  }, [initialEmail, initialToken, navigate]);
+
+    // Check if verification happened
+    if (verificationStatus === 'true') {
+      setIsVerified(true);
+      setMessage('Email verified successfully!');
+      
+      // Set up first-time setup flag
+      localStorage.setItem('firstTimeSetup', 'true');
+    }
+  }, [initialEmail, initialToken, verificationStatus, navigate]);
 
   const handleResendEmail = async () => {
     try {
@@ -47,36 +59,48 @@ const EmailVerification = () => {
     }
   };
 
+  const handleContinueToProfileSetup = () => {
+    navigate('/profile-setup');
+  };
+
   return (
     <div className="email-verification-page">
       <div className="email-verification-container">
         <h2>Verify Your Email</h2>
         
-        <div className="verification-instructions">
-          <p>We've sent a verification email to <strong>{initialEmail}</strong></p>
-          <p>Please check your inbox and click the verification link to activate your account.</p>
-        </div>
+        {!isVerified ? (
+          <>
+            <div className="verification-instructions">
+              <p>We've sent a verification email to <strong>{initialEmail}</strong></p>
+              <p>Please check your inbox and click the verification link to activate your account.</p>
+            </div>
 
-        <div className="verification-actions">
-          <button 
-            onClick={handleResendEmail} 
-            className="resend-button"
-            disabled={isResendDisabled || isLoading}
-          >
-            {isResendDisabled ? 'Resend in 60s' : "Didn't receive an email? Resend"}
-          </button>
+            <div className="verification-actions">
+              <button 
+                onClick={handleResendEmail} 
+                className="resend-button"
+                disabled={isResendDisabled || isLoading}
+              >
+                {isResendDisabled ? 'Resend in 60s' : "Didn't receive an email? Resend"}
+              </button>
 
-          <button 
-            onClick={() => navigate('/signup')} 
-            className="back-button"
-          >
-            Back to Signup
-          </button>
-        </div>
-
-        {message !== 'Verification Pending' && (
-          <div className="message-container">
+              <button 
+                onClick={() => navigate('/signup')} 
+                className="back-button"
+              >
+                Back to Signup
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="verified-container">
             <p>{message}</p>
+            <button 
+              onClick={handleContinueToProfileSetup} 
+              className="continue-button"
+            >
+              Continue to Profile Setup
+            </button>
           </div>
         )}
       </div>

@@ -95,13 +95,14 @@ router.get('/auth/verify-email', async (req, res) => {
 
     await pool.query('UPDATE users SET email_verified = true WHERE verification_token = $1', [token]);
 
-    // Redirect to the email verified page
-    res.redirect('http://arcus.fit/email-verified');
+    // Redirect to the specific email verified page
+    res.redirect('http://arcus.fit/verify-email?verified=true');
   } catch (error) {
     console.error('Verification error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 
 
