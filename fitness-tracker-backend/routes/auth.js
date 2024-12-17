@@ -30,14 +30,11 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const client = await pool.connect();
+    // Generate a 6-digit verification code BEFORE inserting user
+    const verificationCode = generateVerificationCode();
+
     try {
-      await client.query('BEGIN');
-
-      // Generate a 6-digit verification code
-      const verificationCode = generateVerificationCode();
-
-      const newUser = await client.query(
+      const newUser = await pool.query(
         'INSERT INTO users (email, password_hash, verification_code, verification_code_expires_at) VALUES ($1, $2, $3, $4) RETURNING user_id',
         [
           email, 
@@ -47,12 +44,10 @@ router.post('/register', async (req, res) => {
         ]
       );
 
-      await client.query(
+      await pool.query(
         `INSERT INTO user_profiles (user_id, first_name, last_name, date_of_birth, gender) VALUES ($1, $2, $3, $4, $5)`,
         [newUser.rows[0].user_id, firstName, lastName, dateOfBirth, gender]
       );
-
-      await client.query('COMMIT');
 
       // Send verification email with code
       const mailOptions = {
@@ -75,17 +70,15 @@ router.post('/register', async (req, res) => {
         email: email
       });
     } catch (err) {
-      await client.query('ROLLBACK');
       console.error('Registration transaction error:', err);
       res.status(500).json({ message: 'Server error during registration' });
-    } finally {
-      client.release();
     }
   } catch (err) {
     console.error('Registration error:', err);
     res.status(500).json({ message: 'Server error during registration' });
   }
 });
+
 
 // New route to verify code
 router.post('/verify-code', async (req, res) => {

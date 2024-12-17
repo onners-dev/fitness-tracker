@@ -23,23 +23,25 @@ const EmailVerification = () => {
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
+  
     try {
       const response = await authService.verifyCode(email, verificationCode);
       
       // Set verification status
       localStorage.setItem('isVerified', 'true');
       localStorage.setItem('firstTimeSetup', 'true');
-
+  
       setMessage(response.message);
       
       // Navigate to profile setup
       setTimeout(() => navigate('/profile-setup'), 2000);
     } catch (error) {
+      console.error('Verification error:', error);
       setMessage(error.response?.data?.message || 'Verification failed');
       setIsLoading(false);
     }
   };
+  
 
   const handleResendCode = async () => {
     try {

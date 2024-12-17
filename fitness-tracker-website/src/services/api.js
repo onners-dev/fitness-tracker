@@ -58,11 +58,13 @@ export const authService = {
     },
 
     register: async (userData) => {
-        const response = await api.post('/auth/register', userData);
-        if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
+        try {
+            const response = await api.post('/auth/register', userData);
+            return response.data;
+        } catch (error) {
+            console.error('Registration error:', error);
+            throw error;
         }
-        return response.data;
     },
 
     logout: () => {

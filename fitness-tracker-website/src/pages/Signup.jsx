@@ -89,12 +89,6 @@ const Signup = () => {
     setIsLoading(true);
     
     try {
-      console.log('Attempting to register with:', {
-        email: formData.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName
-      });
-  
       const age = calculateAge(formData.dateOfBirth);
       const response = await authService.register({
         email: formData.email,
@@ -106,13 +100,10 @@ const Signup = () => {
         age: age
       });
       
-      console.log('Registration response:', response);
-      
-      if (response) {
+      if (response.email) {
         navigate('/verify-email', { 
           state: { 
-            email: formData.email, 
-            token: response.token 
+            email: response.email
           } 
         });
       } else {
@@ -125,6 +116,7 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
+  
   
   
   
