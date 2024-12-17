@@ -16,6 +16,7 @@ const transporter = nodemailer.createTransport({
 router.post('/register', async (req, res) => {
   try {
     const { firstName, lastName, gender, dateOfBirth, email, password } = req.body;
+    console.log('Registration attempt:', { email, firstName, lastName });
 
     if (!firstName || !lastName || !email || !password || !dateOfBirth || !gender) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -59,9 +60,9 @@ router.post('/register', async (req, res) => {
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.error('Error sending email:', error);
+          console.error('Email Sending Error:', error);
         } else {
-          console.log('Email sent:', info.response);
+          console.log('Email Sent Successfully:', info);
         }
       });
 

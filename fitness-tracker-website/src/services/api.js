@@ -13,6 +13,7 @@ const api = axios.create({
 // Add token to requests if it exists
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
+    console.log('Token being sent:', token); // Debug log
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -97,13 +98,20 @@ export const authService = {
 export const userService = {
     getProfile: async () => {
         try {
+            // Only attempt to get profile if a token exists
+            const token = localStorage.getItem('token');
+            if (!token) {
+                return null;
+            }
+            
             const response = await api.get('/users/profile');
             return response.data;
         } catch (error) {
-            // Only log non-401 errors
-            if (error.response?.status !== 401) {
-                console.error('Error fetching profile', error);
+            // Silently handle 401 errors
+            if (error.response?.status === 401) {
+                return null;
             }
+            console.error('Profile fetch error:', error);
             return null;
         }
     },

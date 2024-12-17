@@ -85,10 +85,16 @@ const Signup = () => {
     if (!validateStep1() || !validateStep2()) {
       return;
     }
-  
+    
     setIsLoading(true);
-  
+    
     try {
+      console.log('Attempting to register with:', {
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName
+      });
+  
       const age = calculateAge(formData.dateOfBirth);
       const response = await authService.register({
         email: formData.email,
@@ -100,10 +106,9 @@ const Signup = () => {
         age: age
       });
       
+      console.log('Registration response:', response);
+      
       if (response) {
-        console.log('Registration successful', response);
-        
-        // Navigate to email verification without automatic setup flag
         navigate('/verify-email', { 
           state: { 
             email: formData.email, 
@@ -114,12 +119,13 @@ const Signup = () => {
         setError('Registration failed');
       }
     } catch (err) {
-      console.error('Registration error:', err);
+      console.error('Full Registration error:', err);
       setError(err.response?.data?.message || 'An error occurred during registration');
     } finally {
       setIsLoading(false);
     }
   };
+  
   
   
 
