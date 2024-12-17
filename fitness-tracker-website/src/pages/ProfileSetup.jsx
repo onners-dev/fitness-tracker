@@ -1,25 +1,46 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../services/api';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import './Signup.css';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { userService } from '../services/api';
+import './ProfileSetup.css';
 
-const Signup = () => {
-  const [step, setStep] = useState(1);
+const ProfileSetup = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    gender: '',
-    dateOfBirth: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    height: '',
+    currentWeight: '',
+    targetWeight: '',
+    fitnessGoal: '',
+    activityLevel: '',
+    primaryFocus: '',
+    weightUnit: 'kg',
+    heightUnit: 'cm'
   });
   const [error, setError] = useState('');
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Lifecycle methods and side effects
+  useEffect(() => {
+    // Check if user is authorized to be on this page
+    const firstTimeSetup = localStorage.getItem('firstTimeSetup');
+    if (firstTimeSetup !== 'true') {
+      navigate('/dashboard');
+    }
+
+    // Optional: Retrieve pre-filled data from local storage
+    const storedGoals = JSON.parse(localStorage.getItem('signupFitnessGoals') || '{}');
+    
+    // Pre-fill fitness goals if available
+    if (storedGoals.fitnessGoal || storedGoals.activityLevel) {
+      setFormData(prev => ({
+        ...prev,
+        fitnessGoal: storedGoals.fitnessGoal || '',
+        activityLevel: storedGoals.activityLevel || ''
+      }));
+
+      // Clear the stored goals
+      localStorage.removeItem('signupFitnessGoals');
+    }
+  }, [navigate]);
 
   // Handle input changes and clear previous errors
   const handleChange = (e) => {
@@ -31,68 +52,40 @@ const Signup = () => {
     setError(''); // Clear error when user types
   };
 
-  // Calculate user's age based on date of birth
-  const calculateAge = (dateOfBirth) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDifference = today.getMonth() - birthDate.getMonth();
+  // Comprehensive input validation
+  const validateForm = () => {
+    const requiredFields = [
+      'height', 'currentWeight', 'fitnessGoal', 
+      'activityLevel', 'primaryFocus'
+    ];
     
-    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      setError(`Please fill in the following fields: ${missingFields.join(', ')}`);
+      return false;
     }
-    
-    return age;
-  };
 
-  // Validate first step of signup form
-  const validateStep1 = () => {
-    if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      setError('Please enter your full name');
-      return false;
-    }
-    if (!formData.gender) {
-      setError('Please select your gender');
-      return false;
-    }
-    if (!formData.dateOfBirth) {
-      setError('Please enter your date of birth');
-      return false;
-    }
-    return true;
-  };
+    // Additional validations
+    const height = parseFloat(formData.height);
+    const currentWeight = parseFloat(formData.currentWeight);
+    const targetWeight = parseFloat(formData.targetWeight) || null;
 
-  // Validate second step of signup form
-  const validateStep2 = () => {
-    if (!formData.email.trim()) {
-      setError('Please enter your email');
+    if (height < 50 || height > 250) {
+      setError('Please enter a valid height between 50 and 250 cm');
       return false;
     }
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+
+    if (currentWeight < 20 || currentWeight > 300) {
+      setError('Please enter a valid current weight between 20 and 300 kg');
       return false;
     }
-    
-    if (!formData.password) {
-      setError('Please enter a password');
+
+    if (targetWeight !== null && (targetWeight < 20 || targetWeight > 300)) {
+      setError('Please enter a valid target weight between 20 and 300 kg');
       return false;
     }
-    
-    // Password strength validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordRegex.test(formData.password)) {
-      setError('Password must be at least 8 characters long, include uppercase, lowercase, number, and special character');
-      return false;
-    }
-    
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return false;
-    }
-    
+
     return true;
   };
 
@@ -100,50 +93,41 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate both steps
-    if (!validateStep1() || !validateStep2()) {
+    // Validate form inputs
+    if (!validateForm()) {
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      // Calculate user's age
-      const age = calculateAge(formData.dateOfBirth);
-      
-      // Attempt to register user
-      const response = await authService.register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender,
-        age: age
-      });
-      
-      // Check if registration was successful
-      if (response.email) {
-        console.log('Registration successful', response);
-        
-        // Navigate to email verification with signup context
-        navigate('/verify-email', { 
-          state: { 
-            email: response.email,
-            fromSignup: true,
-            token: response.token  // Pass token if available
-          } 
-        });
-      } else {
-        setError('Registration failed');
-      }
+      // Prepare profile data for submission
+      const profileData = {
+        height: parseFloat(formData.height),
+        current_weight: parseFloat(formData.currentWeight),
+        target_weight: parseFloat(formData.targetWeight) || null,
+        fitness_goal: formData.fitnessGoal,
+        activity_level: formData.activityLevel,
+        primary_focus: formData.primaryFocus,
+        weight_unit: formData.weightUnit,
+        height_unit: formData.heightUnit
+      };
+
+      // Submit profile data
+      await userService.updateProfile(profileData);
+
+      // Clear first-time setup flag
+      localStorage.removeItem('firstTimeSetup');
+
+      // Navigate to dashboard
+      navigate('/dashboard');
     } catch (err) {
-      console.error('Full Registration error:', err);
+      console.error('Profile setup error:', err);
       
-      // Handle specific error types
+      // Handle specific error scenarios
       if (err.response) {
         // Server responded with an error
-        setError(err.response.data.message || 'Registration failed');
+        setError(err.response.data.message || 'Failed to update profile');
       } else if (err.request) {
         // Request made but no response received
         setError('No response from server. Please check your internet connection.');
@@ -156,193 +140,164 @@ const Signup = () => {
     }
   };
 
-  // Render first step of signup form (personal details)
-  const renderStep1 = () => (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      if (validateStep1()) {
-        setStep(2);
-      }
-    }} className="signup-form">
-      {/* First Name Input */}
-      <div className="form-group">
-        <label htmlFor="firstName">First Name</label>
-        <input
-          type="text"
-          id="firstName"
-          name="firstName"
-          value={formData.firstName}
-          onChange={handleChange}
-          required
-          placeholder="Enter your first name"
-        />
-      </div>
-
-      {/* Last Name Input */}
-      <div className="form-group">
-        <label htmlFor="lastName">Last Name</label>
-        <input
-          type="text"
-          id="lastName"
-          name="lastName"
-          value={formData.lastName}
-          onChange={handleChange}
-          required
-          placeholder="Enter your last name"
-        />
-      </div>
-
-      {/* Gender Selection */}
-      <div className="form-group">
-        <label htmlFor="gender">Gender</label>
-        <select
-          id="gender"
-          name="gender"
-          value={formData.gender}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select gender</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-          <option value="prefer-not-to-say">Prefer not to say</option>
-        </select>
-      </div>
-
-      {/* Date of Birth Input */}
-      <div className="form-group">
-        <label htmlFor="dateOfBirth">Date of Birth</label>
-        <input
-          type="date"
-          id="dateOfBirth"
-          name="dateOfBirth"
-          value={formData.dateOfBirth}
-          onChange={handleChange}
-          required
-          max={new Date().toISOString().split('T')[0]}
-        />
-      </div>
-
-      <button type="submit" className="signup-button">
-        Next
-      </button>
-    </form>
-  );
-
-  // Render second step of signup form (account details)
-  const renderStep2 = () => (
-    <form onSubmit={handleSubmit} className="signup-form">
-      {/* Email Input */}
-      <div className="form-group">
-        <label htmlFor="email">Email</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          placeholder="Enter your email"
-        />
-      </div>
-
-      {/* Password Input */}
-      <div className="form-group password-group">
-        <label htmlFor="password">Password</label>
-        <div className="password-input-wrapper">
-          <input
-            type={showPassword ? "text" : "password"}
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            minLength="8"
-            placeholder="Create a strong password"
-          />
-          <button 
-            type="button"
-            className="password-toggle"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </button>
-        </div>
-      </div>
-
-      {/* Confirm Password Input */}
-      <div className="form-group password-group">
-        <label htmlFor="confirmPassword">Confirm Password</label>
-        <div className="password-input-wrapper">
-          <input
-            type={showConfirmPassword ? "text" : "password"}
-            id="confirmPassword"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            minLength="8"
-            placeholder="Confirm your password"
-          />
-          <button 
-            type="button"
-            className="password-toggle"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          >
-            {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-          </button>
-        </div>
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="button-group">
-        <button 
-          type="button" 
-          onClick={() => setStep(1)} 
-          className="back-button"
-        >
-          Back
-        </button>
-        <button 
-          type="submit" 
-          className="signup-button"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Signing Up...' : 'Sign Up'}
-        </button>
-      </div>
-    </form>
-  );
-
   return (
-    <div className="signup-page">
-      <div className="signup-container">
-        <h2>Create Account</h2>
-        
-        {/* Steps Indicator */}
-        <div className="steps-indicator">
-          <div className={`step ${step >= 1 ? 'active' : ''}`}>1</div>
-          <div className="step-line"></div>
-          <div className={`step ${step >= 2 ? 'active' : ''}`}>2</div>
-        </div>
+    <div className="profile-setup-page">
+      <div className="profile-setup-container">
+        <h2>Complete Your Profile</h2>
         
         {/* Error Message Display */}
         {error && <div className="error-message">{error}</div>}
         
-        {/* Conditional Rendering of Steps */}
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
+        {/* Profile Setup Form */}
+        <form onSubmit={handleSubmit} className="profile-setup-form">
+          {/* Height Input */}
+          <div className="form-group">
+            <label htmlFor="height">Height</label>
+            <div className="input-group">
+              <input
+                type="number"
+                id="height"
+                name="height"
+                value={formData.height}
+                onChange={handleChange}
+                required
+                min="50"
+                max="250"
+                step="0.1"
+                placeholder="Enter height"
+              />
+              <select 
+                name="heightUnit"
+                value={formData.heightUnit}
+                onChange={handleChange}
+              >
+                <option value="cm">cm</option>
+                <option value="in">in</option>
+              </select>
+            </div>
+          </div>
 
-        {/* Footer with Login Link */}
-        <div className="signup-footer">
-          <p>
-            Already have an account? <Link to="/login" className="login-link">Log in</Link>
-          </p>
-        </div>
+          {/* Current Weight Input */}
+          <div className="form-group">
+            <label htmlFor="currentWeight">Current Weight</label>
+            <div className="input-group">
+              <input
+                type="number"
+                id="currentWeight"
+                name="currentWeight"
+                value={formData.currentWeight}
+                onChange={handleChange}
+                required
+                min="20"
+                max="300"
+                step="0.1"
+                placeholder="Enter current weight"
+              />
+              <select 
+                name="weightUnit"
+                value={formData.weightUnit}
+                onChange={handleChange}
+              >
+                <option value="kg">kg</option>
+                <option value="lbs">lbs</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Target Weight Input (Optional) */}
+          <div className="form-group">
+            <label htmlFor="targetWeight">Target Weight (Optional)</label>
+            <div className="input-group">
+              <input
+                type="number"
+                id="targetWeight"
+                name="targetWeight"
+                value={formData.targetWeight}
+                onChange={handleChange}
+                min="20"
+                max="300"
+                step="0.1"
+                placeholder="Enter target weight"
+              />
+              <select 
+                name="weightUnit"
+                value={formData.weightUnit}
+                onChange={handleChange}
+              >
+                <option value="kg">kg</option>
+                <option value="lbs">lbs</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Fitness Goal Selection */}
+          <div className="form-group">
+            <label htmlFor="fitnessGoal">Primary Fitness Goal</label>
+            <select
+              id="fitnessGoal"
+              name="fitnessGoal"
+              value={formData.fitnessGoal}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select your goal</option>
+              <option value="weight_loss">Lose Weight</option>
+              <option value="muscle_gain">Build Muscle</option>
+              <option value="maintenance">Maintain Weight</option>
+              <option value="endurance">Improve Endurance</option>
+              <option value="general_fitness">General Fitness</option>
+            </select>
+          </div>
+
+          {/* Activity Level Selection */}
+          <div className="form-group">
+            <label htmlFor="activityLevel">Activity Level</label>
+            <select
+              id="activityLevel"
+              name="activityLevel"
+              value={formData.activityLevel}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select activity level</option>
+              <option value="sedentary">Sedentary (little or no exercise)</option>
+              <option value="lightly_active">Lightly Active (1-3 days/week)</option>
+              <option value="moderately_active">Moderately Active (3-5 days/week)</option>
+              <option value="very_active">Very Active (6-7 days/week)</option>
+            </select>
+          </div>
+
+          {/* Primary Focus Selection */}
+          <div className="form-group">
+            <label htmlFor="primaryFocus">Primary Focus</label>
+            <select
+              id="primaryFocus"
+              name="primaryFocus"
+              value={formData.primaryFocus}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select your primary focus</option>
+              <option value="strength">Strength Training</option>
+              <option value="cardio">Cardiovascular Health</option>
+              <option value="flexibility">Flexibility and Mobility</option>
+              <option value="weight_management">Weight Management</option>
+              <option value="overall_wellness">Overall Wellness</option>
+            </select>
+          </div>
+
+          {/* Submit Button */}
+          <button 
+            type="submit" 
+            className="profile-setup-button"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Saving Profile...' : 'Complete Profile'}
+          </button>
+        </form>
       </div>
     </div>
   );
 };
 
-export default Signup;
+export default ProfileSetup;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -24,21 +24,37 @@ const Login = () => {
     setError(''); // Clear error when user types
   };
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    // Basic input validation
+  // Validate input before submission
+  const validateInput = () => {
     if (!credentials.email.trim()) {
       setError('Please enter your email');
-      setIsLoading(false);
-      return;
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(credentials.email)) {
+      setError('Please enter a valid email address');
+      return false;
     }
 
     if (!credentials.password) {
       setError('Please enter your password');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Reset states
+    setIsLoading(true);
+    setError('');
+
+    // Validate inputs
+    if (!validateInput()) {
       setIsLoading(false);
       return;
     }
@@ -51,14 +67,31 @@ const Login = () => {
       );
       
       console.log('Login Response:', response);
+      console.log('User Details:', response.user);
 
-      // Remove any existing first-time setup flag
+      // Clear any existing first-time setup flag
       localStorage.removeItem('firstTimeSetup');
       
+      // Set verification status
+      localStorage.setItem('isVerified', 
+        (response.user.email_verified === true || 
+         response.user.email_verified === 't').toString()
+      );
+
       // Determine navigation based on verification status
       if (response.user.email_verified) {
-        navigate('/dashboard');
+        // Check if user needs profile setup
+        // This might come from backend or additional check
+        const needsProfileSetup = true; // Modify based on your requirements
+        
+        if (needsProfileSetup) {
+          localStorage.setItem('firstTimeSetup', 'true');
+          navigate('/profile-setup');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
+        // User's email is not verified
         navigate('/verify-email', { 
           state: { 
             email: credentials.email 
@@ -68,18 +101,18 @@ const Login = () => {
     } catch (err) {
       console.error('Login Error:', err);
       
-      // Handle specific error types
+      // Detailed error handling
       if (err.response) {
         // Server responded with an error
         switch (err.response.status) {
           case 400:
             setError('Invalid email or password');
             break;
-          case 403:
-            setError('Account is inactive or suspended');
-            break;
           case 401:
             setError('Unauthorized. Please verify your email.');
+            break;
+          case 403:
+            setError('Account is inactive or suspended');
             break;
           default:
             setError(err.response.data.message || 'Login failed');

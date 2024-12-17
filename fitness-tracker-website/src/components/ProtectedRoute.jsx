@@ -5,18 +5,20 @@ const ProtectedRoute = ({ children }) => {
   const isVerified = localStorage.getItem('isVerified') === 'true';
   const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
 
-  console.log('Protected Route - Token:', token);
-  console.log('Protected Route - isVerified:', isVerified);
-  console.log('Protected Route - isFirstTimeSetup:', isFirstTimeSetup);
+  console.log('ProtectedRoute Checks:', {
+    token,
+    isVerified,
+    isFirstTimeSetup
+  });
 
   // If not logged in, redirect to login page
-  if (!token || token === 'null' || token === 'undefined') {
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // If this is a first-time setup, allow access to profile setup
+  // If first-time setup is needed, redirect to profile setup
   if (isFirstTimeSetup) {
-    return children;
+    return <Navigate to="/profile-setup" replace />;
   }
 
   // If not verified, redirect to verification page
@@ -27,6 +29,5 @@ const ProtectedRoute = ({ children }) => {
   // If logged in, verified, and not in first-time setup, show the protected component
   return children;
 };
-
 
 export default ProtectedRoute;
