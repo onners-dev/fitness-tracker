@@ -55,12 +55,7 @@ const Login = () => {
         credentials.email, 
         credentials.password
       );
-      
-      // Ensure token is set
-      if (response.token) {
-        localStorage.setItem('token', response.token);
-      }
-  
+    
       // Check verification and first-time setup
       if (response.user.email_verified) {
         try {
@@ -89,6 +84,7 @@ const Login = () => {
       // Error handling remains the same
     }
   };
+  
   
 
   return (

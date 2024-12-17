@@ -53,12 +53,13 @@ router.post('/register', async (req, res) => {
 
       // Create user
       const newUser = await client.query(
-        'INSERT INTO users (email, password_hash, verification_code, verification_code_expires_at) VALUES ($1, $2, $3, $4) RETURNING user_id',
+        'INSERT INTO users (email, password_hash, verification_code, verification_code_expires_at, email_verified) VALUES ($1, $2, $3, $4, $5) RETURNING user_id',
         [
           email, 
           hashedPassword, 
           verificationCode, 
-          new Date(Date.now() + 15 * 60 * 1000) // Code expires in 15 minutes
+          new Date(Date.now() + 15 * 60 * 1000), // Code expires in 15 minutes
+          false // explicitly set email_verified to false
         ]
       );
 
@@ -66,6 +67,16 @@ router.post('/register', async (req, res) => {
       await client.query(
         `INSERT INTO user_profiles (user_id, first_name, last_name, date_of_birth, gender) VALUES ($1, $2, $3, $4, $5)`,
         [newUser.rows[0].user_id, firstName, lastName, dateOfBirth, gender]
+      );
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          user_id: newUser.rows[0].user_id, 
+          email: email 
+        }, 
+        process.env.JWT_SECRET, 
+        { expiresIn: '1d' }
       );
 
       await client.query('COMMIT');
@@ -88,7 +99,13 @@ router.post('/register', async (req, res) => {
 
       res.status(201).json({
         message: 'User registered successfully. Please verify your email.',
-        email: email
+        email: email,
+        token: token,
+        user: {
+          user_id: newUser.rows[0].user_id,
+          email: email,
+          email_verified: false
+        }
       });
     } catch (err) {
       await client.query('ROLLBACK');
@@ -102,6 +119,7 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ message: 'Server error during registration' });
   }
 });
+
 
 // Email Verification Route
 router.post('/verify-code', async (req, res) => {
@@ -130,28 +148,16 @@ router.post('/verify-code', async (req, res) => {
       [email]
     );
 
-    // Generate a new token for the verified user
-    const user = result.rows[0];
-    const token = jwt.sign(
-      { 
-        user_id: newUser.rows[0].user_id, 
-        email: email 
-      }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '1d' }
-    );
-
-    // Send back token with registration response
-    res.status(201).json({
-      message: 'User registered successfully. Please verify your email.',
-      email: email,
-      token: token  // Add this line
+    res.status(200).json({ 
+      message: 'Email verified successfully',
+      email_verified: true
     });
-  } catch (err) {
+  } catch (error) {
     console.error('Code verification error:', error);
     res.status(500).json({ message: 'Server error during verification' });
   }
 });
+
 
 
 // Login Route
@@ -174,21 +180,10 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Create JWT token
-    const token = jwt.sign(
-      { 
-        user_id: user.user_id, 
-        email: user.email 
-      }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '1d' }
-    );
-
     // Convert verification status
     const isEmailVerified = user.email_verified === 't' || user.email_verified === true;
 
     res.json({
-      token,
       user: {
         user_id: user.user_id,
         email: user.email,
@@ -200,5 +195,6 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
 
 module.exports = router;

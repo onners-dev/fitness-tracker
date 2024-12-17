@@ -26,15 +26,10 @@ const EmailVerification = () => {
   const handleVerifyCode = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
+  
     try {
       const response = await authService.verifyCode(email, verificationCode);
       
-      // Ensure token is set
-      if (response.token) {
-        localStorage.setItem('token', response.token);
-      }
-
       // Set verification status
       localStorage.setItem('isVerified', 'true');
       
@@ -49,6 +44,7 @@ const EmailVerification = () => {
       setIsLoading(false);
     }
   };
+  
   
   
   const handleResendCode = async () => {

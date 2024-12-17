@@ -52,45 +52,34 @@ api.interceptors.response.use(
 export const authService = {
     login: async (email, password) => {
         try {
-            const response = await api.post('/auth/login', { email, password });
-            
-            console.log('Login Response:', response.data);
-            
-            if (response.data.token) {
-                // Explicitly set token
-                localStorage.setItem('token', response.data.token);
-                
-                // Explicitly set verification status
-                localStorage.setItem('isVerified', 
-                    (response.data.user.email_verified === true || 
-                     response.data.user.email_verified === 't').toString()
-                );
-            } else {
-                console.error('No token received in login response');
-                localStorage.removeItem('token');
+          const response = await api.post('/auth/login', { email, password });
+          
+          console.log('Login Response:', response.data);
+          
+          // Explicitly set verification status
+          localStorage.setItem('isVerified', 
+            (response.data.user.email_verified === true || 
+             response.data.user.email_verified === 't').toString()
+          );
+          
+          return {
+            user: {
+              ...response.data.user,
+              email_verified: response.data.user.email_verified === true || 
+                              response.data.user.email_verified === 't'
             }
-            
-            return {
-                ...response.data,
-                user: {
-                    ...response.data.user,
-                    email_verified: response.data.user.email_verified === true || 
-                                    response.data.user.email_verified === 't'
-                }
-            };
+          };
         } catch (error) {
-            console.error('Login API Error:', {
-                message: error.response?.data?.message,
-                status: error.response?.status,
-                data: error.response?.data
-            });
-            
-            // Clear token on login failure
-            localStorage.removeItem('token');
-            
-            throw error;
+          console.error('Login API Error:', {
+            message: error.response?.data?.message,
+            status: error.response?.status,
+            data: error.response?.data
+          });
+          
+          throw error;
         }
-    },
+      },
+      
     
 
     register: async (userData) => {
