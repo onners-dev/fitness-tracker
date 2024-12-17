@@ -80,9 +80,8 @@ const Signup = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Ensure preventDefault is called
+    e.preventDefault();
     
-    // Validate both steps before submission
     if (!validateStep1() || !validateStep2()) {
       return;
     }
@@ -90,9 +89,7 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-
       const age = calculateAge(formData.dateOfBirth);
-      // Register user
       const response = await authService.register({
         email: formData.email,
         password: formData.password,
@@ -103,10 +100,10 @@ const Signup = () => {
         age: age
       });
       
-      // Check if registration was successful
       if (response) {
         console.log('Registration successful', response);
-        navigate('/profile-setup');
+        alert('Registration successful! Please check your email to verify your account.');
+        navigate('/login');
       } else {
         setError('Registration failed');
       }
@@ -175,7 +172,7 @@ const Signup = () => {
           value={formData.dateOfBirth}
           onChange={handleChange}
           required
-          max={new Date().toISOString().split('T')[0]} // Prevent future dates
+          max={new Date().toISOString().split('T')[0]}
         />
       </div>
 

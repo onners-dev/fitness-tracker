@@ -41,16 +41,16 @@ const Footer = () => {
       <div className="footer-bottom">
         <p className="footer-copyright">&copy; 2024 Arcus. All rights reserved.</p>
         <div className="footer-social">
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+          <a href="https://arcus.fit" target="_blank" rel="noopener noreferrer">
             <FaFacebook />
           </a>
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
+          <a href="https://x.com/ArcusFit" target="_blank" rel="noopener noreferrer">
             <FaTwitter />
           </a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.instagram.com/arcus.fit/" target="_blank" rel="noopener noreferrer">
             <FaInstagram />
           </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+          <a href="https://arcus.fit" target="_blank" rel="noopener noreferrer">
             <FaLinkedin />
           </a>
         </div>
