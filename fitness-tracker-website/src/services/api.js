@@ -19,6 +19,7 @@ api.interceptors.request.use((config) => {
     console.log('Token:', token ? 'Present' : 'Missing');
     console.log('Is Verified:', isVerified);
     console.log('Request URL:', config.url);
+    console.log('Current Headers:', config.headers);
     console.groupEnd();
 
     // Always add token if present, for any route
@@ -26,6 +27,8 @@ api.interceptors.request.use((config) => {
         // Ensure 'Bearer ' prefix is added
         const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
         config.headers.Authorization = `Bearer ${cleanToken}`;
+        
+        console.log('🛡️ Token Added to Headers:', config.headers.Authorization);
     }
     
     return config;
@@ -65,13 +68,18 @@ export const authService = {
           const response = await api.post('/auth/login', { email, password });
           
           console.group('🔐 Detailed Login Response');
+          console.log('Full Response:', response);
           console.log('Response Data:', response.data);
-          console.log('Token:', response.data.token);
-          console.log('User:', response.data.user);
+          console.log('Token:', response.data?.token);
+          console.log('User:', response.data?.user);
           console.groupEnd();
       
-          // Validate response
-          if (!response.data || !response.data.token) {
+          // Validate response with more robust checking
+          if (!response.data) {
+            throw new Error('Empty response from server');
+          }
+      
+          if (!response.data.token) {
             throw new Error('No token received from server');
           }
           
@@ -85,6 +93,7 @@ export const authService = {
           };
         } catch (error) {
           console.group('🚨 Login API Error');
+          console.error('Full Error:', error);
           console.error('Error Details:', {
             message: error.response?.data?.message,
             status: error.response?.status,
@@ -94,7 +103,8 @@ export const authService = {
           
           throw error;
         }
-      },
+    },
+      
       
       
     

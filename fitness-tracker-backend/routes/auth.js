@@ -248,7 +248,10 @@ router.post('/login', async (req, res) => {
         email_verified: isEmailVerified
       }, 
       process.env.JWT_SECRET, 
-      { expiresIn: '1d' }
+      { 
+        algorithm: 'HS256', 
+        expiresIn: '1d' 
+      }
     );
 
     // Fetch user profile
@@ -285,7 +288,7 @@ router.post('/login', async (req, res) => {
 
     // Always send token in response
     res.status(200).json({
-      token: token,
+      token: token,  // Explicitly add token
       user: {
         user_id: user.user_id,
         email: user.email,
