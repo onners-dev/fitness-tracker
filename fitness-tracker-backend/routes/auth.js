@@ -69,21 +69,20 @@ router.post('/register', async (req, res) => {
         [newUser.rows[0].user_id, firstName, lastName, dateOfBirth, gender]
       );
 
-      // Generate JWT token
+      // Generate JWT token - FIXED: use newUser details
       const token = jwt.sign(
         { 
-          user_id: user.user_id, 
-          email: user.email,
-          email_verified: isEmailVerified
+          user_id: newUser.rows[0].user_id, 
+          email: email,
+          email_verified: false
         }, 
         process.env.JWT_SECRET, 
         { expiresIn: '1d' }
       );
-      
 
       await client.query('COMMIT');
 
-      // Send verification email
+      // Send verification email (optional, can be done async)
       const mailOptions = {
         from: 'no-reply@arcus.fit',
         to: email,
@@ -94,15 +93,13 @@ router.post('/register', async (req, res) => {
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           console.error('Email Sending Error:', error);
-        } else {
-          console.log('Email Sent Successfully:', info);
         }
       });
 
       res.status(201).json({
         message: 'User registered successfully. Please verify your email.',
         email: email,
-        token: token,  // Ensure token is always sent
+        token: token,
         user: {
           user_id: newUser.rows[0].user_id,
           email: email,

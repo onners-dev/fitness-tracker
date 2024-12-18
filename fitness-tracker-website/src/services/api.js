@@ -119,6 +119,38 @@ export const authService = {
     },
       
 
+    register: async (userData) => {
+        try {
+            console.group('🚀 Frontend Registration Attempt');
+            console.log('User Data:', userData);
+            
+            const response = await api.post('/auth/register', userData);
+            
+            console.log('Registration Response:', response.data);
+            console.groupEnd();
+            
+            return {
+                token: response.data.token,
+                email: response.data.email,
+                user: {
+                    user_id: response.data.user.user_id,
+                    email: response.data.email,
+                    email_verified: false,
+                    needs_profile_setup: true
+                }
+            };
+        } catch (error) {
+            console.error('🚨 Registration API Error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            
+            // Throw a more informative error
+            throw error.response?.data || new Error('Registration failed');
+        }
+    },
+
     logout: () => {
         localStorage.removeItem('token');
         localStorage.removeItem('isVerified');
