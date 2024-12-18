@@ -84,36 +84,46 @@ api.interceptors.response.use(
 export const authService = {
     login: async (email, password) => {
         try {
-            const response = await api.post('/auth/login', { email, password });
-            
-            console.group('🔐 Detailed Login Response');
-            console.log('Response Data:', response.data);
-            console.log('Token:', response.data?.token);
-            console.log('User:', response.data?.user);
-            console.groupEnd();
-
-            // Validate response with more robust checking
-            if (!response.data) {
-                throw new Error('Empty response from server');
+          const response = await api.post('/auth/login', { email, password });
+          
+          console.group('🔐 Detailed Login Response');
+          console.log('Full Response:', response);
+          console.log('Response Data:', response.data);
+          console.log('Token:', response.data?.token);
+          console.log('User:', response.data?.user);
+          console.groupEnd();
+      
+          // Validate response with more robust checking
+          if (!response.data) {
+            throw new Error('Empty response from server');
+          }
+      
+          if (!response.data.token) {
+            throw new Error('No token received from server');
+          }
+          
+          return {
+            token: response.data.token,
+            user: {
+              ...response.data.user,
+              email_verified: response.data.user.email_verified === true || 
+                              response.data.user.email_verified === 't'
             }
-
-            if (!response.data.token) {
-                throw new Error('No token received from server');
-            }
-            
-            return {
-                token: response.data.token,
-                user: {
-                    ...response.data.user,
-                    email_verified: response.data.user.email_verified === true || 
-                                    response.data.user.email_verified === 't'
-                }
-            };
+          };
         } catch (error) {
-            // Use the handleApiError function
-            handleApiError(error);
+          console.group('🚨 Login API Error');
+          console.error('Full Error:', error);
+          console.error('Error Details:', {
+            message: error.response?.data?.message,
+            status: error.response?.status,
+            data: error.response?.data
+          });
+          console.groupEnd();
+          
+          throw error;
         }
-    },
+      },
+      
 
     register: async (userData) => {
         try {

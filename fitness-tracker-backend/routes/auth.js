@@ -218,7 +218,7 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log('Login Attempt:', { email });
+    console.log('🔐 Backend Login Attempt:', { email });
 
     // Find user
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -226,14 +226,14 @@ router.post('/login', async (req, res) => {
 
     // Check if user exists
     if (!user) {
-      console.warn('User not found:', email);
+      console.warn('❌ User not found:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
-      console.warn('Invalid password for:', email);
+      console.warn('❌ Invalid password for:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
@@ -254,7 +254,14 @@ router.post('/login', async (req, res) => {
       }
     );
 
-    // Fetch user profile
+    console.log('✅ Login Success:', {
+      userId: user.user_id,
+      email: user.email,
+      emailVerified: isEmailVerified,
+      tokenGenerated: !!token
+    });
+
+    // Fetch user profile to check completeness
     const profileResult = await pool.query(`
       SELECT 
         up.first_name, 
@@ -278,16 +285,8 @@ router.post('/login', async (req, res) => {
       profile?.primary_focus
     );
 
-    console.log('Login Success:', {
-      userId: user.user_id,
-      email: user.email,
-      emailVerified: isEmailVerified,
-      profileComplete: isProfileComplete,
-      tokenGenerated: !!token
-    });
-
-    // Explicitly construct response with token
-    const responseBody = {
+    // IMPORTANT: Explicitly return token in response
+    res.status(200).json({
       token: token,  // Explicitly add token
       user: {
         user_id: user.user_id,
@@ -295,19 +294,16 @@ router.post('/login', async (req, res) => {
         email_verified: isEmailVerified,
         is_profile_complete: isProfileComplete
       }
-    };
-
-    console.log('Response Body:', responseBody);
-
-    res.status(200).json(responseBody);
+    });
   } catch (err) {
-    console.error('Login Error:', err);
+    console.error('🚨 Login Error:', err);
     res.status(500).json({ 
       message: 'Server error during login',
       error: err.message 
     });
   }
 });
+
 
 
 module.exports = router;
