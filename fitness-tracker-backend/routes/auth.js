@@ -286,8 +286,8 @@ router.post('/login', async (req, res) => {
       tokenGenerated: !!token
     });
 
-    // Always send token in response
-    res.status(200).json({
+    // Explicitly construct response with token
+    const responseBody = {
       token: token,  // Explicitly add token
       user: {
         user_id: user.user_id,
@@ -295,7 +295,11 @@ router.post('/login', async (req, res) => {
         email_verified: isEmailVerified,
         is_profile_complete: isProfileComplete
       }
-    });
+    };
+
+    console.log('Response Body:', responseBody);
+
+    res.status(200).json(responseBody);
   } catch (err) {
     console.error('Login Error:', err);
     res.status(500).json({ 
@@ -304,5 +308,6 @@ router.post('/login', async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;

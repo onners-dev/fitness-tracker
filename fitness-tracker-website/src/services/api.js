@@ -2,6 +2,25 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+function handleApiError(error) {
+  console.group('🚨 API Error Handler');
+  console.error('Full Error:', error);
+  console.error('Error Response:', error.response);
+  console.groupEnd();
+
+  if (error.response) {
+    // The request was made and the server responded with a status code
+    // that falls out of the range of 2xx
+    throw error.response.data || new Error('An error occurred');
+  } else if (error.request) {
+    // The request was made but no response was received
+    throw new Error('No response received from server');
+  } else {
+    // Something happened in setting up the request that triggered an Error
+    throw new Error('Error setting up the request');
+  }
+}
+
 // Create axios instance
 const api = axios.create({
     baseURL: API_URL,
@@ -65,57 +84,43 @@ api.interceptors.response.use(
 export const authService = {
     login: async (email, password) => {
         try {
-          const response = await api.post('/auth/login', { email, password });
-          
-          console.group('🔐 Detailed Login Response');
-          console.log('Full Response:', response);
-          console.log('Response Data:', response.data);
-          console.log('Token:', response.data?.token);
-          console.log('User:', response.data?.user);
-          console.groupEnd();
-      
-          // Validate response with more robust checking
-          if (!response.data) {
-            throw new Error('Empty response from server');
-          }
-      
-          if (!response.data.token) {
-            throw new Error('No token received from server');
-          }
-          
-          return {
-            token: response.data.token,
-            user: {
-              ...response.data.user,
-              email_verified: response.data.user.email_verified === true || 
-                              response.data.user.email_verified === 't'
+            const response = await api.post('/auth/login', { email, password });
+            
+            console.group('🔐 Detailed Login Response');
+            console.log('Response Data:', response.data);
+            console.log('Token:', response.data?.token);
+            console.log('User:', response.data?.user);
+            console.groupEnd();
+
+            // Validate response with more robust checking
+            if (!response.data) {
+                throw new Error('Empty response from server');
             }
-          };
+
+            if (!response.data.token) {
+                throw new Error('No token received from server');
+            }
+            
+            return {
+                token: response.data.token,
+                user: {
+                    ...response.data.user,
+                    email_verified: response.data.user.email_verified === true || 
+                                    response.data.user.email_verified === 't'
+                }
+            };
         } catch (error) {
-          console.group('🚨 Login API Error');
-          console.error('Full Error:', error);
-          console.error('Error Details:', {
-            message: error.response?.data?.message,
-            status: error.response?.status,
-            data: error.response?.data
-          });
-          console.groupEnd();
-          
-          throw error;
+            // Use the handleApiError function
+            handleApiError(error);
         }
     },
-      
-      
-      
-    
 
     register: async (userData) => {
         try {
             const response = await api.post('/auth/register', userData);
             return response.data;
         } catch (error) {
-            console.error('Registration error:', error);
-            throw error;
+            handleApiError(error);
         }
     },
 
@@ -169,43 +174,21 @@ export const authService = {
 export const userService = {
     getProfile: async () => {
         try {
-          const response = await api.get('/users/profile');
-          return response.data;
+            const response = await api.get('/users/profile');
+            return response.data;
         } catch (error) {
-          console.error('Profile fetch error:', error);
-          
-          // If 401 (unauthorized), clear token and redirect
-          if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('isVerified');
-            window.location.href = '/login';
-            return null;
-          }
-          
-          // For other errors, throw
-          throw error;
+            handleApiError(error);
         }
-      },
-  
-      updateProfile: async (profileData) => {
+    },
+
+    updateProfile: async (profileData) => {
         try {
-          console.log('🚀 Updating Profile:', profileData);
-          
-          const response = await api.put('/users/profile', profileData);
-          
-          console.log('✅ Profile Update Response:', response.data);
-          
-          return response.data;
+            const response = await api.put('/users/profile', profileData);
+            return response.data;
         } catch (error) {
-          console.error('❌ Update Profile Error:', {
-            message: error.response?.data?.message,
-            status: error.response?.status,
-            data: error.response?.data
-          });
-          
-          throw error;
+            handleApiError(error);
         }
-      },
+    },
       
 
     updatePassword: async (passwordData) => {
