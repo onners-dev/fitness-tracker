@@ -75,9 +75,15 @@ const EmailVerification = () => {
       
       const response = await authService.resendVerificationCode(email);
       
+      // Use the message from the server response
       setMessage(response.message || 'New verification code sent!');
     } catch (error) {
-      setMessage('Failed to resend verification code');
+      // More specific error handling
+      setMessage(
+        error.message || 
+        'Failed to resend verification code. Please try again.'
+      );
+      
       // Reset countdown if there's an error
       setResendCountdown(0);
     }
@@ -92,6 +98,7 @@ const EmailVerification = () => {
           <p>We've sent a 6-digit verification code to</p>
           <p><strong>{email}</strong></p>
           <p>Enter the code below to verify your email address</p>
+          <p>If you haven't received the email, check your spam folder.</p>
         </div>
 
         <form onSubmit={handleVerifyCode} className="verification-form">

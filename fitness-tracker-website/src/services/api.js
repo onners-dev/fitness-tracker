@@ -201,18 +201,32 @@ export const authService = {
           
           throw error;
         }
-      },
+    },
       
 
     resendVerificationCode: async (email) => {
         try {
+            console.log('🔄 Attempting to Resend Verification Code:', email);
+            
             const response = await api.post('/auth/resend-verification', { email });
+            
+            console.log('✅ Resend Verification Response:', response.data);
             return response.data;
         } catch (error) {
-            console.error('Resend verification code error:', error);
-            throw error;
+            console.error('❌ Resend Verification Code Error:', {
+                message: error.response?.data?.message,
+                status: error.response?.status,
+                data: error.response?.data
+            });
+            
+            // Throw a more specific error
+            throw {
+                message: error.response?.data?.message || 'Failed to resend verification code',
+                status: error.response?.status
+            };
         }
     }
+    
 };
 
 // User services

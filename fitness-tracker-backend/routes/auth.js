@@ -246,6 +246,80 @@ router.post('/verify-code', async (req, res) => {
   }
 });
 
+// Resend Verification Code Route
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    console.log('🔄 Resend Verification Code Request:', { email });
+
+    // Validate input
+    if (!email) {
+      return res.status(400).json({ 
+        message: 'Email is required' 
+      });
+    }
+
+    // Check if user exists
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = userResult.rows[0];
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: 'User not found' 
+      });
+    }
+
+    // Generate new verification code
+    const verificationCode = generateVerificationCode();
+
+    // Update user with new verification code
+    await pool.query(
+      `UPDATE users 
+       SET verification_code = $1, 
+           verification_code_expires_at = $2 
+       WHERE email = $3`,
+      [
+        verificationCode, 
+        new Date(Date.now() + 15 * 60 * 1000), // Code expires in 15 minutes
+        email
+      ]
+    );
+
+    // Send verification email
+    const mailOptions = {
+      from: 'no-reply@arcus.fit',
+      to: email,
+      subject: 'New Verification Code for Arcus',
+      text: `Your new verification code is: ${verificationCode}. This code will expire in 15 minutes.`
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Resend Verification Email Error:', error);
+      }
+    });
+
+    res.status(200).json({ 
+      message: 'New verification code has been sent to your email',
+      email: email
+    });
+
+  } catch (error) {
+    console.error('🚨 Resend Verification Code Error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+
+    res.status(500).json({ 
+      message: 'Server error while resending verification code',
+      error: error.message 
+    });
+  }
+});
+
+
 
 router.post('/login', async (req, res) => {
   console.log('JWT Secret Check:', {
