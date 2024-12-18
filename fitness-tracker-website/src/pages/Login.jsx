@@ -56,17 +56,18 @@ const Login = () => {
     try {
       const loginResponse = await authService.login(credentials.email, credentials.password);
       
-      console.log('🔐 Login Response:', {
+      console.log('🔐 Processed Login Response:', {
         user: loginResponse.user,
         token: loginResponse.token
       });
   
       // Ensure token is set correctly
-      if (loginResponse.token) {
-        // Remove any existing 'Bearer ' prefix and store clean token
-        const cleanToken = loginResponse.token.replace(/^Bearer\s+/i, '').trim();
-        localStorage.setItem('token', cleanToken);
+      if (!loginResponse.token) {
+        throw new Error('No token received');
       }
+  
+      // Store token
+      localStorage.setItem('token', loginResponse.token);
       
       // Set verification status
       localStorage.setItem('isVerified', 
@@ -96,6 +97,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+  
   
 
   return (

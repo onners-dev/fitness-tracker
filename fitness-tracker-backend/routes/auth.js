@@ -197,8 +197,15 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    console.log('Login Token Generated:', {
+      token: token,
+      user_id: user.user_id,
+      email: user.email,
+      email_verified: isEmailVerified
+    });
+
     res.json({
-      token: token,  // Send raw token without 'Bearer '
+      token: token,  // Ensure token is always sent
       user: {
         user_id: user.user_id,
         email: user.email,
@@ -210,6 +217,7 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
 
 
 module.exports = router;

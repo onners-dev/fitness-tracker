@@ -2,15 +2,17 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
 module.exports = (req, res, next) => {
-    // Log full headers for debugging
-    console.log('📋 Full Request Headers:', req.headers);
+    console.log('🔍 Full Request Headers:', req.headers);
 
-    // Get token from header, handling different potential formats
-    const authHeader = req.headers.authorization || req.headers.Authorization;
+    // Extract token from multiple possible header locations
+    const authHeader = 
+        req.headers.authorization || 
+        req.headers.Authorization || 
+        req.get('Authorization');
     
-    console.log('🔍 Authorization Header:', authHeader);
+    console.log('📡 Authorization Header:', authHeader);
 
-    // Extract token, handling different possible formats
+    // Extract token, handling different formats
     const token = authHeader ? 
         authHeader.replace(/^Bearer\s+/i, '').trim() : 
         null;
@@ -19,7 +21,6 @@ module.exports = (req, res, next) => {
 
     // Check if no token
     if (!token) {
-        console.warn('❌ No token, authorization denied');
         return res.status(401).json({ 
             message: 'No token, authorization denied',
             details: 'Token not found in headers'

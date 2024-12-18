@@ -63,7 +63,15 @@ export const authService = {
         try {
           const response = await api.post('/auth/login', { email, password });
           
-          console.log('Login Response:', response.data);
+          console.log('🔐 Detailed Login Response:', {
+            user: response.data.user,
+            token: response.data.token
+          });
+          
+          // Ensure token is returned
+          if (!response.data.token) {
+            throw new Error('No token received from server');
+          }
           
           // Explicitly set verification status
           localStorage.setItem('isVerified', 
@@ -72,6 +80,7 @@ export const authService = {
           );
           
           return {
+            token: response.data.token,
             user: {
               ...response.data.user,
               email_verified: response.data.user.email_verified === true || 
@@ -87,7 +96,7 @@ export const authService = {
           
           throw error;
         }
-      },
+    },
       
     
 
