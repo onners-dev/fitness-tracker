@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const pool = require('../db');
+const authMiddleware = require('../middleware/authorization');
 
 // Configure nodemailer to use Postfix
 const transporter = nodemailer.createTransport({
