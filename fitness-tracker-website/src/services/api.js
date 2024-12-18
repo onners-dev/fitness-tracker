@@ -84,27 +84,25 @@ api.interceptors.response.use(
 export const authService = {
     login: async (email, password) => {
         try {
+            console.group('🔐 Frontend Login Attempt');
+            console.log('Email:', email);
+            console.log('Password Length:', password.length);
+            
             const response = await api.post('/auth/login', { email, password });
             
-            console.group('🔐 Detailed Login Response');
+            console.log('Full Response:', response);
             console.log('Response Data:', response.data);
             console.groupEnd();
         
-            // Modify token extraction logic
-            const token = response.data.token || 
-                          (response.data.user && response.data.user.token);
+            // Very explicit token extraction and validation
+            const token = 
+                response.data.token || 
+                (response.data.user && response.data.user.token);
             
             if (!token) {
-                console.error('❌ Invalid login response: No token');
-                throw new Error('No token received from server');
+                console.error('❌ No token in login response');
+                throw new Error('No authentication token received');
             }
-            
-            // Set token and verification status in localStorage
-            localStorage.setItem('token', token);
-            localStorage.setItem('isVerified', 
-                (response.data.user.email_verified === true || 
-                 response.data.user.email_verified === 't').toString()
-            );
             
             return {
                 token: token,
@@ -117,13 +115,15 @@ export const authService = {
                 }
             };
         } catch (error) {
-            console.error('🚨 Login API Error:', error);
+            console.error('🚨 Login API Error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
             throw error;
         }
     },
     
-      
-      
       
 
     register: async (userData) => {

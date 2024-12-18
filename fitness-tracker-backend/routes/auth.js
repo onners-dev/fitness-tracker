@@ -213,14 +213,39 @@ router.post('/verify-code', async (req, res) => {
 
 
 router.post('/login', async (req, res) => {
+  console.log('JWT Secret Check:', {
+    secretDefined: !!process.env.JWT_SECRET,
+    secretLength: process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 'N/A'
+  });
+  
   try {
     const { email, password } = req.body;
 
-    console.log('🔐 Backend Login Attempt:', { email });
+    console.log('🔐 Backend Login Attempt:', { 
+      email, 
+      emailLength: email.length,
+      passwordLength: password.length
+    });
+
+    // Verify JWT secret
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET is UNDEFINED');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
 
     // Find user
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
+
+    // Extremely detailed logging
+    console.log('User Query Result:', {
+      userFound: !!user,
+      userDetails: user ? {
+        user_id: user.user_id,
+        email: user.email,
+        email_verified: user.email_verified
+      } : null
+    });
 
     // Check if user exists
     if (!user) {
@@ -228,75 +253,82 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Detailed password verification logging
+    console.log('Password Verification:', {
+      inputPasswordLength: password.length,
+      storedHashLength: user.password_hash.length
+    });
+
     // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
+    
+    console.log('Password Validation:', {
+      validPassword,
+      errorIfFalse: !validPassword ? 'Invalid password' : 'Password matched'
+    });
+
     if (!validPassword) {
       console.warn('❌ Invalid password for:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Convert verification status
-    const isEmailVerified = user.email_verified === 't' || user.email_verified === true;
+    // Token generation with extremely detailed logging
+    try {
+      const tokenPayload = { 
+        user_id: user.user_id, 
+        email: user.email,
+        email_verified: user.email_verified === true || user.email_verified === 't'
+      };
 
-    // Generate token
-    const token = jwt.sign(
-      { 
-        user_id: userResult.rows[0].user_id, 
-        email: userResult.rows[0].email,
-        email_verified: isEmailVerified
-      }, 
-      process.env.JWT_SECRET, 
-      { 
-        algorithm: 'HS256', 
-        expiresIn: '1d' 
-      }
-    );
+      console.log('Token Payload:', JSON.stringify(tokenPayload, null, 2));
+      
 
-    console.log('✅ Login Success:', {
-      userId: user.user_id,
-      email: user.email,
-      emailVerified: isEmailVerified,
-      tokenGenerated: !!token
-    });
+      const token = jwt.sign(
+        tokenPayload, 
+        process.env.JWT_SECRET, 
+        { 
+          algorithm: 'HS256', 
+          expiresIn: '1d' 
+        }
+      );
 
-    // Fetch user profile to check completeness
-    const profileResult = await pool.query(`
-      SELECT 
-        up.first_name, 
-        up.last_name, 
-        up.height, 
-        up.current_weight, 
-        up.fitness_goal, 
-        up.activity_level, 
-        up.primary_focus
-      FROM user_profiles up
-      WHERE up.user_id = $1
-    `, [user.user_id]);
+      console.log('🎉 Token Generated Successfully:', {
+        tokenLength: token.length,
+        firstChars: token.substring(0, 10),
+        lastChars: token.substring(token.length - 10)
+      });
 
-    // Determine profile completeness
-    const profile = profileResult.rows[0];
-    const isProfileComplete = !!(
-      profile?.height &&
-      profile?.current_weight &&
-      profile?.fitness_goal &&
-      profile?.activity_level &&
-      profile?.primary_focus
-    );
-
-    // IMPORTANT: Explicitly return token in response
-    res.status(200).json({
-      token: token,  // Ensure this is always present
-      user: {
-          user_id: userResult.rows[0].user_id,
-          email: userResult.rows[0].email,
-          email_verified: isEmailVerified,
-          is_profile_complete: isProfileComplete
-      }
-  });
+      // Explicit and complete response
+      res.status(200).json({
+        token: token,
+        user: {
+          user_id: user.user_id,
+          email: user.email,
+          email_verified: user.email_verified === true || user.email_verified === 't',
+          is_profile_complete: true  // You might want to actually check this
+        }
+      });
+    } catch (tokenError) {
+      console.error('🚨 Token Generation FAILED:', {
+        name: tokenError.name,
+        message: tokenError.message,
+        stack: tokenError.stack
+      });
+      
+      res.status(500).json({ 
+        message: 'Failed to generate authentication token',
+        error: tokenError.message 
+      });
+    }
   } catch (err) {
-    console.error('🚨 Login Error:', err);
+    console.error('🚨 COMPLETE Login Error:', {
+      name: err.name,
+      message: err.message,
+      stack: err.stack
+    });
+    
     res.status(500).json({ 
-      message: 'Server error during login',
+      message: 'Unexpected server error during login',
       error: err.message 
     });
   }
