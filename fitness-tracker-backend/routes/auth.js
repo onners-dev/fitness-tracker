@@ -73,11 +73,13 @@ router.post('/register', async (req, res) => {
       const token = jwt.sign(
         { 
           user_id: newUser.rows[0].user_id, 
-          email: email 
+          email: email,
+          email_verified: false  // Explicitly set
         }, 
         process.env.JWT_SECRET, 
         { expiresIn: '1d' }
       );
+      
 
       await client.query('COMMIT');
 

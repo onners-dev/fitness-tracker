@@ -82,13 +82,15 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateStep1() || !validateStep2()) {
+    // Add validation for step 2
+    if (!validateStep2()) {
       return;
     }
-    
+  
     setIsLoading(true);
     
     try {
+      // Complete the registration data
       const age = calculateAge(formData.dateOfBirth);
       const response = await authService.register({
         email: formData.email,
@@ -100,16 +102,17 @@ const Signup = () => {
         age: age
       });
       
-      if (response.email) {
-        navigate('/verify-email', { 
-          state: { 
-            email: response.email,
-            fromSignup: true
-          } 
-        });
-      } else {
-        setError('Registration failed');
-      }
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('isVerified', 'false');
+      localStorage.setItem('firstTimeSetup', 'true');
+      
+      navigate('/verify-email', { 
+        state: { 
+          email: response.email,
+          fromSignup: true,
+          token: response.token
+        } 
+      });
     } catch (err) {
       console.error('Full Registration error:', err);
       setError(err.response?.data?.message || 'An error occurred during registration');
@@ -117,6 +120,7 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
+  
   
   
 

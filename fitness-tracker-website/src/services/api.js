@@ -13,31 +13,15 @@ const api = axios.create({
 // Token interceptor
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
+    const isVerified = localStorage.getItem('isVerified') === 'true';
     
-    console.log('🔑 TOKEN INTERCEPTOR:', {
-      token: token,
-      tokenType: typeof token,
-      config: {
-        url: config.url,
-        method: config.method
-      }
-    });
-  
-    if (token && 
-        token !== 'null' && 
-        token !== 'undefined' && 
-        typeof token === 'string') {
+    if (token && isVerified) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('✅ TOKEN ADDED TO HEADERS');
-    } else {
-      console.warn('❌ NO VALID TOKEN TO ADD TO HEADERS');
     }
     
     return config;
-  }, (error) => {
-    console.error('🚨 TOKEN INTERCEPTOR ERROR:', error);
-    return Promise.reject(error);
-  });
+  }, (error) => Promise.reject(error));
+  
   
   
 

@@ -25,12 +25,11 @@ const EmailVerification = () => {
 
   const handleVerifyCode = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-  
+    
     try {
       const response = await authService.verifyCode(email, verificationCode);
       
-      // Explicitly set verification status
+      localStorage.setItem('token', response.token);
       localStorage.setItem('isVerified', 'true');
       localStorage.setItem('firstTimeSetup', 'true');
       

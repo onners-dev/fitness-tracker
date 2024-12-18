@@ -51,38 +51,25 @@ const Login = () => {
     e.preventDefault();
     
     try {
-      const response = await authService.login(
-        credentials.email, 
-        credentials.password
-      );
+      const response = await authService.login(credentials.email, credentials.password);
       
-      // Existing token should still be valid from registration
-      const existingToken = localStorage.getItem('token');
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('isVerified', response.user.email_verified.toString());
       
-      localStorage.setItem('isVerified', 
-        (response.user.email_verified === true || 
-         response.user.email_verified === 't').toString()
-      );
-  
-      try {
-        const userProfile = await userService.getProfile();
-        
-        if (!userProfile || !userProfile.is_profile_complete) {
-          localStorage.setItem('firstTimeSetup', 'true');
-          navigate('/profile-setup');
-        } else {
-          localStorage.removeItem('firstTimeSetup');
-          navigate('/dashboard');
-        }
-      } catch (profileError) {
-        console.error('Profile fetch error:', profileError);
+      const userProfile = await userService.getProfile();
+      
+      if (!userProfile.is_profile_complete) {
+        localStorage.setItem('firstTimeSetup', 'true');
+        navigate('/profile-setup');
+      } else {
+        localStorage.removeItem('firstTimeSetup');
         navigate('/dashboard');
       }
     } catch (err) {
-      console.error('Login Error:', err);
       // Error handling
     }
   };
+  
   
   
   
