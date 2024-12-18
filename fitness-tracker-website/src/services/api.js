@@ -84,33 +84,44 @@ api.interceptors.response.use(
 export const authService = {
     login: async (email, password) => {
         try {
-          const response = await api.post('/auth/login', { email, password });
-          
-          console.group('🔐 Detailed Login Response');
-          console.log('Response Data:', response.data);
-          console.groupEnd();
-      
-          // Validate response structure
-          if (!response.data || !response.data.token) {
-            console.error('❌ Invalid login response: No token');
-            throw new Error('No token received from server');
-          }
-          
-          return {
-            token: response.data.token,
-            user: {
-              user_id: response.data.user.user_id,
-              email: response.data.user.email,
-              email_verified: response.data.user.email_verified === true || 
-                              response.data.user.email_verified === 't',
-              is_profile_complete: response.data.user.is_profile_complete
+            const response = await api.post('/auth/login', { email, password });
+            
+            console.group('🔐 Detailed Login Response');
+            console.log('Response Data:', response.data);
+            console.groupEnd();
+        
+            // Modify token extraction logic
+            const token = response.data.token || 
+                          (response.data.user && response.data.user.token);
+            
+            if (!token) {
+                console.error('❌ Invalid login response: No token');
+                throw new Error('No token received from server');
             }
-          };
+            
+            // Set token and verification status in localStorage
+            localStorage.setItem('token', token);
+            localStorage.setItem('isVerified', 
+                (response.data.user.email_verified === true || 
+                 response.data.user.email_verified === 't').toString()
+            );
+            
+            return {
+                token: token,
+                user: {
+                    user_id: response.data.user.user_id,
+                    email: response.data.user.email,
+                    email_verified: response.data.user.email_verified === true || 
+                                    response.data.user.email_verified === 't',
+                    is_profile_complete: response.data.user.is_profile_complete
+                }
+            };
         } catch (error) {
-          console.error('🚨 Login API Error:', error);
-          throw error;
+            console.error('🚨 Login API Error:', error);
+            throw error;
         }
     },
+    
       
       
       

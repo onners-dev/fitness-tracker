@@ -285,14 +285,14 @@ router.post('/login', async (req, res) => {
 
     // IMPORTANT: Explicitly return token in response
     res.status(200).json({
-      token: token,  // Add this back
+      token: token,  // Ensure this is always present
       user: {
-        user_id: userResult.rows[0].user_id,
-        email: userResult.rows[0].email,
-        email_verified: isEmailVerified,
-        is_profile_complete: isProfileComplete
+          user_id: userResult.rows[0].user_id,
+          email: userResult.rows[0].email,
+          email_verified: isEmailVerified,
+          is_profile_complete: isProfileComplete
       }
-    });
+  });
   } catch (err) {
     console.error('🚨 Login Error:', err);
     res.status(500).json({ 
