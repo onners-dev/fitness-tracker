@@ -79,6 +79,7 @@ const Signup = () => {
     return true;
   };
 
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -105,7 +106,7 @@ const Signup = () => {
       
       // Set verification status
       localStorage.setItem('isVerified', 'false');
-      localStorage.setItem('firstTimeSetup', 'true');
+      localStorage.removeItem('firstTimeSetup');
       
       navigate('/verify-email', { 
         state: { 
@@ -116,14 +117,13 @@ const Signup = () => {
       });
     } catch (err) {
       console.error('Full Registration error:', err);
-      setError(err.response?.data?.message || 'An error occurred during registration');
+      setError(
+        (err.message || err.response?.data?.message || 'An error occurred during registration')
+      );
     } finally {
       setIsLoading(false);
     }
   };
-  
-  
-  
   
 
   const renderStep1 = () => (

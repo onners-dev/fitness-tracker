@@ -19,6 +19,9 @@ function generateVerificationCode() {
 
 // User Registration Route
 router.post('/register', async (req, res) => {
+  console.group('🚀 Backend Registration Attempt');
+  console.log('Received Registration Data:', req.body);
+
   try {
     const { 
       firstName, 
@@ -26,8 +29,34 @@ router.post('/register', async (req, res) => {
       gender, 
       dateOfBirth, 
       email, 
-      password 
+      password,
+      age 
     } = req.body;
+
+    console.log('Extracted Data:', { 
+      firstName, 
+      lastName, 
+      gender, 
+      dateOfBirth, 
+      email,
+      age
+    });
+
+    // Validate input with more detailed checks
+    const missingFields = [];
+    if (!firstName) missingFields.push('firstName');
+    if (!lastName) missingFields.push('lastName');
+    if (!email) missingFields.push('email');
+    if (!password) missingFields.push('password');
+    if (!dateOfBirth) missingFields.push('dateOfBirth');
+    if (!gender) missingFields.push('gender');
+
+    if (missingFields.length > 0) {
+      console.warn('❌ Missing fields:', missingFields);
+      return res.status(400).json({ 
+        message: `Missing required fields: ${missingFields.join(', ')}` 
+      });
+    }
 
     // Validate input
     if (!firstName || !lastName || !email || !password || !dateOfBirth || !gender) {
@@ -115,8 +144,17 @@ router.post('/register', async (req, res) => {
       client.release();
     }
   } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ message: 'Server error during registration' });
+    console.error('🚨 Complete Registration Error:', {
+      name: err.name,
+      message: err.message,
+      stack: err.stack
+    });
+    console.groupEnd();
+
+    res.status(500).json({ 
+      message: 'Server error during registration',
+      error: err.message 
+    });
   }
 });
 

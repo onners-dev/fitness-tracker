@@ -123,11 +123,17 @@ export const authService = {
         try {
             console.group('🚀 Frontend Registration Attempt');
             console.log('User Data:', userData);
+            console.log('API Base URL:', API_URL);
             
-            const response = await api.post('/auth/register', userData);
+            const response = await api.post('/register', userData);
             
             console.log('Registration Response:', response.data);
             console.groupEnd();
+            
+            // Validate response
+            if (!response.data.token) {
+                throw new Error('No authentication token received');
+            }
             
             return {
                 token: response.data.token,
@@ -143,13 +149,25 @@ export const authService = {
             console.error('🚨 Registration API Error:', {
                 message: error.message,
                 response: error.response?.data,
-                status: error.response?.status
+                status: error.response?.status,
+                url: error.config?.url
             });
             
-            // Throw a more informative error
-            throw error.response?.data || new Error('Registration failed');
+            // More detailed error throwing
+            if (error.response) {
+                throw {
+                    message: error.response.data.message || 'Registration failed',
+                    status: error.response.status,
+                    data: error.response.data
+                };
+            } else if (error.request) {
+                throw new Error('No response received from server');
+            } else {
+                throw new Error('Error setting up the registration request');
+            }
         }
     },
+    
 
     logout: () => {
         localStorage.removeItem('token');
