@@ -125,7 +125,7 @@ export const authService = {
             console.log('User Data:', userData);
             console.log('API Base URL:', API_URL);
             
-            const response = await api.post('/auth/register', userData);
+            const response = await api.post(`${API_URL}/auth/register`, userData);
             
             console.log('Registration Response:', response.data);
             console.groupEnd();
