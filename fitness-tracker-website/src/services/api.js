@@ -91,25 +91,27 @@ export const authService = {
           console.log('Response Status:', response.status);
           console.log('Response Headers:', response.headers);
           console.log('Response Data:', JSON.stringify(response.data, null, 2));
-          
-          // Detailed property inspection
           console.log('Response Data Properties:', {
             hasData: !!response.data,
             dataKeys: response.data ? Object.keys(response.data) : 'No Data',
             tokenExists: response.data && response.data.token !== undefined,
-            userExists: response.data && response.data.user !== undefined
+            userExists: response.data && response.data.user !== undefined,
+            fullDataInspection: response.data
           });
           console.groupEnd();
       
           // More aggressive validation
           if (!response.data) {
+            console.error('❌ No Data in Response', response);
             throw new Error('Empty response from server');
           }
       
-          // Check if token is missing
+          // Detailed token check
           if (!response.data.token) {
             console.error('❌ No Token in Response:', {
-              fullResponseData: JSON.stringify(response.data, null, 2)
+              fullResponseData: JSON.stringify(response.data, null, 2),
+              dataType: typeof response.data,
+              dataKeys: response.data ? Object.keys(response.data) : 'No Keys'
             });
             throw new Error('No token received from server');
           }
@@ -141,6 +143,7 @@ export const authService = {
           throw error;
         }
     },
+      
       
       
 
