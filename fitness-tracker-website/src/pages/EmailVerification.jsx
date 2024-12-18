@@ -2,26 +2,50 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../services/api';
 import './EmailVerification.css';
+import jwtDecode from 'jwt-decode'; // Make sure to install jwt-decode
 
 const EmailVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [verificationCode, setVerificationCode] = useState('');
+  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
 
-  const email = location.state?.email;
-  const fromSignup = location.state?.fromSignup || false;
-  const initialToken = location.state?.token;
-
-  // Use effect to handle initial token
+  // Extract email from token on component mount
   useEffect(() => {
-    if (initialToken) {
-      localStorage.setItem('token', initialToken);
+    const token = localStorage.getItem('token');
+    
+    try {
+      if (token) {
+        const decodedToken = jwtDecode(token);
+        
+        console.group('🔍 Token Verification');
+        console.log('Decoded Token:', decodedToken);
+        console.log('Email from Token:', decodedToken.email);
+        console.log('Email Verified:', decodedToken.email_verified);
+        console.groupEnd();
+
+        // If email exists in token and is not verified
+        if (decodedToken.email && !decodedToken.email_verified) {
+          setEmail(decodedToken.email);
+        } else {
+          // Redirect to dashboard if already verified
+          navigate('/dashboard');
+        }
+      } else {
+        // No token, redirect to login
+        navigate('/login');
+      }
+    } catch (error) {
+      console.error('❌ Token Decoding Error:', error);
+      // Clear invalid token and redirect to login
+      localStorage.removeItem('token');
+      navigate('/login');
     }
-  }, [initialToken]);
+  }, [navigate]);
 
   // Countdown effect
   useEffect(() => {
@@ -88,6 +112,16 @@ const EmailVerification = () => {
       setResendCountdown(0);
     }
   };
+
+  // Don't render anything until email is set
+  if (!email) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Verifying your account...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="email-verification-page">
