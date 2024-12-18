@@ -241,8 +241,8 @@ router.post('/login', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { 
-        user_id: user.user_id, 
-        email: user.email,
+        user_id: userResult.rows[0].user_id, 
+        email: userResult.rows[0].email,
         email_verified: isEmailVerified
       }, 
       process.env.JWT_SECRET, 
@@ -285,10 +285,10 @@ router.post('/login', async (req, res) => {
 
     // IMPORTANT: Explicitly return token in response
     res.status(200).json({
-      token: token,  // Explicitly add token
+      token: token,  // Add this back
       user: {
-        user_id: user.user_id,
-        email: user.email,
+        user_id: userResult.rows[0].user_id,
+        email: userResult.rows[0].email,
         email_verified: isEmailVerified,
         is_profile_complete: isProfileComplete
       }

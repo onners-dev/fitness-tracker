@@ -47,64 +47,43 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Add this line back
+    e.preventDefault();
     
     if (!validateInput()) return;
     
     setIsLoading(true);
     
     try {
-      // Attempt to log in
       const loginResponse = await authService.login(
         credentials.email, 
         credentials.password
       );
       
-      console.group('🔐 Login Process');
-      console.log('Login Response:', {
-        user: loginResponse.user,
-        token: loginResponse.token
-      });
+      console.log('Login Response:', loginResponse);
   
       // Ensure token is set
       if (!loginResponse.token) {
         throw new Error('No token received from login');
       }
   
-      // Create a new object for token and user
-      const tokenData = {
-        token: loginResponse.token,
-        user: {
-          ...loginResponse.user
-        }
-      };
-  
       // Store token
-      localStorage.setItem('token', tokenData.token);
+      localStorage.setItem('token', loginResponse.token);
       
       // Set verification status
       localStorage.setItem('isVerified', 
-        (tokenData.user.email_verified === true || 
-         tokenData.user.email_verified === 't').toString()
+        (loginResponse.user.email_verified === true).toString()
       );
       
-      // Determine next navigation based on profile completeness
-      if (!tokenData.user.is_profile_complete) {
+      // Navigate based on profile completeness
+      if (!loginResponse.user.is_profile_complete) {
         localStorage.setItem('firstTimeSetup', 'true');
         navigate('/profile-setup');
       } else {
         localStorage.removeItem('firstTimeSetup');
         navigate('/dashboard');
       }
-  
-      console.groupEnd();
     } catch (err) {
-      console.group('❌ Login Error');
-      console.error('Error:', err);
-      console.error('Response:', err.response);
-      console.groupEnd();
-      
-      // More specific error handling
+      console.error('Login Error:', err);
       setError(
         err.response?.data?.message || 
         'Login failed. Please try again.'
@@ -113,8 +92,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-  
-  
   
   
   return (

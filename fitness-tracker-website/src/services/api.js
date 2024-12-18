@@ -87,32 +87,12 @@ export const authService = {
           const response = await api.post('/auth/login', { email, password });
           
           console.group('🔐 Detailed Login Response');
-          console.log('Full Response:', JSON.stringify(response, null, 2));
-          console.log('Response Status:', response.status);
-          console.log('Response Headers:', response.headers);
-          console.log('Response Data:', JSON.stringify(response.data, null, 2));
-          console.log('Response Data Properties:', {
-            hasData: !!response.data,
-            dataKeys: response.data ? Object.keys(response.data) : 'No Data',
-            tokenExists: response.data && response.data.token !== undefined,
-            userExists: response.data && response.data.user !== undefined,
-            fullDataInspection: response.data
-          });
+          console.log('Response Data:', response.data);
           console.groupEnd();
       
-          // More aggressive validation
-          if (!response.data) {
-            console.error('❌ No Data in Response', response);
-            throw new Error('Empty response from server');
-          }
-      
-          // Detailed token check
-          if (!response.data.token) {
-            console.error('❌ No Token in Response:', {
-              fullResponseData: JSON.stringify(response.data, null, 2),
-              dataType: typeof response.data,
-              dataKeys: response.data ? Object.keys(response.data) : 'No Keys'
-            });
+          // Validate response structure
+          if (!response.data || !response.data.token) {
+            console.error('❌ Invalid login response: No token');
             throw new Error('No token received from server');
           }
           
@@ -127,19 +107,7 @@ export const authService = {
             }
           };
         } catch (error) {
-          console.group('🚨 Login API Error');
-          console.error('Full Error Object:', error);
-          console.error('Error Response:', error.response);
-          console.error('Error Message:', error.message);
-          
-          // More detailed error logging
-          if (error.response) {
-            console.error('Error Response Data:', JSON.stringify(error.response.data, null, 2));
-            console.error('Error Response Status:', error.response.status);
-            console.error('Error Response Headers:', error.response.headers);
-          }
-          console.groupEnd();
-          
+          console.error('🚨 Login API Error:', error);
           throw error;
         }
     },
