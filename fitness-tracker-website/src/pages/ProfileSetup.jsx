@@ -18,79 +18,92 @@ const ProfileSetup = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isPageReady, setIsPageReady] = useState(false);
+  const [authenticationDetails, setAuthenticationDetails] = useState({
+    token: '',
+    isVerified: false,
+    firstTimeSetup: false
+  });
+
+  // Debug function to log all important details
+  const logAuthenticationDetails = useCallback(() => {
+    console.group('🔍 ProfileSetup Authentication Details');
+    console.log('Token:', localStorage.getItem('token'));
+    console.log('Is Verified:', localStorage.getItem('isVerified'));
+    console.log('First Time Setup:', localStorage.getItem('firstTimeSetup'));
+    console.log('Window Location:', window.location);
+    console.groupEnd();
+  }, []);
 
   // Comprehensive authorization check
   const checkAuthorization = useCallback(() => {
-    console.log('🔐 Checking Authorization for Profile Setup');
+    try {
+      const token = localStorage.getItem('token');
+      const isVerified = localStorage.getItem('isVerified') === 'true';
+      const firstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
 
-    const token = localStorage.getItem('token');
-    const isVerified = localStorage.getItem('isVerified') === 'true';
-    const firstTimeSetup = localStorage.getItem('firstTimeSetup');
+      console.group('🛡️ Profile Setup Authorization Check');
+      console.log('Token:', token ? 'Present' : 'Missing');
+      console.log('Is Verified:', isVerified);
+      console.log('First Time Setup:', firstTimeSetup);
+      console.groupEnd();
 
-    console.log('🛡️ Profile Setup Authorization Checks:', {
-      token: token ? 'Present' : 'Missing',
-      isVerified,
-      firstTimeSetup
-    });
+      // Update authentication details state
+      setAuthenticationDetails({
+        token: token || '',
+        isVerified,
+        firstTimeSetup
+      });
 
-    // Strict authorization checks
-    if (!token) {
-      console.warn('❌ No token - redirecting to login');
+      // Strict authorization checks
+      if (!token) {
+        console.warn('❌ No token - redirecting to login');
+        navigate('/login');
+        return false;
+      }
+
+      if (!isVerified) {
+        console.warn('🔒 Not verified - redirecting to email verification');
+        navigate('/verify-email');
+        return false;
+      }
+
+      if (firstTimeSetup !== true) {
+        console.warn('⚠️ Profile setup not required - redirecting to dashboard');
+        navigate('/dashboard');
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error('🚨 Authorization Check Error:', err);
       navigate('/login');
       return false;
     }
-
-    if (!isVerified) {
-      console.warn('🔒 Not verified - redirecting to email verification');
-      navigate('/verify-email');
-      return false;
-    }
-
-    if (firstTimeSetup !== 'true') {
-      console.warn('⚠️ Profile setup not required - redirecting to dashboard');
-      navigate('/dashboard');
-      return false;
-    }
-
-    return true;
   }, [navigate]);
 
   // Comprehensive page initialization
   useEffect(() => {
-    console.log('🚀 Profile Setup Page Mounted');
+    console.group('🚀 Profile Setup Page Initialization');
+    
+    // Log all authentication details
+    logAuthenticationDetails();
 
-    // Ensure localStorage is accessible
     try {
       // Run authorization check
       const isAuthorized = checkAuthorization();
 
-      // Log additional context
-      console.log('📋 Authorization Result:', isAuthorized);
+      console.log('Authorization Result:', isAuthorized);
+      console.groupEnd();
 
       // If authorized, mark page as ready
       if (isAuthorized) {
         setIsPageReady(true);
       }
-
-      // Optional: Retrieve pre-filled data from local storage or previous signup data
-      const storedGoals = JSON.parse(localStorage.getItem('signupFitnessGoals') || '{}');
-      
-      // Pre-fill fitness goals if available
-      if (storedGoals.fitnessGoal || storedGoals.activityLevel) {
-        setFormData(prev => ({
-          ...prev,
-          fitnessGoal: storedGoals.fitnessGoal || '',
-          activityLevel: storedGoals.activityLevel || ''
-        }));
-
-        // Clear the stored goals
-        localStorage.removeItem('signupFitnessGoals');
-      }
     } catch (error) {
       console.error('🚨 Initialization Error:', error);
       navigate('/login');
     }
-  }, [checkAuthorization, navigate]);
+  }, [checkAuthorization, logAuthenticationDetails, navigate]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -194,6 +207,10 @@ const ProfileSetup = () => {
       <div className="loading-container">
         <div className="spinner"></div>
         <p>Preparing your profile setup...</p>
+        <div className="debug-info">
+          <h3>Debug Information:</h3>
+          <pre>{JSON.stringify(authenticationDetails, null, 2)}</pre>
+        </div>
       </div>
     );
   }

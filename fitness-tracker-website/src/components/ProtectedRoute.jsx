@@ -7,32 +7,37 @@ const ProtectedRoute = ({ children }) => {
   const isVerified = localStorage.getItem('isVerified') === 'true';
   const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
 
-  console.log('🛡️ Protected Route Detailed Check:', {
-    token: token ? 'Present' : 'Missing',
-    isVerified,
-    isFirstTimeSetup,
-    currentPath: location.pathname,
-    children: children ? 'Present' : 'Missing'
-  });
+  console.group('🛡️ Protected Route Comprehensive Check');
+  console.log('Token:', token ? 'Present' : 'Missing');
+  console.log('Is Verified:', isVerified);
+  console.log('First Time Setup:', isFirstTimeSetup);
+  console.log('Current Path:', location.pathname);
+  console.log('Children Type:', children?.type?.name);
+  console.groupEnd();
 
   // Always check for token first
   if (!token) {
-    console.log('❌ No token, redirecting to login');
+    console.warn('❌ No token, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   // Check verification status
   if (!isVerified) {
-    console.log('🔒 Not verified, redirecting to email verification');
+    console.warn('🔒 Not verified, redirecting to email verification');
     return <Navigate to="/verify-email" replace />;
   }
 
   // Check first-time setup
   if (isFirstTimeSetup) {
-    console.log('🆕 First-time setup required, redirecting to profile setup');
-    return children.type.name === 'ProfileSetup' 
-      ? children 
-      : <Navigate to="/profile-setup" replace />;
+    console.warn('🆕 First-time setup required');
+    
+    // If already on profile-setup page, render children
+    if (location.pathname === '/profile-setup') {
+      return children;
+    }
+
+    // Otherwise, redirect to profile setup
+    return <Navigate to="/profile-setup" replace />;
   }
 
   // If all checks pass, render children

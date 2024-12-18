@@ -236,3 +236,18 @@
     100% { transform: rotate(360deg); }
   }
   
+  .debug-info {
+    margin-top: 20px;
+    background-color: #f0f0f0;
+    padding: 15px;
+    border-radius: 5px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  
+  .debug-info pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.8em;
+  }
+  
