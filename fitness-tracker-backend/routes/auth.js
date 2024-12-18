@@ -244,7 +244,10 @@ router.post('/login', async (req, res) => {
         email_verified: isEmailVerified
       }, 
       process.env.JWT_SECRET, 
-      { expiresIn: '1d' }
+      { 
+        algorithm: 'HS256', // Specify algorithm
+        expiresIn: '1d'     // Explicit expiration
+      }
     );
 
     // Fetch user profile

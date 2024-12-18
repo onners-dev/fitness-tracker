@@ -14,23 +14,20 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     const isVerified = localStorage.getItem('isVerified') === 'true';
-    const firstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
     
-    console.log('🔑 Comprehensive Token Check:', {
-        token: token ? 'Present' : 'Missing',
-        isVerified,
-        firstTimeSetup,
-        url: config.url
-    });
+    console.group('🔑 Token Interceptor');
+    console.log('Token:', token ? 'Present' : 'Missing');
+    console.log('Is Verified:', isVerified);
+    console.log('Request URL:', config.url);
+    console.groupEnd();
 
     // Always add token if present
     if (token) {
+        // Ensure 'Bearer ' prefix is added
         const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
         config.headers.Authorization = `Bearer ${cleanToken}`;
         
-        console.log('🛡️ Token Added to Headers', {
-            headerToken: config.headers.Authorization
-        });
+        console.log('🛡️ Token Added to Headers:', config.headers.Authorization);
     }
     
     return config;
