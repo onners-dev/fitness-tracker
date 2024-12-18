@@ -333,10 +333,9 @@ router.post('/login', async (req, res) => {
         email_verified: isEmailVerified
       }, 
       process.env.JWT_SECRET, 
-      { 
-        expiresIn: '1d' 
-      }
+      { expiresIn: '1d' }
     );
+
 
     console.log('✅ Login Success:', {
       userId: user.user_id,

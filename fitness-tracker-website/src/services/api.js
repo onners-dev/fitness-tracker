@@ -101,29 +101,31 @@ export const authService = {
           if (!response.data.token) {
             throw new Error('No token received from server');
           }
-          
-          // Create a new object to avoid read-only property issues
-          return {
+
+        // Create loginResponse object to match the usage in Login.jsx
+        const loginResponse = {
             token: response.data.token,
             user: {
-              user_id: response.data.user.user_id,
-              email: response.data.user.email,
-              email_verified: response.data.user.email_verified === true || 
-                              response.data.user.email_verified === 't',
-              is_profile_complete: response.data.user.is_profile_complete
+            user_id: response.data.user.user_id,
+            email: response.data.user.email,
+            email_verified: response.data.user.email_verified === true || 
+                            response.data.user.email_verified === 't',
+            is_profile_complete: response.data.user.is_profile_complete
             }
-          };
+        };
+        
+        return loginResponse;
         } catch (error) {
-          console.group('🚨 Login API Error');
-          console.error('Full Error:', error);
-          console.error('Error Details:', {
+        console.group('🚨 Login API Error');
+        console.error('Full Error:', error);
+        console.error('Error Details:', {
             message: error.response?.data?.message,
             status: error.response?.status,
             data: error.response?.data
-          });
-          console.groupEnd();
-          
-          throw error;
+        });
+        console.groupEnd();
+        
+        throw error;
         }
     },
       
