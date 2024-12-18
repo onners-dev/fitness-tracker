@@ -46,29 +46,48 @@ const Login = () => {
     return true;
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateInput()) return;
+    
+    setIsLoading(true);
     
     try {
       const response = await authService.login(credentials.email, credentials.password);
       
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('isVerified', response.user.email_verified.toString());
+      // Always set token
+      localStorage.setItem('token', response.token || '');
       
-      const userProfile = await userService.getProfile();
+      // Set verification status
+      localStorage.setItem('isVerified', 
+        (response.user.email_verified === true || 
+         response.user.email_verified === 't').toString()
+      );
       
-      if (!userProfile.is_profile_complete) {
-        localStorage.setItem('firstTimeSetup', 'true');
-        navigate('/profile-setup');
-      } else {
-        localStorage.removeItem('firstTimeSetup');
+      try {
+        const userProfile = await userService.getProfile();
+        
+        if (!userProfile.is_profile_complete) {
+          localStorage.setItem('firstTimeSetup', 'true');
+          navigate('/profile-setup');
+        } else {
+          localStorage.removeItem('firstTimeSetup');
+          navigate('/dashboard');
+        }
+      } catch (profileError) {
+        console.error('Profile fetch error:', profileError);
+        // If profile fetch fails, still allow login
         navigate('/dashboard');
       }
     } catch (err) {
-      // Error handling
+      console.error('Login Error:', err);
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
+  
   
   
   

@@ -72,9 +72,9 @@ router.post('/register', async (req, res) => {
       // Generate JWT token
       const token = jwt.sign(
         { 
-          user_id: newUser.rows[0].user_id, 
-          email: email,
-          email_verified: false  // Explicitly set
+          user_id: user.user_id, 
+          email: user.email,
+          email_verified: isEmailVerified
         }, 
         process.env.JWT_SECRET, 
         { expiresIn: '1d' }
@@ -102,7 +102,7 @@ router.post('/register', async (req, res) => {
       res.status(201).json({
         message: 'User registered successfully. Please verify your email.',
         email: email,
-        token: token,
+        token: token,  // Ensure token is always sent
         user: {
           user_id: newUser.rows[0].user_id,
           email: email,
@@ -186,7 +186,9 @@ router.post('/login', async (req, res) => {
     // Convert verification status
     const isEmailVerified = user.email_verified === 't' || user.email_verified === true;
 
+
     res.json({
+      token: token,  // Add token to response
       user: {
         user_id: user.user_id,
         email: user.email,

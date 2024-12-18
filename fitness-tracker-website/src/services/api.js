@@ -13,17 +13,14 @@ const api = axios.create({
 // Token interceptor
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
-    const isVerified = localStorage.getItem('isVerified') === 'true';
     
-    if (token && isVerified) {
+    // Always add token if present, regardless of verification status
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     
     return config;
-  }, (error) => Promise.reject(error));
-  
-  
-  
+}, (error) => Promise.reject(error));
 
 // Add response interceptor to handle unauthorized requests
 api.interceptors.response.use(

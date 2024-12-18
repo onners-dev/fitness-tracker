@@ -82,15 +82,13 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Add validation for step 2
     if (!validateStep2()) {
       return;
     }
-  
+    
     setIsLoading(true);
     
     try {
-      // Complete the registration data
       const age = calculateAge(formData.dateOfBirth);
       const response = await authService.register({
         email: formData.email,
@@ -102,7 +100,10 @@ const Signup = () => {
         age: age
       });
       
-      localStorage.setItem('token', response.token);
+      // Always set token
+      localStorage.setItem('token', response.token || '');
+      
+      // Set verification status
       localStorage.setItem('isVerified', 'false');
       localStorage.setItem('firstTimeSetup', 'true');
       
@@ -120,6 +121,7 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
+  
   
   
   
