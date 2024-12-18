@@ -21,13 +21,11 @@ api.interceptors.request.use((config) => {
     console.log('Request URL:', config.url);
     console.groupEnd();
 
-    // Always add token if present
+    // Always add token if present, for any route
     if (token) {
         // Ensure 'Bearer ' prefix is added
         const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
         config.headers.Authorization = `Bearer ${cleanToken}`;
-        
-        console.log('🛡️ Token Added to Headers:', config.headers.Authorization);
     }
     
     return config;
@@ -35,6 +33,7 @@ api.interceptors.request.use((config) => {
     console.error('🚨 Token Interceptor Error:', error);
     return Promise.reject(error);
 });
+
 
 
 
@@ -65,13 +64,14 @@ export const authService = {
         try {
           const response = await api.post('/auth/login', { email, password });
           
-          console.log('🔐 Detailed Login Response:', {
-            user: response.data.user,
-            token: response.data.token
-          });
-          
-          // Ensure token is present
-          if (!response.data.token) {
+          console.group('🔐 Detailed Login Response');
+          console.log('Response Data:', response.data);
+          console.log('Token:', response.data.token);
+          console.log('User:', response.data.user);
+          console.groupEnd();
+      
+          // Validate response
+          if (!response.data || !response.data.token) {
             throw new Error('No token received from server');
           }
           
@@ -84,11 +84,13 @@ export const authService = {
             }
           };
         } catch (error) {
-          console.error('Login API Error:', {
+          console.group('🚨 Login API Error');
+          console.error('Error Details:', {
             message: error.response?.data?.message,
             status: error.response?.status,
             data: error.response?.data
           });
+          console.groupEnd();
           
           throw error;
         }

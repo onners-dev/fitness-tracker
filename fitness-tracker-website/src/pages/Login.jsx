@@ -60,7 +60,8 @@ const Login = () => {
         credentials.password
       );
       
-      console.log('🔐 Login Response:', {
+      console.group('🔐 Login Process');
+      console.log('Login Response:', {
         user: loginResponse.user,
         token: loginResponse.token
       });
@@ -87,11 +88,13 @@ const Login = () => {
         localStorage.removeItem('firstTimeSetup');
         navigate('/dashboard');
       }
+  
+      console.groupEnd();
     } catch (err) {
-      console.error('Login Error:', {
-        error: err,
-        response: err.response
-      });
+      console.group('❌ Login Error');
+      console.error('Error:', err);
+      console.error('Response:', err.response);
+      console.groupEnd();
       
       // More specific error handling
       setError(
@@ -103,9 +106,6 @@ const Login = () => {
     }
   };
   
-  
-  
-
   return (
     <div className="login-page">
       <div className="login-container">

@@ -218,18 +218,22 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('Login Attempt:', { email });
+
     // Find user
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
 
     // Check if user exists
     if (!user) {
+      console.warn('User not found:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
+      console.warn('Invalid password for:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
@@ -244,10 +248,7 @@ router.post('/login', async (req, res) => {
         email_verified: isEmailVerified
       }, 
       process.env.JWT_SECRET, 
-      { 
-        algorithm: 'HS256', // Specify algorithm
-        expiresIn: '1d'     // Explicit expiration
-      }
+      { expiresIn: '1d' }
     );
 
     // Fetch user profile
@@ -274,7 +275,16 @@ router.post('/login', async (req, res) => {
       profile?.primary_focus
     );
 
-    console.log('Login Response:', {
+    console.log('Login Success:', {
+      userId: user.user_id,
+      email: user.email,
+      emailVerified: isEmailVerified,
+      profileComplete: isProfileComplete,
+      tokenGenerated: !!token
+    });
+
+    // Always send token in response
+    res.status(200).json({
       token: token,
       user: {
         user_id: user.user_id,
@@ -283,22 +293,13 @@ router.post('/login', async (req, res) => {
         is_profile_complete: isProfileComplete
       }
     });
-
-    res.json({
-      token: token,  // Explicitly ensure token is sent
-      user: {
-        user_id: user.user_id,
-        email: user.email,
-        email_verified: isEmailVerified,
-        is_profile_complete: isProfileComplete
-      }
-    });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error during login' });
+    console.error('Login Error:', err);
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: err.message 
+    });
   }
 });
-
-
 
 module.exports = router;
