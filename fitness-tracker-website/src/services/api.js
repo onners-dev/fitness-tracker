@@ -14,16 +14,17 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     const isVerified = localStorage.getItem('isVerified') === 'true';
+    const firstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
     
-    console.log('🔑 Token Interceptor:', {
+    console.log('🔑 Comprehensive Token Check:', {
         token: token ? 'Present' : 'Missing',
-        isVerified: isVerified,
+        isVerified,
+        firstTimeSetup,
         url: config.url
     });
 
     // Always add token if present
     if (token) {
-        // Remove any existing 'Bearer ' prefix and add it back
         const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
         config.headers.Authorization = `Bearer ${cleanToken}`;
         
@@ -37,6 +38,7 @@ api.interceptors.request.use((config) => {
     console.error('🚨 Token Interceptor Error:', error);
     return Promise.reject(error);
 });
+
 
 
 

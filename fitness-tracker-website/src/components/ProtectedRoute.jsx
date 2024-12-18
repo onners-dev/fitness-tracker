@@ -1,3 +1,4 @@
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
@@ -6,11 +7,12 @@ const ProtectedRoute = ({ children }) => {
   const isVerified = localStorage.getItem('isVerified') === 'true';
   const isFirstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
 
-  console.log('🛡️ Protected Route Check:', {
+  console.log('🛡️ Protected Route Detailed Check:', {
     token: token ? 'Present' : 'Missing',
     isVerified,
     isFirstTimeSetup,
-    currentPath: location.pathname
+    currentPath: location.pathname,
+    children: children ? 'Present' : 'Missing'
   });
 
   // Always check for token first
@@ -28,7 +30,9 @@ const ProtectedRoute = ({ children }) => {
   // Check first-time setup
   if (isFirstTimeSetup) {
     console.log('🆕 First-time setup required, redirecting to profile setup');
-    return <Navigate to="/profile-setup" replace />;
+    return children.type.name === 'ProfileSetup' 
+      ? children 
+      : <Navigate to="/profile-setup" replace />;
   }
 
   // If all checks pass, render children

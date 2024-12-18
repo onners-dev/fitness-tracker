@@ -27,7 +27,7 @@ const ProfileSetup = () => {
     const isVerified = localStorage.getItem('isVerified') === 'true';
     const firstTimeSetup = localStorage.getItem('firstTimeSetup');
 
-    console.log('🛡️ Authorization Checks:', {
+    console.log('🛡️ Profile Setup Authorization Checks:', {
       token: token ? 'Present' : 'Missing',
       isVerified,
       firstTimeSetup
@@ -59,29 +59,38 @@ const ProfileSetup = () => {
   useEffect(() => {
     console.log('🚀 Profile Setup Page Mounted');
 
-    // Run authorization check
-    const isAuthorized = checkAuthorization();
+    // Ensure localStorage is accessible
+    try {
+      // Run authorization check
+      const isAuthorized = checkAuthorization();
 
-    // If authorized, mark page as ready
-    if (isAuthorized) {
-      setIsPageReady(true);
+      // Log additional context
+      console.log('📋 Authorization Result:', isAuthorized);
+
+      // If authorized, mark page as ready
+      if (isAuthorized) {
+        setIsPageReady(true);
+      }
+
+      // Optional: Retrieve pre-filled data from local storage or previous signup data
+      const storedGoals = JSON.parse(localStorage.getItem('signupFitnessGoals') || '{}');
+      
+      // Pre-fill fitness goals if available
+      if (storedGoals.fitnessGoal || storedGoals.activityLevel) {
+        setFormData(prev => ({
+          ...prev,
+          fitnessGoal: storedGoals.fitnessGoal || '',
+          activityLevel: storedGoals.activityLevel || ''
+        }));
+
+        // Clear the stored goals
+        localStorage.removeItem('signupFitnessGoals');
+      }
+    } catch (error) {
+      console.error('🚨 Initialization Error:', error);
+      navigate('/login');
     }
-
-    // Optional: Retrieve pre-filled data from local storage or previous signup data
-    const storedGoals = JSON.parse(localStorage.getItem('signupFitnessGoals') || '{}');
-    
-    // Pre-fill fitness goals if available
-    if (storedGoals.fitnessGoal || storedGoals.activityLevel) {
-      setFormData(prev => ({
-        ...prev,
-        fitnessGoal: storedGoals.fitnessGoal || '',
-        activityLevel: storedGoals.activityLevel || ''
-      }));
-
-      // Clear the stored goals
-      localStorage.removeItem('signupFitnessGoals');
-    }
-  }, [checkAuthorization]);
+  }, [checkAuthorization, navigate]);
 
   // Handle input changes
   const handleChange = (e) => {
