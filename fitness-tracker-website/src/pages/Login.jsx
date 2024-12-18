@@ -47,31 +47,19 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateInput()) return;
-    
-    setIsLoading(true);
-    
     try {
       // Attempt to log in
       const loginResponse = await authService.login(
         credentials.email, 
         credentials.password
       );
-      
-      console.group('🔐 Login Process');
-      console.log('Login Response:', {
-        user: loginResponse.user,
-        token: loginResponse.token
-      });
-  
+    
       // Ensure token is set
       if (!loginResponse.token) {
         throw new Error('No token received from login');
       }
-  
-      // Store token
+    
+      // Store token in localStorage
       localStorage.setItem('token', loginResponse.token);
       
       // Set verification status
@@ -80,7 +68,7 @@ const Login = () => {
          loginResponse.user.email_verified === 't').toString()
       );
       
-      // Check if profile is complete
+      // Determine next navigation based on profile completeness
       if (!loginResponse.user.is_profile_complete) {
         localStorage.setItem('firstTimeSetup', 'true');
         navigate('/profile-setup');
@@ -88,23 +76,15 @@ const Login = () => {
         localStorage.removeItem('firstTimeSetup');
         navigate('/dashboard');
       }
-  
-      console.groupEnd();
     } catch (err) {
-      console.group('❌ Login Error');
-      console.error('Error:', err);
-      console.error('Response:', err.response);
-      console.groupEnd();
-      
-      // More specific error handling
+      // Error handling
       setError(
         err.response?.data?.message || 
         'Login failed. Please try again.'
       );
-    } finally {
-      setIsLoading(false);
     }
   };
+  
   
   
   return (
