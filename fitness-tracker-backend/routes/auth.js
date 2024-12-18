@@ -299,7 +299,95 @@ router.post('/login', async (req, res) => {
       error: err.message 
     });
   }
+});router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    console.log('🔐 Backend Login Attempt:', { email });
+
+    // Find user
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = userResult.rows[0];
+
+    // Check if user exists
+    if (!user) {
+      console.warn('❌ User not found:', email);
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Verify password
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      console.warn('❌ Invalid password for:', email);
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Convert verification status
+    const isEmailVerified = user.email_verified === 't' || user.email_verified === true;
+
+    // Generate token
+    const token = jwt.sign(
+      { 
+        user_id: user.user_id, 
+        email: user.email,
+        email_verified: isEmailVerified
+      }, 
+      process.env.JWT_SECRET, 
+      { 
+        expiresIn: '1d' 
+      }
+    );
+
+    console.log('✅ Login Success:', {
+      userId: user.user_id,
+      email: user.email,
+      emailVerified: isEmailVerified,
+      tokenGenerated: !!token
+    });
+
+    // Fetch user profile to check completeness
+    const profileResult = await pool.query(`
+      SELECT 
+        up.first_name, 
+        up.last_name, 
+        up.height, 
+        up.current_weight, 
+        up.fitness_goal, 
+        up.activity_level, 
+        up.primary_focus
+      FROM user_profiles up
+      WHERE up.user_id = $1
+    `, [user.user_id]);
+
+    // Determine profile completeness
+    const profile = profileResult.rows[0];
+    const isProfileComplete = !!(
+      profile?.height &&
+      profile?.current_weight &&
+      profile?.fitness_goal &&
+      profile?.activity_level &&
+      profile?.primary_focus
+    );
+
+    // IMPORTANT: Explicitly return token in response
+    res.status(200).json({
+      token: token,  // Explicitly add token
+      user: {
+        user_id: user.user_id,
+        email: user.email,
+        email_verified: isEmailVerified,
+        is_profile_complete: isProfileComplete
+      }
+    });
+  } catch (err) {
+    console.error('🚨 Login Error:', err);
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: err.message 
+    });
+  }
 });
+
 
 
 

@@ -102,12 +102,15 @@ export const authService = {
             throw new Error('No token received from server');
           }
           
+          // Create a new object to avoid read-only property issues
           return {
             token: response.data.token,
             user: {
-              ...response.data.user,
+              user_id: response.data.user.user_id,
+              email: response.data.user.email,
               email_verified: response.data.user.email_verified === true || 
-                              response.data.user.email_verified === 't'
+                              response.data.user.email_verified === 't',
+              is_profile_complete: response.data.user.is_profile_complete
             }
           };
         } catch (error) {
@@ -122,7 +125,8 @@ export const authService = {
           
           throw error;
         }
-      },
+    },
+      
       
 
     register: async (userData) => {
