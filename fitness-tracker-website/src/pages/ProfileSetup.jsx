@@ -95,13 +95,12 @@ const ProfileSetup = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    
     if (!validateForm()) return;
-  
+    
     setIsLoading(true);
-  
+    
     try {
-      // Prepare profile data for submission
       const profileData = {
         height: parseFloat(formData.height),
         current_weight: parseFloat(formData.currentWeight),
@@ -112,28 +111,18 @@ const ProfileSetup = () => {
         weight_unit: formData.weightUnit,
         height_unit: formData.heightUnit
       };
-  
-      console.log('📤 Submitting Profile Data:', profileData);
-
+    
       const updatedProfile = await userService.updateProfile(profileData);
       
-      console.log('✅ Profile Updated:', updatedProfile);
-
-      // Clear first-time setup flag
-      localStorage.removeItem('firstTimeSetup');
-      
-      // Set verification to true
-      localStorage.setItem('isVerified', 'true');
-  
-      // Navigate to dashboard
-      navigate('/dashboard');
+      // Check profile completeness from the response 
+      if (updatedProfile.is_profile_complete) {
+        localStorage.removeItem('firstTimeSetup');
+        navigate('/dashboard');
+      } else {
+        // Optionally handle partially complete profiles
+        setError('Please complete all profile fields');
+      }
     } catch (err) {
-      console.error('❌ Profile Setup Error:', {
-        error: err,
-        response: err.response
-      });
-      
-      // More specific error handling
       setError(
         err.response?.data?.message || 
         'Failed to update profile. Please try again.'
@@ -142,6 +131,7 @@ const ProfileSetup = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="profile-setup-page">
