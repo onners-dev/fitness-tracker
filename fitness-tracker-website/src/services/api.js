@@ -56,10 +56,6 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
-
-
-
-
 // Add response interceptor to handle unauthorized requests
 api.interceptors.response.use(
     (response) => response,
@@ -84,20 +80,9 @@ api.interceptors.response.use(
 export const authService = {
     login: async (email, password) => {
         try {
-            console.group('🔐 Frontend Login Attempt');
-            console.log('Email:', email);
-            console.log('Password Length:', password.length);
-            
             const response = await api.post('/auth/login', { email, password });
             
-            console.log('Full Response:', response);
-            console.log('Response Data:', response.data);
-            console.groupEnd();
-        
-            // Very explicit token extraction and validation
-            const token = 
-                response.data.token || 
-                (response.data.user && response.data.user.token);
+            const token = response.data.token;  // Directly access token from top-level response
             
             if (!token) {
                 console.error('❌ No token in login response');
