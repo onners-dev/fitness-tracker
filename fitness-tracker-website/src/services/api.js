@@ -11,19 +11,21 @@ const api = axios.create({
 });
 
 // Token interceptor
-// Token interceptor
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
+    const isVerified = localStorage.getItem('isVerified') === 'true';
     
-    console.log('🔑 Interceptor Token Check:', {
+    console.log('🔑 Token Interceptor:', {
         token: token ? 'Present' : 'Missing',
+        isVerified: isVerified,
         url: config.url
     });
 
-    // Explicitly set the Authorization header
+    // Always add token if present
     if (token) {
-        // Ensure 'Bearer ' prefix is added
-        config.headers.Authorization = `Bearer ${token.replace('Bearer ', '')}`;
+        // Remove any existing 'Bearer ' prefix and add it back
+        const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
+        config.headers.Authorization = `Bearer ${cleanToken}`;
         
         console.log('🛡️ Token Added to Headers', {
             headerToken: config.headers.Authorization
@@ -32,9 +34,10 @@ api.interceptors.request.use((config) => {
     
     return config;
 }, (error) => {
-    console.error('🚨 Request Interceptor Error:', error);
+    console.error('🚨 Token Interceptor Error:', error);
     return Promise.reject(error);
 });
+
 
 
 // Add response interceptor to handle unauthorized requests
@@ -117,9 +120,16 @@ export const authService = {
 
     verifyCode: async (email, code) => {
         try {
+          console.log('🔍 Verification Attempt:', { email, code });
+          
           const response = await api.post('/auth/verify-code', { email, code });
           
-          // Explicitly set token and verification status
+          console.log('✅ Verification Response:', {
+            data: response.data,
+            token: response.data.token
+          });
+          
+          // Always set token if present
           if (response.data.token) {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('isVerified', 'true');
@@ -127,10 +137,16 @@ export const authService = {
           
           return response.data;
         } catch (error) {
-          console.error('Code verification error:', error);
+          console.error('❌ Verification Error:', {
+            message: error.response?.data?.message,
+            status: error.response?.status,
+            data: error.response?.data
+          });
+          
           throw error;
         }
       },
+      
 
     resendVerificationCode: async (email) => {
         try {

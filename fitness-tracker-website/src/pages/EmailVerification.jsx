@@ -27,22 +27,48 @@ const EmailVerification = () => {
     e.preventDefault();
     setIsLoading(true);
   
+    // Trim and validate code
+    const trimmedCode = verificationCode.trim();
+    
+    // Validate code format
+    if (!/^\d{6}$/.test(trimmedCode)) {
+      setMessage('Please enter a valid 6-digit code');
+      setIsLoading(false);
+      return;
+    }
+  
     try {
-      const response = await authService.verifyCode(email, verificationCode);
+      console.log('🔍 Attempting Verification:', { 
+        email, 
+        codeLength: trimmedCode.length 
+      });
+  
+      const response = await authService.verifyCode(email, trimmedCode);
       
-      // Always set token
-      localStorage.setItem('token', response.token || '');
+      console.log('✅ Verification Response:', response);
+  
+      // Always set token if present
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
+      
       localStorage.setItem('isVerified', 'true');
-      localStorage.removeItem('firstTimeSetup');
+      localStorage.setItem('firstTimeSetup', 'true');
       
       navigate('/profile-setup');
     } catch (error) {
-      console.error('Verification error:', error);
-      setMessage(error.response?.data?.message || 'Verification failed');
+      console.error('❌ Verification Error:', error);
+      
+      // More user-friendly error message
+      setMessage(
+        error.response?.data?.message || 
+        'Verification failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
+  
   
   
   const handleResendCode = async () => {

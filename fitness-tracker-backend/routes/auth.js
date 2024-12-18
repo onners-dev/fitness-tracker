@@ -129,17 +129,42 @@ router.post('/verify-code', async (req, res) => {
   try {
     const { email, code } = req.body;
 
+    console.log('🔍 Verification Request:', { 
+      email, 
+      code, 
+      codeType: typeof code 
+    });
+
+    // Validate input
+    if (!email || !code) {
+      return res.status(400).json({ 
+        message: 'Email and verification code are required' 
+      });
+    }
+
+    // Ensure code is a string and has 6 digits
+    const verificationCode = code.toString().trim();
+    if (!/^\d{6}$/.test(verificationCode)) {
+      return res.status(400).json({ 
+        message: 'Invalid verification code format' 
+      });
+    }
+
     const result = await pool.query(
       `SELECT * FROM users 
        WHERE email = $1 
        AND verification_code = $2 
        AND verification_code_expires_at > CURRENT_TIMESTAMP`,
-      [email, code]
+      [email, verificationCode]
     );
 
     if (result.rows.length === 0) {
-      return res.status(400).json({ message: 'Invalid or expired code' });
+      return res.status(400).json({ 
+        message: 'Invalid or expired verification code' 
+      });
     }
+
+    const user = result.rows[0];
 
     // Mark email as verified and clear verification code
     await pool.query(
@@ -151,15 +176,40 @@ router.post('/verify-code', async (req, res) => {
       [email]
     );
 
+    // Generate new token for verified user
+    const token = jwt.sign(
+      { 
+        user_id: user.user_id, 
+        email: user.email,
+        email_verified: true
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1d' }
+    );
+
     res.status(200).json({ 
       message: 'Email verified successfully',
-      email_verified: true
+      email_verified: true,
+      token: token,
+      user: {
+        user_id: user.user_id,
+        email: user.email
+      }
     });
   } catch (error) {
-    console.error('Code verification error:', error);
-    res.status(500).json({ message: 'Server error during verification' });
+    console.error('🚨 Code Verification Error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+
+    res.status(500).json({ 
+      message: 'Server error during verification',
+      error: error.message
+    });
   }
 });
+
 
 
 
