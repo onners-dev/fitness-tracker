@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../services/api';
 import './EmailVerification.css';
-import jwtDecode from 'jwt-decode'; // Make sure to install jwt-decode
+import * as jwtDecode from 'jwt-decode';
 
 const EmailVerification = () => {
   const location = useLocation();
