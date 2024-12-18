@@ -1,3 +1,5 @@
+import { Navigate } from 'react-router-dom';
+
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   const isVerified = localStorage.getItem('isVerified') === 'true';
@@ -18,3 +20,7 @@ const ProtectedRoute = ({ children }) => {
 
   return children;
 };
+
+
+
+export default ProtectedRoute;
