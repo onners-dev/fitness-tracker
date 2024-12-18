@@ -2,7 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../services/api';
 import './EmailVerification.css';
-import * as jwtDecode from 'jwt-decode';
+
+// Import jwt-decode safely
+const jwtDecode = (() => {
+  try {
+    // Try to import default export first
+    return require('jwt-decode').default || require('jwt-decode');
+  } catch (e) {
+    // Fallback to direct import if require fails
+    return (token) => {
+      try {
+        return JSON.parse(atob(token.split('.')[1]));
+      } catch (error) {
+        console.error('Token decoding error:', error);
+        return null;
+      }
+    };
+  }
+})();
 
 const EmailVerification = () => {
   const location = useLocation();
