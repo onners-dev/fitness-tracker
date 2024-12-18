@@ -87,45 +87,58 @@ export const authService = {
           const response = await api.post('/auth/login', { email, password });
           
           console.group('🔐 Detailed Login Response');
-          console.log('Full Response:', response);
-          console.log('Response Data:', response.data);
-          console.log('Token:', response.data?.token);
-          console.log('User:', response.data?.user);
+          console.log('Full Response:', JSON.stringify(response, null, 2));
+          console.log('Response Status:', response.status);
+          console.log('Response Headers:', response.headers);
+          console.log('Response Data:', JSON.stringify(response.data, null, 2));
+          
+          // Detailed property inspection
+          console.log('Response Data Properties:', {
+            hasData: !!response.data,
+            dataKeys: response.data ? Object.keys(response.data) : 'No Data',
+            tokenExists: response.data && response.data.token !== undefined,
+            userExists: response.data && response.data.user !== undefined
+          });
           console.groupEnd();
       
-          // Validate response with more robust checking
+          // More aggressive validation
           if (!response.data) {
             throw new Error('Empty response from server');
           }
       
+          // Check if token is missing
           if (!response.data.token) {
+            console.error('❌ No Token in Response:', {
+              fullResponseData: JSON.stringify(response.data, null, 2)
+            });
             throw new Error('No token received from server');
           }
-
-        // Create loginResponse object to match the usage in Login.jsx
-        const loginResponse = {
+          
+          return {
             token: response.data.token,
             user: {
-            user_id: response.data.user.user_id,
-            email: response.data.user.email,
-            email_verified: response.data.user.email_verified === true || 
-                            response.data.user.email_verified === 't',
-            is_profile_complete: response.data.user.is_profile_complete
+              user_id: response.data.user.user_id,
+              email: response.data.user.email,
+              email_verified: response.data.user.email_verified === true || 
+                              response.data.user.email_verified === 't',
+              is_profile_complete: response.data.user.is_profile_complete
             }
-        };
-        
-        return loginResponse;
+          };
         } catch (error) {
-        console.group('🚨 Login API Error');
-        console.error('Full Error:', error);
-        console.error('Error Details:', {
-            message: error.response?.data?.message,
-            status: error.response?.status,
-            data: error.response?.data
-        });
-        console.groupEnd();
-        
-        throw error;
+          console.group('🚨 Login API Error');
+          console.error('Full Error Object:', error);
+          console.error('Error Response:', error.response);
+          console.error('Error Message:', error.message);
+          
+          // More detailed error logging
+          if (error.response) {
+            console.error('Error Response Data:', JSON.stringify(error.response.data, null, 2));
+            console.error('Error Response Status:', error.response.status);
+            console.error('Error Response Headers:', error.response.headers);
+          }
+          console.groupEnd();
+          
+          throw error;
         }
     },
       
