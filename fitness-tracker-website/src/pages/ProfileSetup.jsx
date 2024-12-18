@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../services/api';
 import './ProfileSetup.css';
@@ -17,35 +17,73 @@ const ProfileSetup = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPageReady, setIsPageReady] = useState(false);
 
-  // Lifecycle methods and side effects
-  useEffect(() => {
-    console.log('🚀 Profile Setup Page Mounted');
-    
-    // Check if user is authorized to be on this page
+  // Comprehensive authorization check
+  const checkAuthorization = useCallback(() => {
+    console.log('🔐 Checking Authorization for Profile Setup');
+
     const token = localStorage.getItem('token');
     const isVerified = localStorage.getItem('isVerified') === 'true';
     const firstTimeSetup = localStorage.getItem('firstTimeSetup');
 
-    console.log('🔍 Profile Setup Authorization Check:', {
+    console.log('🛡️ Authorization Checks:', {
       token: token ? 'Present' : 'Missing',
       isVerified,
       firstTimeSetup
     });
 
-    if (!token || !isVerified) {
-      console.warn('❌ Unauthorized access to profile setup');
+    // Strict authorization checks
+    if (!token) {
+      console.warn('❌ No token - redirecting to login');
       navigate('/login');
-      return;
+      return false;
+    }
+
+    if (!isVerified) {
+      console.warn('🔒 Not verified - redirecting to email verification');
+      navigate('/verify-email');
+      return false;
     }
 
     if (firstTimeSetup !== 'true') {
-      console.warn('⚠️ Profile setup not required');
+      console.warn('⚠️ Profile setup not required - redirecting to dashboard');
       navigate('/dashboard');
+      return false;
     }
+
+    return true;
   }, [navigate]);
 
-  // Handle input changes and clear previous errors
+  // Comprehensive page initialization
+  useEffect(() => {
+    console.log('🚀 Profile Setup Page Mounted');
+
+    // Run authorization check
+    const isAuthorized = checkAuthorization();
+
+    // If authorized, mark page as ready
+    if (isAuthorized) {
+      setIsPageReady(true);
+    }
+
+    // Optional: Retrieve pre-filled data from local storage or previous signup data
+    const storedGoals = JSON.parse(localStorage.getItem('signupFitnessGoals') || '{}');
+    
+    // Pre-fill fitness goals if available
+    if (storedGoals.fitnessGoal || storedGoals.activityLevel) {
+      setFormData(prev => ({
+        ...prev,
+        fitnessGoal: storedGoals.fitnessGoal || '',
+        activityLevel: storedGoals.activityLevel || ''
+      }));
+
+      // Clear the stored goals
+      localStorage.removeItem('signupFitnessGoals');
+    }
+  }, [checkAuthorization]);
+
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -55,7 +93,7 @@ const ProfileSetup = () => {
     setError(''); // Clear error when user types
   };
 
-  // Comprehensive input validation
+  // Comprehensive form validation
   const validateForm = () => {
     const requiredFields = [
       'height', 'currentWeight', 'fitnessGoal', 
@@ -95,12 +133,14 @@ const ProfileSetup = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+  
+    // Validate form before submission
     if (!validateForm()) return;
-    
+  
     setIsLoading(true);
-    
+  
     try {
+      // Prepare profile data for submission
       const profileData = {
         height: parseFloat(formData.height),
         current_weight: parseFloat(formData.currentWeight),
@@ -111,18 +151,25 @@ const ProfileSetup = () => {
         weight_unit: formData.weightUnit,
         height_unit: formData.heightUnit
       };
-    
+  
+      console.log('📤 Submitting Profile Data:', profileData);
+
       const updatedProfile = await userService.updateProfile(profileData);
       
-      // Check profile completeness from the response 
-      if (updatedProfile.is_profile_complete) {
-        localStorage.removeItem('firstTimeSetup');
-        navigate('/dashboard');
-      } else {
-        // Optionally handle partially complete profiles
-        setError('Please complete all profile fields');
-      }
+      console.log('✅ Profile Updated:', updatedProfile);
+
+      // Clear first-time setup flag
+      localStorage.removeItem('firstTimeSetup');
+      
+      // Navigate to dashboard
+      navigate('/dashboard');
     } catch (err) {
+      console.error('❌ Profile Setup Error:', {
+        error: err,
+        response: err.response
+      });
+      
+      // More specific error handling
       setError(
         err.response?.data?.message || 
         'Failed to update profile. Please try again.'
@@ -131,7 +178,16 @@ const ProfileSetup = () => {
       setIsLoading(false);
     }
   };
-  
+
+  // If page is not ready, show a loading state
+  if (!isPageReady) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Preparing your profile setup...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-setup-page">
