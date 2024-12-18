@@ -207,6 +207,137 @@ router.post('/verify-code', async (req, res) => {
   }
 });
 
+// In your backend routes/users.js
+router.put('/profile', authMiddleware, async (req, res) => {
+  console.group('🔐 Profile Update Request');
+  console.log('User ID:', req.user.id);
+  console.log('Request Body:', req.body);
+
+  try {
+    const { 
+      height, 
+      current_weight, 
+      target_weight, 
+      fitness_goal, 
+      activity_level, 
+      primary_focus
+    } = req.body;
+
+    // Validate required fields
+    const requiredFields = [
+      'height', 'current_weight', 
+      'fitness_goal', 'activity_level', 'primary_focus'
+    ];
+
+    const missingFields = requiredFields.filter(field => 
+      req.body[field] === undefined || req.body[field] === null
+    );
+
+    if (missingFields.length > 0) {
+      console.warn('❌ Missing required fields:', missingFields);
+      return res.status(400).json({ 
+        message: `Missing required fields: ${missingFields.join(', ')}` 
+      });
+    }
+
+    // Begin database transaction
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Update user profile
+      const profileUpdateQuery = `
+        UPDATE user_profiles
+        SET 
+          height = $1, 
+          current_weight = $2, 
+          target_weight = $3, 
+          fitness_goal = $4, 
+          activity_level = $5, 
+          primary_focus = $6,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $7
+        RETURNING *
+      `;
+
+      const values = [
+        height, 
+        current_weight, 
+        target_weight || null, 
+        fitness_goal, 
+        activity_level, 
+        primary_focus,
+        req.user.id
+      ];
+
+      const result = await client.query(profileUpdateQuery, values);
+
+      // Update users table to mark profile as complete
+      await client.query(
+        `UPDATE users SET is_profile_complete = true WHERE user_id = $1`,
+        [req.user.id]
+      );
+
+      await client.query('COMMIT');
+
+      console.log('✅ Profile Updated Successfully');
+      console.groupEnd();
+
+      res.status(200).json({
+        message: 'Profile updated successfully',
+        profile: result.rows[0]
+      });
+    } catch (dbError) {
+      await client.query('ROLLBACK');
+      console.error('🚨 Database Update Error:', dbError);
+      console.groupEnd();
+      
+      res.status(500).json({ 
+        message: 'Error updating profile',
+        error: dbError.message 
+      });
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('🚨 Profile Update Error:', error);
+    console.groupEnd();
+    
+    res.status(500).json({ 
+      message: 'Unexpected error during profile update',
+      error: error.message 
+    });
+  }
+});
+
+// Profile retrieval route
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        up.*, 
+        u.email_verified,
+        u.is_profile_complete
+      FROM user_profiles up
+      JOIN users u ON up.user_id = u.user_id
+      WHERE up.user_id = $1
+    `;
+
+    const result = await pool.query(query, [req.user.id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error('Profile retrieval error:', error);
+    res.status(500).json({ message: 'Error retrieving profile' });
+  }
+});
+
+
 
 
 router.post('/login', async (req, res) => {

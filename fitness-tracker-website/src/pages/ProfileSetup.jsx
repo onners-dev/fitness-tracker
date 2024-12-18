@@ -156,7 +156,6 @@ const ProfileSetup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    // Validate form before submission
     if (!validateForm()) return;
   
     setIsLoading(true);
@@ -166,20 +165,18 @@ const ProfileSetup = () => {
       const profileData = {
         height: parseFloat(formData.height),
         current_weight: parseFloat(formData.currentWeight),
-        target_weight: parseFloat(formData.targetWeight) || null,
+        target_weight: formData.targetWeight ? parseFloat(formData.targetWeight) : null,
         fitness_goal: formData.fitnessGoal,
         activity_level: formData.activityLevel,
-        primary_focus: formData.primaryFocus,
-        weight_unit: formData.weightUnit,
-        height_unit: formData.heightUnit
+        primary_focus: formData.primaryFocus
       };
   
       console.log('📤 Submitting Profile Data:', profileData);
-
+  
       const updatedProfile = await userService.updateProfile(profileData);
       
       console.log('✅ Profile Updated:', updatedProfile);
-
+  
       // Clear first-time setup flag
       localStorage.removeItem('firstTimeSetup');
       
@@ -194,12 +191,14 @@ const ProfileSetup = () => {
       // More specific error handling
       setError(
         err.response?.data?.message || 
+        err.message || 
         'Failed to update profile. Please try again.'
       );
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   // If page is not ready, show a loading state
   if (!isPageReady) {
