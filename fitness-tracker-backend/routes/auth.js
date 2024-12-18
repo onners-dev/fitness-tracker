@@ -186,9 +186,19 @@ router.post('/login', async (req, res) => {
     // Convert verification status
     const isEmailVerified = user.email_verified === 't' || user.email_verified === true;
 
+    // Generate token
+    const token = jwt.sign(
+      { 
+        user_id: user.user_id, 
+        email: user.email,
+        email_verified: isEmailVerified
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '1d' }
+    );
 
     res.json({
-      token: token,  // Add token to response
+      token: token,  // Send raw token without 'Bearer '
       user: {
         user_id: user.user_id,
         email: user.email,
@@ -200,7 +210,6 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-
 
 
 module.exports = router;

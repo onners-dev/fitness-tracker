@@ -54,15 +54,24 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const response = await authService.login(credentials.email, credentials.password);
+      const loginResponse = await authService.login(credentials.email, credentials.password);
       
-      // Always set token
-      localStorage.setItem('token', response.token || '');
+      console.log('🔐 Login Response:', {
+        user: loginResponse.user,
+        token: loginResponse.token
+      });
+  
+      // Ensure token is set correctly
+      if (loginResponse.token) {
+        // Remove any existing 'Bearer ' prefix and store clean token
+        const cleanToken = loginResponse.token.replace(/^Bearer\s+/i, '').trim();
+        localStorage.setItem('token', cleanToken);
+      }
       
       // Set verification status
       localStorage.setItem('isVerified', 
-        (response.user.email_verified === true || 
-         response.user.email_verified === 't').toString()
+        (loginResponse.user.email_verified === true || 
+         loginResponse.user.email_verified === 't').toString()
       );
       
       try {
@@ -87,10 +96,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-  
-  
-  
-  
   
 
   return (

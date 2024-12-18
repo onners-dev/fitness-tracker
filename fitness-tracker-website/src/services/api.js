@@ -11,16 +11,31 @@ const api = axios.create({
 });
 
 // Token interceptor
+// Token interceptor
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     
-    // Always add token if present, regardless of verification status
+    console.log('🔑 Interceptor Token Check:', {
+        token: token ? 'Present' : 'Missing',
+        url: config.url
+    });
+
+    // Explicitly set the Authorization header
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+        // Ensure 'Bearer ' prefix is added
+        config.headers.Authorization = `Bearer ${token.replace('Bearer ', '')}`;
+        
+        console.log('🛡️ Token Added to Headers', {
+            headerToken: config.headers.Authorization
+        });
     }
     
     return config;
-}, (error) => Promise.reject(error));
+}, (error) => {
+    console.error('🚨 Request Interceptor Error:', error);
+    return Promise.reject(error);
+});
+
 
 // Add response interceptor to handle unauthorized requests
 api.interceptors.response.use(
