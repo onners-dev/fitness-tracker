@@ -152,14 +152,15 @@ const ProfileSetup = () => {
     return true;
   };
 
+  
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!validateForm()) return;
-  
+
     setIsLoading(true);
-  
+
     try {
       // Prepare profile data for submission
       const profileData = {
@@ -168,15 +169,18 @@ const ProfileSetup = () => {
         target_weight: formData.targetWeight ? parseFloat(formData.targetWeight) : null,
         fitness_goal: formData.fitnessGoal,
         activity_level: formData.activityLevel,
-        primary_focus: formData.primaryFocus
+        primary_focus: formData.primaryFocus,
+        // Add optional unit fields
+        weight_unit: formData.weightUnit,
+        height_unit: formData.heightUnit
       };
-  
+
       console.log('📤 Submitting Profile Data:', profileData);
-  
+
       const updatedProfile = await userService.updateProfile(profileData);
       
       console.log('✅ Profile Updated:', updatedProfile);
-  
+
       // Clear first-time setup flag
       localStorage.removeItem('firstTimeSetup');
       
@@ -198,6 +202,7 @@ const ProfileSetup = () => {
       setIsLoading(false);
     }
   };
+
   
 
   // If page is not ready, show a loading state

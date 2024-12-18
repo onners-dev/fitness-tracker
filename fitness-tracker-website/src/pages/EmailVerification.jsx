@@ -10,7 +10,7 @@ const EmailVerification = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isResendDisabled, setIsResendDisabled] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
 
   const email = location.state?.email;
   const fromSignup = location.state?.fromSignup || false;
@@ -22,6 +22,20 @@ const EmailVerification = () => {
       localStorage.setItem('token', initialToken);
     }
   }, [initialToken]);
+
+  // Countdown effect
+  useEffect(() => {
+    let intervalId;
+    if (resendCountdown > 0) {
+      intervalId = setInterval(() => {
+        setResendCountdown((prevCountdown) => prevCountdown - 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [resendCountdown]);
 
   const handleVerifyCode = async (e) => {
     e.preventDefault();
@@ -54,21 +68,18 @@ const EmailVerification = () => {
     }
   };
   
-  
-  
-  
   const handleResendCode = async () => {
     try {
-      setIsResendDisabled(true);
+      // Start 60-second countdown
+      setResendCountdown(60);
+      
       const response = await authService.resendVerificationCode(email);
       
-      setMessage(response.message);
-      
-      // Re-enable resend after 60 seconds
-      setTimeout(() => setIsResendDisabled(false), 60000);
+      setMessage(response.message || 'New verification code sent!');
     } catch (error) {
       setMessage('Failed to resend verification code');
-      setIsResendDisabled(false);
+      // Reset countdown if there's an error
+      setResendCountdown(0);
     }
   };
 
@@ -78,25 +89,27 @@ const EmailVerification = () => {
         <h2>Verify Your Email</h2>
         
         <div className="verification-instructions">
-          <p>We've sent a 6-digit verification code to <strong>{email}</strong></p>
-          <p>Please enter the code below to verify your email</p>
+          <p>We've sent a 6-digit verification code to</p>
+          <p><strong>{email}</strong></p>
+          <p>Enter the code below to verify your email address</p>
         </div>
 
         <form onSubmit={handleVerifyCode} className="verification-form">
           <input 
             type="text" 
             value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-            placeholder="Enter 6-digit code"
+            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+            placeholder="_ _ _ _ _ _"
             maxLength="6"
             required
+            pattern="\d{6}"
           />
           
           <button 
             type="submit" 
             disabled={isLoading || verificationCode.length !== 6}
           >
-            {isLoading ? 'Verifying...' : 'Verify'}
+            {isLoading ? 'Verifying...' : 'Verify Code'}
           </button>
         </form>
 
@@ -105,9 +118,11 @@ const EmailVerification = () => {
         <div className="verification-actions">
           <button 
             onClick={handleResendCode}
-            disabled={isResendDisabled}
+            disabled={resendCountdown > 0}
           >
-            {isResendDisabled ? 'Resend in 60s' : 'Resend Code'}
+            {resendCountdown > 0 
+              ? `Resend in ${resendCountdown}s` 
+              : 'Resend Verification Code'}
           </button>
         </div>
       </div>
