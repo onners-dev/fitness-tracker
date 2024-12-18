@@ -327,4 +327,28 @@ export const favoriteService = {
     }
 };
 
+export const nutritionService = {
+    // Get current nutrition goals
+    getNutritionGoals: async () => {
+      try {
+        const response = await api.get('/nutrition/goals');
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching nutrition goals', error);
+        throw error;
+      }
+    },
+  
+    // Calculate and update nutrition goals
+    calculateNutritionGoals: async () => {
+        try {
+          const response = await api.post('/nutrition/calculate-goals');
+          return response.data;
+        } catch (error) {
+          console.error('Error calculating nutrition goals', error);
+          throw error;
+        }
+      }
+};
+
 export default api;

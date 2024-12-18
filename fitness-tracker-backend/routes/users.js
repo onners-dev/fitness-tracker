@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const authorization = require('../middleware/authorization');
 const pool = require('../db');
+const { calculateNutrientGoals } = require('../routes/nutrition');
 
 router.get('/profile', authorization, async (req, res) => {
   try {
@@ -78,6 +79,7 @@ router.put('/profile', authorization, async (req, res) => {
   try {
     const userId = req.user.id;
     const { 
+      // Existing fitness fields
       height, 
       current_weight, 
       target_weight, 
@@ -85,11 +87,23 @@ router.put('/profile', authorization, async (req, res) => {
       activity_level,
       primary_focus,
       weight_unit,
-      height_unit
+      height_unit,
+
+      // New personal information fields
+      first_name,
+      last_name,
+      email,
+      date_of_birth,
+      gender
     } = req.body;
 
     console.log('📥 Received Profile Update:', {
       userId,
+      first_name,
+      last_name,
+      email,
+      date_of_birth,
+      gender,
       height,
       current_weight,
       target_weight,
@@ -100,63 +114,41 @@ router.put('/profile', authorization, async (req, res) => {
       height_unit
     });
 
-    // Validate required fields
-    const requiredFields = [
-      'height', 
-      'current_weight', 
-      'fitness_goal', 
-      'activity_level', 
-      'primary_focus'
-    ];
-
-    const missingFields = requiredFields.filter(field => 
-      req.body[field] === undefined || 
-      req.body[field] === null || 
-      req.body[field] === ''
-    );
-
-    if (missingFields.length > 0) {
-      return res.status(400).json({ 
-        message: `Missing required fields: ${missingFields.join(', ')}` 
-      });
-    }
-
-    // Additional validation
-    if (height <= 0 || height > 300) {
-      return res.status(400).json({ message: 'Invalid height' });
-    }
-
-    if (current_weight <= 0 || current_weight > 500) {
-      return res.status(400).json({ message: 'Invalid current weight' });
-    }
-
     // Start a transaction
     const client = await pool.connect();
 
     try {
       await client.query('BEGIN');
 
-      // Prepare update query
-      const updateQuery = `
+      // Update user_profiles table
+      const profileUpdateQuery = `
         UPDATE user_profiles
         SET 
-          height = $1,
-          current_weight = $2,
-          target_weight = $3,
-          fitness_goal = $4,
-          activity_level = $5,
-          primary_focus = $6,
-          weight_unit = $7,
-          height_unit = $8,
+          first_name = COALESCE($1, first_name),
+          last_name = COALESCE($2, last_name),
+          date_of_birth = COALESCE($3, date_of_birth),
+          gender = COALESCE($4, gender),
+          height = COALESCE($5, height),
+          current_weight = COALESCE($6, current_weight),
+          target_weight = COALESCE($7, target_weight),
+          fitness_goal = COALESCE($8, fitness_goal),
+          activity_level = COALESCE($9, activity_level),
+          primary_focus = COALESCE($10, primary_focus),
+          weight_unit = COALESCE($11, weight_unit),
+          height_unit = COALESCE($12, height_unit),
           updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $9
+        WHERE user_id = $13
         RETURNING *
       `;
 
-      const values = [
+      const profileValues = [
+        first_name,
+        last_name,
+        date_of_birth ? new Date(date_of_birth) : null,
+        gender,
         height,
         current_weight,
-        target_weight || null,
+        target_weight,
         fitness_goal,
         activity_level,
         primary_focus,
@@ -165,16 +157,33 @@ router.put('/profile', authorization, async (req, res) => {
         userId
       ];
 
-      // Execute update
-      const result = await client.query(updateQuery, values);
+      // Execute profile update
+      const profileResult = await client.query(profileUpdateQuery, profileValues);
 
-      // Fetch updated user profile with additional details
-      const profileQuery = `
+      // Update email in users table if provided
+      let userResult;
+      if (email) {
+        const userUpdateQuery = `
+          UPDATE users
+          SET email = $1
+          WHERE user_id = $2
+          RETURNING *
+        `;
+        userResult = await client.query(userUpdateQuery, [email, userId]);
+      }
+
+      // Commit transaction
+      await client.query('COMMIT');
+
+      // Fetch final profile data
+      const finalProfileQuery = `
         SELECT 
           up.user_id,
           u.email,
           up.first_name,
           up.last_name,
+          up.date_of_birth,
+          up.gender,
           up.height,
           up.current_weight,
           up.target_weight,
@@ -182,20 +191,16 @@ router.put('/profile', authorization, async (req, res) => {
           up.activity_level,
           up.primary_focus,
           up.weight_unit,
-          up.height_unit,
-          up.date_of_birth
+          up.height_unit
         FROM user_profiles up
         JOIN users u ON up.user_id = u.user_id
         WHERE up.user_id = $1
       `;
 
-      const profileResult = await client.query(profileQuery, [userId]);
-
-      // Commit transaction
-      await client.query('COMMIT');
+      const finalProfileResult = await client.query(finalProfileQuery, [userId]);
 
       // Prepare response
-      const userProfile = profileResult.rows[0];
+      const userProfile = finalProfileResult.rows[0];
       const age = userProfile.date_of_birth 
         ? new Date().getFullYear() - new Date(userProfile.date_of_birth).getFullYear() 
         : null;
@@ -206,7 +211,11 @@ router.put('/profile', authorization, async (req, res) => {
         userProfile.current_weight &&
         userProfile.fitness_goal &&
         userProfile.activity_level &&
-        userProfile.primary_focus
+        userProfile.primary_focus &&
+        userProfile.first_name &&
+        userProfile.last_name &&
+        userProfile.date_of_birth &&
+        userProfile.gender
       );
 
       // Construct detailed profile response
@@ -215,7 +224,9 @@ router.put('/profile', authorization, async (req, res) => {
         email: userProfile.email,
         first_name: userProfile.first_name,
         last_name: userProfile.last_name,
+        date_of_birth: userProfile.date_of_birth,
         age: age,
+        gender: userProfile.gender,
         height: userProfile.height,
         current_weight: userProfile.current_weight,
         target_weight: userProfile.target_weight,
@@ -228,6 +239,42 @@ router.put('/profile', authorization, async (req, res) => {
       };
 
       console.log('✅ Profile Update Success:', responseProfile);
+
+      // Trigger nutrition goals recalculation (existing logic)
+      if (responseProfile.current_weight && 
+          responseProfile.height && 
+          responseProfile.fitness_goal && 
+          age) {
+        try {
+          const nutritionGoals = calculateNutrientGoals({
+            current_weight: responseProfile.current_weight,
+            height: responseProfile.height,
+            age: age,
+            fitness_goal: responseProfile.fitness_goal,
+            activity_level: responseProfile.activity_level,
+            gender: responseProfile.gender
+          });
+
+          await pool.query(
+            `UPDATE user_profiles 
+             SET daily_calories_goal = $1,
+                 daily_protein_goal = $2,
+                 daily_carbs_goal = $3,
+                 daily_fats_goal = $4,
+                 goals_last_calculated = CURRENT_TIMESTAMP
+             WHERE user_id = $5`,
+            [
+              nutritionGoals.daily_calories_goal,
+              nutritionGoals.daily_protein_goal,
+              nutritionGoals.daily_carbs_goal,
+              nutritionGoals.daily_fats_goal,
+              userId
+            ]
+          );
+        } catch (calculationError) {
+          console.error('Error in nutrition goals calculation:', calculationError);
+        }
+      }
 
       res.json(responseProfile);
     } catch (updateError) {
@@ -261,6 +308,7 @@ router.put('/profile', authorization, async (req, res) => {
     });
   }
 });
+
 
 
 module.exports = router;

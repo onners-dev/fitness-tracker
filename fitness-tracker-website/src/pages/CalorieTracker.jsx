@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { searchFood } from '../services/foodApi';
 import { mealService } from '../services/mealApi';
 import { contributedFoodService } from '../services/contributedFoodApi';
+import { nutritionService } from '../services/api';
 import './CalorieTracker.css';
+
+
 
 function CalorieTracker() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +36,20 @@ function CalorieTracker() {
   });
   const [contributedFoods, setContributedFoods] = useState([]);
   const [showContributedFoods, setShowContributedFoods] = useState(false);
+
+  useEffect(() => {
+    // Add or remove no-scroll class based on modal state
+    if (isCustomFoodModalOpen) {
+      document.body.classList.add('no-scroll');
+    } else {
+      document.body.classList.remove('no-scroll');
+    }
+  
+    // Cleanup function
+    return () => {
+      document.body.classList.remove('no-scroll');
+    };
+  }, [isCustomFoodModalOpen]);
 
   // Load meals for selected date
   useEffect(() => {
@@ -76,6 +93,85 @@ function CalorieTracker() {
 
     fetchContributions();
   }, []);
+
+  const [nutritionGoals, setNutritionGoals] = useState(null);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+
+  useEffect(() => {
+    const fetchNutritionGoals = async () => {
+      try {
+        const goals = await nutritionService.getNutritionGoals();
+        setNutritionGoals(goals);
+      } catch (error) {
+        // Handle error (maybe recalculate goals)
+        try {
+          const newGoals = await nutritionService.calculateNutritionGoals();
+          setNutritionGoals(newGoals);
+        } catch (recalculateError) {
+          console.error('Failed to fetch or calculate nutrition goals', recalculateError);
+        }
+      }
+    };
+
+    fetchNutritionGoals();
+  }, []);
+
+  
+  const recalculateNutritionGoals = async () => {
+    try {
+      setIsRecalculating(true);
+      const newGoals = await nutritionService.calculateNutritionGoals();
+      setNutritionGoals(newGoals);
+    } catch (error) {
+      console.error('Failed to recalculate nutrition goals', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+  
+      const errorMessage = error.response?.data?.message || 
+        error.response?.data?.details || 
+        'Failed to recalculate goals.';
+  
+      // More informative error messages
+      if (error.response?.data?.missingFields) {
+        alert(`Please complete your profile. Missing fields: ${error.response.data.missingFields.join(', ')}`);
+      } else {
+        alert(errorMessage);
+      }
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
+  
+
+  
+  // Progress Bar Component
+  const NutrientProgressBar = ({ type, current, goal, color }) => {
+    const percentage = Math.min((current / goal) * 100, 100);
+    
+    return (
+      <div className="nutrient-progress-container">
+        <div className="nutrient-progress-header">
+          <span>{type}</span>
+          <span>{current.toFixed(1)} / {goal} {type === 'Calories' ? 'cal' : 'g'}</span>
+        </div>
+        <div className="nutrient-progress-bar">
+          <div 
+            style={{
+              width: `${percentage}%`,
+              height: '100%', 
+              backgroundColor: color,
+              borderRadius: '5px'
+            }}
+          />
+        </div>
+        <div className="nutrient-progress-percentage">
+          {percentage.toFixed(0)}%
+        </div>
+      </div>
+    );
+  };
 
   // Calculate nutrition totals
   useEffect(() => {
@@ -236,13 +332,25 @@ function CalorieTracker() {
 
       {/* Date Selector */}
       <div className="date-selector">
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          max={new Date().toISOString().split('T')[0]}
-        />
+        <div className="date-input-wrapper">
+          <span className="date-day-display">
+            {(() => {
+              const date = new Date(selectedDate);
+              const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+              return days[date.getDay()];
+            })()}
+          </span>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            max={new Date().toISOString().split('T')[0]}
+            className="date-input-with-text"
+          />
+        </div>
       </div>
+
+
       
       {/* Search and Custom Food Buttons */}
       <div className="food-actions">
@@ -263,43 +371,71 @@ function CalorieTracker() {
             className="custom-food-button" 
             onClick={() => setIsCustomFoodModalOpen(true)}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
             Add Custom Food
           </button>
           <button 
             className="contributed-foods-button"
             onClick={() => setShowContributedFoods(!showContributedFoods)}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
             {showContributedFoods ? 'Hide' : 'Show'} My Contributions
           </button>
         </div>
       </div>
+
 
       {/* Contributed Foods Section */}
       {showContributedFoods && (
         <div className="contributed-foods-section">
           <h3>Your Contributed Foods</h3>
           {contributedFoods.length === 0 ? (
-            <p>No contributed foods yet.</p>
+            <div style={{ 
+              textAlign: 'center', 
+              padding: 'var(--spacing-md)', 
+              color: 'var(--soft-text-medium)' 
+            }}>
+              No contributed foods yet
+            </div>
           ) : (
-            contributedFoods.map(food => (
-              <div key={food.food_id} className="contributed-food-item">
-                <div className="food-info">
-                  <h4>{food.name}</h4>
-                  <div className="nutrition-info">
-                    <span>{food.calories} kcal</span>
-                    <span>{food.protein || 0}g protein</span>
-                    <span>{food.carbs || 0}g carbs</span>
-                    <span>{food.fats || 0}g fat</span>
+            <div className="contributed-foods-list">
+              {contributedFoods.map(food => (
+                <div key={food.food_id} className="contributed-food-item">
+                  <div className="contributed-food-header">
+                    <h4>{food.name}</h4>
+                    <span className="contribution-status">
+                      {food.approval_status}
+                    </span>
+                  </div>
+                  <div className="contributed-food-nutrition">
+                    <div className="nutrition-badge">
+                      <span>Calories</span>
+                      <span>{food.calories} kcal</span>
+                    </div>
+                    <div className="nutrition-badge">
+                      <span>Protein</span>
+                      <span>{food.protein || 0}g</span>
+                    </div>
+                    <div className="nutrition-badge">
+                      <span>Carbs</span>
+                      <span>{food.carbs || 0}g</span>
+                    </div>
+                    <div className="nutrition-badge">
+                      <span>Fats</span>
+                      <span>{food.fats || 0}g</span>
+                    </div>
                   </div>
                 </div>
-                <span className="contribution-status">
-                  Status: {food.approval_status}
-                </span>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       )}
+
       
       {/* Custom Food Modal */}
       {isCustomFoodModalOpen && (
@@ -440,6 +576,47 @@ function CalorieTracker() {
           </div>
         ))}
       </div>
+
+      {/* Nutrition Goals Progress */}
+      {nutritionGoals && (
+        <div className="nutrition-goals-progress">
+          <div className="nutrition-goals-header">
+            <h3>Daily Nutrition Goals</h3>
+            <button 
+              className="recalculate-goals-btn"
+              onClick={recalculateNutritionGoals} 
+              disabled={isRecalculating}
+            >
+              {isRecalculating ? 'Recalculating...' : 'Recalculate Goals'}
+            </button>
+          </div>
+          <NutrientProgressBar 
+            type="Calories"
+            current={nutritionSummary.calories}
+            goal={nutritionGoals.daily_calories_goal}
+            color="rgb(255, 99, 132)"
+          />
+          <NutrientProgressBar 
+            type="Protein"
+            current={nutritionSummary.protein}
+            goal={nutritionGoals.daily_protein_goal}
+            color="rgb(54, 162, 235)"
+          />
+          <NutrientProgressBar 
+            type="Carbs"
+            current={nutritionSummary.carbs}
+            goal={nutritionGoals.daily_carbs_goal}
+            color="rgb(255, 206, 86)"
+          />
+          <NutrientProgressBar 
+            type="Fats"
+            current={nutritionSummary.fats}
+            goal={nutritionGoals.daily_fats_goal}
+            color="rgb(75, 192, 192)"
+          />
+        </div>
+      )}
+
 
       {/* Nutrition Summary */}
       <div className="nutrition-summary">

@@ -10,6 +10,8 @@ const Settings = () => {
     firstName: '',
     lastName: '',
     email: '',
+    dateOfBirth: '',
+    gender: '',
     
     // Fitness Goals
     height: '',
@@ -17,6 +19,7 @@ const Settings = () => {
     targetWeight: '',
     fitnessGoal: '',
     activityLevel: '',
+    primaryFocus: '',
     
     // Account Security
     currentPassword: '',
@@ -35,11 +38,16 @@ const Settings = () => {
           firstName: profile.first_name,
           lastName: profile.last_name,
           email: profile.email,
+          dateOfBirth: profile.date_of_birth 
+            ? new Date(profile.date_of_birth).toISOString().split('T')[0] 
+            : '',
+          gender: profile.gender || '',
           height: profile.height,
           currentWeight: profile.current_weight,
           targetWeight: profile.target_weight || '',
           fitnessGoal: profile.fitness_goal,
           activityLevel: profile.activity_level,
+          primaryFocus: profile.primary_focus || '',
           currentPassword: '',
           newPassword: '',
           confirmNewPassword: ''
@@ -69,6 +77,8 @@ const Settings = () => {
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required';
+    if (!formData.gender) newErrors.gender = 'Gender is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -79,6 +89,7 @@ const Settings = () => {
     if (!formData.height) newErrors.height = 'Height is required';
     if (!formData.currentWeight) newErrors.currentWeight = 'Current weight is required';
     if (!formData.fitnessGoal) newErrors.fitnessGoal = 'Fitness goal is required';
+    if (!formData.primaryFocus) newErrors.primaryFocus = 'Primary focus is required'; 
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -134,7 +145,9 @@ const Settings = () => {
           await userService.updateProfile({
             first_name: formData.firstName,
             last_name: formData.lastName,
-            email: formData.email
+            email: formData.email,
+            date_of_birth: formData.dateOfBirth,
+            gender: formData.gender
           });
           break;
         case 'fitness':
@@ -143,7 +156,8 @@ const Settings = () => {
             current_weight: parseFloat(formData.currentWeight),
             target_weight: parseFloat(formData.targetWeight) || null,
             fitness_goal: formData.fitnessGoal,
-            activity_level: formData.activityLevel
+            activity_level: formData.activityLevel,
+            primary_focus: formData.primaryFocus // Add this
           });
           break;
         case 'security':
@@ -195,6 +209,32 @@ const Settings = () => {
                 onChange={handleChange}
               />
               {errors.email && <span className="error">{errors.email}</span>}
+            </div>
+            <div className="form-group">
+              <label>Date of Birth</label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+                max={new Date().toISOString().split('T')[0]} // Prevent future dates
+              />
+              {errors.dateOfBirth && <span className="error">{errors.dateOfBirth}</span>}
+            </div>
+            <div className="form-group">
+              <label>Gender</label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+              >
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer Not to Say</option>
+              </select>
+              {errors.gender && <span className="error">{errors.gender}</span>}
             </div>
           </div>
         );
@@ -260,6 +300,25 @@ const Settings = () => {
                 <option value="moderately_active">Moderately Active</option>
                 <option value="very_active">Very Active</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>Primary Focus</label>
+              <select
+                name="primaryFocus"
+                value={formData.primaryFocus}
+                onChange={handleChange}
+              >
+                <option value="">Select Primary Focus</option>
+                <option value="strength">Strength Training</option>
+                <option value="cardio">Cardiovascular Fitness</option>
+                <option value="flexibility">Flexibility</option>
+                <option value="muscle_building">Muscle Building</option>
+                <option value="weight_loss">Weight Loss</option>
+                <option value="endurance">Endurance</option>
+                <option value="overall_fitness">Overall Fitness</option>
+              </select>
+              {errors.primaryFocus && <span className="error">{errors.primaryFocus}</span>}
             </div>
           </div>
         );

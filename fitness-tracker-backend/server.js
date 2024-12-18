@@ -42,7 +42,8 @@ const routes = [
   { path: './routes/meals', name: 'meals', apiPath: '/api/meals' },
   { path: './routes/foods', name: 'foods', apiPath: '/api/foods' },
   { path: './routes/trends', name: 'trends', apiPath: '/api/trends' },
-  { path: './routes/workouts', name: 'workouts', apiPath: '/api/workouts' }
+  { path: './routes/workouts', name: 'workouts', apiPath: '/api/workouts' },
+  {path: './routes/nutrition', name: 'nutrition', apiPath: '/api/nutrition'}
 ];
 
 
