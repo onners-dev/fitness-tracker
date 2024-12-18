@@ -73,16 +73,10 @@ export const authService = {
             token: response.data.token
           });
           
-          // Ensure token is returned
+          // Ensure token is present
           if (!response.data.token) {
             throw new Error('No token received from server');
           }
-          
-          // Explicitly set verification status
-          localStorage.setItem('isVerified', 
-            (response.data.user.email_verified === true || 
-             response.data.user.email_verified === 't').toString()
-          );
           
           return {
             token: response.data.token,
@@ -101,7 +95,8 @@ export const authService = {
           
           throw error;
         }
-    },
+      },
+      
       
     
 

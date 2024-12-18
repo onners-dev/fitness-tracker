@@ -54,16 +54,20 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const loginResponse = await authService.login(credentials.email, credentials.password);
+      // Attempt to log in
+      const loginResponse = await authService.login(
+        credentials.email, 
+        credentials.password
+      );
       
-      console.log('🔐 Processed Login Response:', {
+      console.log('🔐 Login Response:', {
         user: loginResponse.user,
         token: loginResponse.token
       });
   
-      // Ensure token is set correctly
+      // Ensure token is set
       if (!loginResponse.token) {
-        throw new Error('No token received');
+        throw new Error('No token received from login');
       }
   
       // Store token
@@ -75,28 +79,30 @@ const Login = () => {
          loginResponse.user.email_verified === 't').toString()
       );
       
-      try {
-        const userProfile = await userService.getProfile();
-        
-        if (!userProfile.is_profile_complete) {
-          localStorage.setItem('firstTimeSetup', 'true');
-          navigate('/profile-setup');
-        } else {
-          localStorage.removeItem('firstTimeSetup');
-          navigate('/dashboard');
-        }
-      } catch (profileError) {
-        console.error('Profile fetch error:', profileError);
-        // If profile fetch fails, still allow login
+      // Check if profile is complete
+      if (!loginResponse.user.is_profile_complete) {
+        localStorage.setItem('firstTimeSetup', 'true');
+        navigate('/profile-setup');
+      } else {
+        localStorage.removeItem('firstTimeSetup');
         navigate('/dashboard');
       }
     } catch (err) {
-      console.error('Login Error:', err);
-      setError(err.response?.data?.message || 'Login failed');
+      console.error('Login Error:', {
+        error: err,
+        response: err.response
+      });
+      
+      // More specific error handling
+      setError(
+        err.response?.data?.message || 
+        'Login failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
+  
   
   
 
