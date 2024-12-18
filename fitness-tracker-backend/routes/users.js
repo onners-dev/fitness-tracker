@@ -78,144 +78,187 @@ router.put('/profile', authorization, async (req, res) => {
   try {
     const userId = req.user.id;
     const { 
-      first_name, 
-      last_name, 
-      email, 
       height, 
       current_weight, 
       target_weight, 
       fitness_goal, 
       activity_level,
       primary_focus,
-      age
+      weight_unit,
+      height_unit
     } = req.body;
 
-    // Start a transaction
-    await pool.query('BEGIN');
+    console.log('📥 Received Profile Update:', {
+      userId,
+      height,
+      current_weight,
+      target_weight,
+      fitness_goal,
+      activity_level,
+      primary_focus,
+      weight_unit,
+      height_unit
+    });
 
-    // Update users table if email is provided
-    if (email) {
-      await pool.query(
-        'UPDATE users SET email = $1 WHERE user_id = $2',
-        [email, userId]
-      );
-    }
+    // Validate required fields
+    const requiredFields = [
+      'height', 
+      'current_weight', 
+      'fitness_goal', 
+      'activity_level', 
+      'primary_focus'
+    ];
 
-    // Prepare update for user_profiles
-    const updateFields = [];
-    const values = [];
-    let paramCount = 1;
-
-    if (first_name) {
-      updateFields.push(`first_name = $${paramCount}`);
-      values.push(first_name);
-      paramCount++;
-    }
-    if (last_name) {
-      updateFields.push(`last_name = $${paramCount}`);
-      values.push(last_name);
-      paramCount++;
-    }
-    if (height) {
-      updateFields.push(`height = $${paramCount}`);
-      values.push(height);
-      paramCount++;
-    }
-    if (current_weight) {
-      updateFields.push(`current_weight = $${paramCount}`);
-      values.push(current_weight);
-      paramCount++;
-    }
-    if (target_weight !== undefined) {
-      updateFields.push(`target_weight = $${paramCount}`);
-      values.push(target_weight);
-      paramCount++;
-    }
-    if (fitness_goal) {
-      updateFields.push(`fitness_goal = $${paramCount}`);
-      values.push(fitness_goal);
-      paramCount++;
-    }
-    if (activity_level) {
-      updateFields.push(`activity_level = $${paramCount}`);
-      values.push(activity_level);
-      paramCount++;
-    }
-    if (primary_focus) {
-      updateFields.push(`primary_focus = $${paramCount}`);
-      values.push(primary_focus);
-      paramCount++;
-    }
-    if (age) {
-      // Calculate date of birth from age
-      const dateOfBirth = new Date();
-      dateOfBirth.setFullYear(dateOfBirth.getFullYear() - age);
-
-      updateFields.push(`date_of_birth = $${paramCount}`);
-      values.push(dateOfBirth);
-      paramCount++;
-    }
-
-    // Add user ID as the last parameter
-    values.push(userId);
-
-    // Construct the full query
-    if (updateFields.length > 0) {
-      const query = `
-        UPDATE user_profiles 
-        SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $${paramCount}
-        RETURNING *
-      `;
-      
-      await pool.query(query, values);
-    }
-
-    // Commit the transaction
-    await pool.query('COMMIT');
-
-    // Fetch and return the updated profile
-    const result = await pool.query(
-      `SELECT 
-        u.user_id,
-        u.email,
-        up.first_name,
-        up.last_name,
-        up.date_of_birth AS age,
-        up.height,
-        up.current_weight,
-        up.target_weight,
-        up.fitness_goal,
-        up.activity_level,
-        up.primary_focus
-      FROM users u
-      JOIN user_profiles up ON u.user_id = up.user_id
-      WHERE u.user_id = $1`, 
-      [userId]
+    const missingFields = requiredFields.filter(field => 
+      req.body[field] === undefined || 
+      req.body[field] === null || 
+      req.body[field] === ''
     );
 
-    // Prepare the response
-    const userProfile = {
-      id: result.rows[0].user_id,
-      email: result.rows[0].email,
-      first_name: result.rows[0].first_name,
-      last_name: result.rows[0].last_name,
-      age: result.rows[0].age ? new Date().getFullYear() - new Date(result.rows[0].age).getFullYear() : null,
-      height: result.rows[0].height,
-      current_weight: result.rows[0].current_weight,
-      target_weight: result.rows[0].target_weight,
-      fitness_goal: result.rows[0].fitness_goal,
-      activity_level: result.rows[0].activity_level,
-      primary_focus: result.rows[0].primary_focus
-    };
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        message: `Missing required fields: ${missingFields.join(', ')}` 
+      });
+    }
 
-    res.json(userProfile);
+    // Additional validation
+    if (height <= 0 || height > 300) {
+      return res.status(400).json({ message: 'Invalid height' });
+    }
+
+    if (current_weight <= 0 || current_weight > 500) {
+      return res.status(400).json({ message: 'Invalid current weight' });
+    }
+
+    // Start a transaction
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Prepare update query
+      const updateQuery = `
+        UPDATE user_profiles
+        SET 
+          height = $1,
+          current_weight = $2,
+          target_weight = $3,
+          fitness_goal = $4,
+          activity_level = $5,
+          primary_focus = $6,
+          weight_unit = $7,
+          height_unit = $8,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $9
+        RETURNING *
+      `;
+
+      const values = [
+        height,
+        current_weight,
+        target_weight || null,
+        fitness_goal,
+        activity_level,
+        primary_focus,
+        weight_unit || 'kg',
+        height_unit || 'cm',
+        userId
+      ];
+
+      // Execute update
+      const result = await client.query(updateQuery, values);
+
+      // Fetch updated user profile with additional details
+      const profileQuery = `
+        SELECT 
+          up.user_id,
+          u.email,
+          up.first_name,
+          up.last_name,
+          up.height,
+          up.current_weight,
+          up.target_weight,
+          up.fitness_goal,
+          up.activity_level,
+          up.primary_focus,
+          up.weight_unit,
+          up.height_unit,
+          up.date_of_birth
+        FROM user_profiles up
+        JOIN users u ON up.user_id = u.user_id
+        WHERE up.user_id = $1
+      `;
+
+      const profileResult = await client.query(profileQuery, [userId]);
+
+      // Commit transaction
+      await client.query('COMMIT');
+
+      // Prepare response
+      const userProfile = profileResult.rows[0];
+      const age = userProfile.date_of_birth 
+        ? new Date().getFullYear() - new Date(userProfile.date_of_birth).getFullYear() 
+        : null;
+
+      // Determine profile completeness
+      const isProfileComplete = !!(
+        userProfile.height &&
+        userProfile.current_weight &&
+        userProfile.fitness_goal &&
+        userProfile.activity_level &&
+        userProfile.primary_focus
+      );
+
+      // Construct detailed profile response
+      const responseProfile = {
+        id: userProfile.user_id,
+        email: userProfile.email,
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name,
+        age: age,
+        height: userProfile.height,
+        current_weight: userProfile.current_weight,
+        target_weight: userProfile.target_weight,
+        fitness_goal: userProfile.fitness_goal,
+        activity_level: userProfile.activity_level,
+        primary_focus: userProfile.primary_focus,
+        weight_unit: userProfile.weight_unit,
+        height_unit: userProfile.height_unit,
+        is_profile_complete: isProfileComplete
+      };
+
+      console.log('✅ Profile Update Success:', responseProfile);
+
+      res.json(responseProfile);
+    } catch (updateError) {
+      // Rollback transaction in case of error
+      await client.query('ROLLBACK');
+
+      console.error('❌ Profile Update Transaction Error:', {
+        name: updateError.name,
+        message: updateError.message,
+        stack: updateError.stack
+      });
+
+      res.status(500).json({ 
+        message: 'Error updating profile',
+        error: updateError.message 
+      });
+    } finally {
+      // Always release the client
+      client.release();
+    }
   } catch (error) {
-    // Rollback the transaction in case of error
-    await pool.query('ROLLBACK');
+    console.error('❌ Profile Update Outer Error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
 
-    console.error('Profile update error:', error);
-    res.status(500).json({ message: 'Error updating profile' });
+    res.status(500).json({ 
+      message: 'Unexpected error updating profile',
+      error: error.message 
+    });
   }
 });
 

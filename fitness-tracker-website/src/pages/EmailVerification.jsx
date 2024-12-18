@@ -27,25 +27,10 @@ const EmailVerification = () => {
     e.preventDefault();
     setIsLoading(true);
   
-    // Trim and validate code
-    const trimmedCode = verificationCode.trim();
-    
-    // Validate code format
-    if (!/^\d{6}$/.test(trimmedCode)) {
-      setMessage('Please enter a valid 6-digit code');
-      setIsLoading(false);
-      return;
-    }
-  
     try {
-      console.log('🔍 Attempting Verification:', { 
-        email, 
-        codeLength: trimmedCode.length 
-      });
-  
-      const response = await authService.verifyCode(email, trimmedCode);
+      const response = await authService.verifyCode(email, verificationCode);
       
-      console.log('✅ Verification Response:', response);
+      console.log('✅ Email Verification Response:', response);
   
       // Always set token if present
       if (response.token) {
@@ -55,11 +40,11 @@ const EmailVerification = () => {
       localStorage.setItem('isVerified', 'true');
       localStorage.setItem('firstTimeSetup', 'true');
       
+      // Redirect to profile setup, not login
       navigate('/profile-setup');
     } catch (error) {
       console.error('❌ Verification Error:', error);
       
-      // More user-friendly error message
       setMessage(
         error.response?.data?.message || 
         'Verification failed. Please try again.'
@@ -68,6 +53,7 @@ const EmailVerification = () => {
       setIsLoading(false);
     }
   };
+  
   
   
   

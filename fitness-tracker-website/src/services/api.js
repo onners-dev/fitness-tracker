@@ -181,15 +181,26 @@ export const userService = {
         }
       },
   
-    updateProfile: async (profileData) => {
+      updateProfile: async (profileData) => {
         try {
-            const response = await api.put('/users/profile', profileData);
-            return response.data;
+          console.log('🚀 Updating Profile:', profileData);
+          
+          const response = await api.put('/users/profile', profileData);
+          
+          console.log('✅ Profile Update Response:', response.data);
+          
+          return response.data;
         } catch (error) {
-            console.error('Update profile error', error);
-            throw error;
+          console.error('❌ Update Profile Error:', {
+            message: error.response?.data?.message,
+            status: error.response?.status,
+            data: error.response?.data
+          });
+          
+          throw error;
         }
-    },
+      },
+      
 
     updatePassword: async (passwordData) => {
         try {

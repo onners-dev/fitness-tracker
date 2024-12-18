@@ -20,25 +20,28 @@ const ProfileSetup = () => {
 
   // Lifecycle methods and side effects
   useEffect(() => {
+    console.log('🚀 Profile Setup Page Mounted');
+    
     // Check if user is authorized to be on this page
+    const token = localStorage.getItem('token');
+    const isVerified = localStorage.getItem('isVerified') === 'true';
     const firstTimeSetup = localStorage.getItem('firstTimeSetup');
-    if (firstTimeSetup !== 'true') {
-      navigate('/dashboard');
+
+    console.log('🔍 Profile Setup Authorization Check:', {
+      token: token ? 'Present' : 'Missing',
+      isVerified,
+      firstTimeSetup
+    });
+
+    if (!token || !isVerified) {
+      console.warn('❌ Unauthorized access to profile setup');
+      navigate('/login');
+      return;
     }
 
-    // Optional: Retrieve pre-filled data from local storage
-    const storedGoals = JSON.parse(localStorage.getItem('signupFitnessGoals') || '{}');
-    
-    // Pre-fill fitness goals if available
-    if (storedGoals.fitnessGoal || storedGoals.activityLevel) {
-      setFormData(prev => ({
-        ...prev,
-        fitnessGoal: storedGoals.fitnessGoal || '',
-        activityLevel: storedGoals.activityLevel || ''
-      }));
-
-      // Clear the stored goals
-      localStorage.removeItem('signupFitnessGoals');
+    if (firstTimeSetup !== 'true') {
+      console.warn('⚠️ Profile setup not required');
+      navigate('/dashboard');
     }
   }, [navigate]);
 
@@ -110,8 +113,11 @@ const ProfileSetup = () => {
         height_unit: formData.heightUnit
       };
   
+      console.log('📤 Submitting Profile Data:', profileData);
 
-      await userService.updateProfile(profileData);
+      const updatedProfile = await userService.updateProfile(profileData);
+      
+      console.log('✅ Profile Updated:', updatedProfile);
 
       // Clear first-time setup flag
       localStorage.removeItem('firstTimeSetup');
@@ -122,13 +128,20 @@ const ProfileSetup = () => {
       // Navigate to dashboard
       navigate('/dashboard');
     } catch (err) {
-      console.error('Profile setup error:', err);
-      // Error handling
+      console.error('❌ Profile Setup Error:', {
+        error: err,
+        response: err.response
+      });
+      
+      // More specific error handling
+      setError(
+        err.response?.data?.message || 
+        'Failed to update profile. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <div className="profile-setup-page">
