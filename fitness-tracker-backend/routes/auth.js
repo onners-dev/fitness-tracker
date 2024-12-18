@@ -284,7 +284,11 @@ router.post('/login', async (req, res) => {
       
 
       const token = jwt.sign(
-        tokenPayload, 
+        { 
+          user_id: user.user_id, 
+          email: user.email,
+          email_verified: user.email_verified === true || user.email_verified === 't'
+        }, 
         process.env.JWT_SECRET, 
         { 
           algorithm: 'HS256', 
@@ -300,7 +304,7 @@ router.post('/login', async (req, res) => {
 
       // Explicit and complete response
       res.status(200).json({
-        token: token,
+        token: token,  // Explicitly include token at top level
         user: {
           user_id: user.user_id,
           email: user.email,
@@ -308,6 +312,7 @@ router.post('/login', async (req, res) => {
           is_profile_complete: true  // You might want to actually check this
         }
       });
+  
     } catch (tokenError) {
       console.error('🚨 Token Generation FAILED:', {
         name: tokenError.name,

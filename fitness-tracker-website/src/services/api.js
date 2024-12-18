@@ -80,45 +80,44 @@ api.interceptors.response.use(
 export const authService = {
     login: async (email, password) => {
         try {
-            const response = await api.post('/auth/login', { email, password });
-            
-            const token = response.data.token;  // Directly access token from top-level response
-            
-            if (!token) {
-                console.error('❌ No token in login response');
-                throw new Error('No authentication token received');
-            }
-            
-            return {
-                token: token,
-                user: {
-                    user_id: response.data.user.user_id,
-                    email: response.data.user.email,
-                    email_verified: response.data.user.email_verified === true || 
-                                    response.data.user.email_verified === 't',
-                    is_profile_complete: response.data.user.is_profile_complete
-                }
-            };
-        } catch (error) {
-            console.error('🚨 Login API Error:', {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status
-            });
-            throw error;
-        }
-    },
-    
+          console.group('🔐 Frontend Login Attempt');
+          console.log('Email:', email);
+          console.log('Password Length:', password.length);
+          
+          const response = await api.post('/auth/login', { email, password });
+          
+          console.log('Full Response:', response);
+          console.log('Response Data:', response.data);
+          console.groupEnd();
       
-
-    register: async (userData) => {
-        try {
-            const response = await api.post('/auth/register', userData);
-            return response.data;
+          // Very explicit token extraction
+          const token = response.data.token;
+          
+          if (!token) {
+            console.error('❌ No token in login response');
+            throw new Error('No authentication token received');
+          }
+          
+          return {
+            token: token,
+            user: {
+              user_id: response.data.user.user_id,
+              email: response.data.user.email,
+              email_verified: response.data.user.email_verified === true || 
+                              response.data.user.email_verified === 't',
+              is_profile_complete: response.data.user.is_profile_complete
+            }
+          };
         } catch (error) {
-            handleApiError(error);
+          console.error('🚨 Login API Error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+          });
+          throw error;
         }
     },
+      
 
     logout: () => {
         localStorage.removeItem('token');
