@@ -9,6 +9,7 @@ import './CalorieTracker.css';
 
 function CalorieTracker() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFoodModalOpen, setIsFoodModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,9 @@ function CalorieTracker() {
     carbs: '',
     fats: '',
     serving: '100g',
-    brand: ''
+    brand: '',
+    visibility: 'personal', // Add visibility
+    category: 'Other' // Add category
   });
   const [contributedFoods, setContributedFoods] = useState([]);
   const [showContributedFoods, setShowContributedFoods] = useState(false);
@@ -50,6 +53,7 @@ function CalorieTracker() {
       document.body.classList.remove('no-scroll');
     };
   }, [isCustomFoodModalOpen]);
+
 
   // Load meals for selected date
   useEffect(() => {
@@ -200,12 +204,12 @@ function CalorieTracker() {
   const addCustomFood = async (e) => {
     e.preventDefault();
     
-    const { name, calories, protein, carbs, fats } = customFood;
+    const { name, calories, protein, carbs, fats, visibility, category } = customFood;
     if (!name || !calories) {
       alert('Please enter at least a name and calories');
       return;
     }
-
+  
     try {
       const foodData = {
         name,
@@ -214,9 +218,11 @@ function CalorieTracker() {
         carbs: parseFloat(carbs) || null,
         fats: parseFloat(fats) || null,
         serving_size: customFood.serving,
-        brand: customFood.brand || null
+        brand: customFood.brand || null,
+        visibility, // Add visibility
+        category // Add category
       };
-
+  
       const newContribution = await contributedFoodService.contributeFood(foodData);
       
       // Add to meals if approved
@@ -228,7 +234,7 @@ function CalorieTracker() {
         const newMeal = await mealService.addMeal(mealData);
         setMeals(prevMeals => [...prevMeals, newMeal]);
       }
-
+  
       // Update contributed foods list
       setContributedFoods(prev => [...prev, newContribution]);
       
@@ -240,7 +246,9 @@ function CalorieTracker() {
         carbs: '',
         fats: '',
         serving: '100g',
-        brand: ''
+        brand: '',
+        visibility: 'personal',
+        category: 'Other'
       });
       setIsCustomFoodModalOpen(false);
     } catch (error) {
@@ -249,29 +257,39 @@ function CalorieTracker() {
     }
   };
 
+  const [combinedFoodResults, setCombinedFoodResults] = useState({
+    contributedFoods: [],
+    apiFoods: []
+  });
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-
+  
     setLoading(true);
     try {
-      const products = await searchFood(searchQuery);
-      if (products && Array.isArray(products)) {
-        setSearchResults(products.filter(product => 
+      // Search contributed foods (now includes public and user's foods)
+      const contributedResults = await contributedFoodService.searchContributedFoods(searchQuery);
+      
+      // Then search Open Food API
+      const apiProducts = await searchFood(searchQuery);
+      
+      setCombinedFoodResults({
+        contributedFoods: contributedResults,
+        apiFoods: apiProducts.filter(product => 
           product.product_name && 
           product.nutriments?.energy_100g
-        ));
-      } else {
-        setSearchResults([]);
-        console.error('Invalid response format:', products);
-      }
+        )
+      });
     } catch (error) {
       console.error('Error searching for food:', error);
-      setSearchResults([]);
+      setCombinedFoodResults({ contributedFoods: [], apiFoods: [] });
     } finally {
       setLoading(false);
     }
   };
+  
+  
 
   // Updated addMeal to handle portion sizes
   const addMeal = async (food) => {
@@ -332,62 +350,97 @@ function CalorieTracker() {
 
       {/* Date Selector */}
       <div className="date-selector">
-        <div className="date-input-wrapper">
-          <span className="date-day-display">
-            {(() => {
-              const date = new Date(selectedDate);
-              const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-              return days[date.getDay()];
-            })()}
-          </span>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
-            className="date-input-with-text"
-          />
-        </div>
+        {/* Existing date selector code */}
       </div>
 
+      {/* Food Actions */}
 
       
-      {/* Search and Custom Food Buttons */}
       <div className="food-actions">
-        <form className="meal-form" onSubmit={handleSearch}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for a food..."
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Searching...' : 'Search'}
-          </button>
-        </form>
-
-        <div className="action-buttons">
-          <button 
-            className="custom-food-button" 
-            onClick={() => setIsCustomFoodModalOpen(true)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Add Custom Food
-          </button>
-          <button 
-            className="contributed-foods-button"
-            onClick={() => setShowContributedFoods(!showContributedFoods)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="20" height="20">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-            </svg>
-            {showContributedFoods ? 'Hide' : 'Show'} My Contributions
-          </button>
-        </div>
+        <button 
+          className="add-food-button" 
+          onClick={() => setIsFoodModalOpen(true)}
+        >
+          Add Food
+        </button>
+        <button 
+          className="custom-food-button" 
+          onClick={() => setIsCustomFoodModalOpen(true)}
+        >
+          Create Custom Food
+        </button>
+        <button 
+          className="contributed-foods-button"
+          onClick={() => setShowContributedFoods(!showContributedFoods)}
+        >
+          {showContributedFoods ? 'Hide' : 'Show'} My Contributions
+        </button>
       </div>
 
+      {/* Food Modal */}
+      {isFoodModalOpen && (
+        <div className="food-modal">
+          <div className="food-modal-content">
+            <button 
+              className="food-modal-close-btn" 
+              onClick={() => setIsFoodModalOpen(false)}
+            >
+              &times;
+            </button>
+            <h3>Add Food</h3>
+            {/* Search Input */}
+            <form onSubmit={handleSearch} className="food-search-form">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search foods..."
+              />
+              <button type="submit" disabled={loading}>
+                {loading ? 'Searching...' : 'Search'}
+              </button>
+            </form>
+
+            {/* Contributed Foods Section */}
+            {combinedFoodResults.contributedFoods.length > 0 && (
+              <div className="contributed-foods-search-results">
+                <h4>Your Contributed Foods</h4>
+                {combinedFoodResults.contributedFoods.map(food => (
+                  <div key={food.food_id} className="food-result-item">
+                    <div>
+                      <strong>{food.name}</strong>
+                      <span>{food.calories} kcal</span>
+                    </div>
+                    <button onClick={() => addMeal(food)}>Add</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* API Foods Section */}
+            {combinedFoodResults.apiFoods.length > 0 && (
+              <div className="api-foods-search-results">
+                <h4>Open Food API Results</h4>
+                {combinedFoodResults.apiFoods.map((food) => (
+                  <div key={food._id} className="food-result-item">
+                    <div>
+                      <strong>{food.product_name}</strong>
+                      <span>{food.nutriments?.energy_100g || 0} kcal</span>
+                    </div>
+                    <button onClick={() => addMeal(food)}>Add</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button 
+              className="close-button" 
+              onClick={() => setIsFoodModalOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Contributed Foods Section */}
       {showContributedFoods && (
@@ -407,9 +460,15 @@ function CalorieTracker() {
                 <div key={food.food_id} className="contributed-food-item">
                   <div className="contributed-food-header">
                     <h4>{food.name}</h4>
-                    <span className="contribution-status">
-                      {food.approval_status}
-                    </span>
+                    <div className="contribution-metadata">
+                      <span className="contribution-category">{food.category}</span>
+                      <span className="contribution-status">
+                        {food.visibility === 'public' ? 'Public' : 'Personal'}
+                      </span>
+                      <span className="contribution-approval">
+                        {food.approval_status}
+                      </span>
+                    </div>
                   </div>
                   <div className="contributed-food-nutrition">
                     <div className="nutrition-badge">
@@ -436,7 +495,6 @@ function CalorieTracker() {
         </div>
       )}
 
-      
       {/* Custom Food Modal */}
       {isCustomFoodModalOpen && (
         <div className="custom-food-modal">
@@ -452,6 +510,32 @@ function CalorieTracker() {
                   onChange={handleCustomFoodChange}
                   required
                 />
+              </div>
+              <div className="form-group">
+                <label>Visibility</label>
+                <select
+                  name="visibility"
+                  value={customFood.visibility}
+                  onChange={handleCustomFoodChange}
+                >
+                  <option value="personal">Personal (Only for you)</option>
+                  <option value="public">Public (Shared with community)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  name="category"
+                  value={customFood.category}
+                  onChange={handleCustomFoodChange}
+                >
+                  <option value="Other">Other</option>
+                  <option value="Breakfast">Breakfast</option>
+                  <option value="Lunch">Lunch</option>
+                  <option value="Dinner">Dinner</option>
+                  <option value="Snack">Snack</option>
+                  <option value="Homemade">Homemade</option>
+                </select>
               </div>
               <div className="form-group">
                 <label>Calories *</label>
@@ -525,7 +609,6 @@ function CalorieTracker() {
           </div>
         </div>
       )}
-
 
       {/* Search Results with Portion Size */}
       {searchResults.length > 0 && (

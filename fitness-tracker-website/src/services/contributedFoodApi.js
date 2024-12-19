@@ -38,6 +38,20 @@ export const contributedFoodService = {
         }
     },
 
+    searchContributedFoods: async (query) => {
+        try {
+            const response = await axios.get(`${BASE_URL}/search`, {
+                params: { query },
+                headers: getAuthHeader()
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error searching contributed foods', error);
+            throw error;  // Changed from returning empty array to throwing error
+        }
+    },
+    
+
     // Contribute a new food
     contributeFood: async (foodData) => {
         try {

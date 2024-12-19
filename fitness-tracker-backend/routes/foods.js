@@ -24,13 +24,26 @@ router.get('/my-contributions', authorization, async (req, res) => {
     }
 });
 
+router.get('/search', authorization, async (req, res) => {
+    try {
+        const { query } = req.query;
+        const { rows } = await pool.query(
+            `SELECT * FROM user_contributed_foods 
+             WHERE 
+             (visibility = 'public' OR user_id = $1) AND 
+             (LOWER(name) LIKE LOWER($2) OR LOWER(brand) LIKE LOWER($2))`,
+            [req.user.id, `%${query}%`]
+        );
+        res.json(rows);
+    } catch (err) {
+        console.error('Error searching contributed foods:', err);
+        res.status(500).json({ message: 'Server error searching foods' });
+    }
+});
+
 // Contribute a new food
 router.post('/contribute', authorization, async (req, res) => {
     try {
-        console.log('Received contribute request');
-        console.log('User ID:', req.user.id);
-        console.log('Request body:', req.body);
-
         const { 
             name, 
             calories, 
@@ -38,7 +51,9 @@ router.post('/contribute', authorization, async (req, res) => {
             carbs, 
             fats, 
             serving_size, 
-            brand 
+            brand,
+            visibility,  // New field
+            category     // New field
         } = req.body;
 
         // Validate required fields
@@ -50,8 +65,8 @@ router.post('/contribute', authorization, async (req, res) => {
 
         const { rows } = await pool.query(
             `INSERT INTO user_contributed_foods 
-            (user_id, name, calories, protein, carbs, fats, serving_size, brand, approval_status) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+            (user_id, name, calories, protein, carbs, fats, serving_size, brand, visibility, category, approval_status) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
             RETURNING *`,
             [
                 req.user.id, 
@@ -62,6 +77,8 @@ router.post('/contribute', authorization, async (req, res) => {
                 fats || null, 
                 serving_size || '100g',
                 brand || null,
+                visibility || 'personal',
+                category || 'Other',
                 'pending'
             ]
         );
@@ -76,5 +93,6 @@ router.post('/contribute', authorization, async (req, res) => {
         });
     }
 });
+
 
 module.exports = router;
