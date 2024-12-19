@@ -1,16 +1,16 @@
 import React from 'react'
 import Hero from '../components/Hero'
 import Features from '../components/Features'
-import './Home.css' // We'll create this CSS file for additional styling
+import './Home.css'
 
 function Home() {
   return (
     <div className="home">
       <Hero 
-        title="Transform Your Fitness with Arcus" 
-        subtitle="Your Comprehensive Fitness Companion" 
-        description="Track workouts, monitor nutrition, and achieve your fitness goals with personalized insights and data-driven progress tracking."
-        ctaText="Start Your Fitness Journey"
+        title="Start your fitness arc!" 
+        subtitle="Arcus: Your Personal Fitness Companion" 
+        description="Transform your health journey with intelligent tracking, personalized insights, and motivational tools. Whether you're a beginner or a fitness enthusiast, Arcus helps you visualize progress, set achievable goals, and stay motivated."
+        ctaText="Begin Your Transformation"
         ctaLink="/signup"
       />
       
@@ -18,19 +18,19 @@ function Home() {
       
       <section className="value-proposition">
         <div className="container">
-          <h2>Why Choose Arcus?</h2>
+          <h2>Why Arcus?</h2>
           <div className="value-grid">
             <div className="value-item">
-              <h3>Personalized Tracking</h3>
-              <p>Custom workout and nutrition plans tailored to your unique fitness goals.</p>
+              <h3>Intelligent Tracking</h3>
+              <p>Advanced algorithms that adapt to your unique fitness profile and goals.</p>
             </div>
             <div className="value-item">
-              <h3>Comprehensive Insights</h3>
-              <p>Detailed analytics to help you understand and optimize your fitness journey.</p>
+              <h3>Data-Driven Progress</h3>
+              <p>Visualize your fitness journey with comprehensive, easy-to-understand analytics.</p>
             </div>
             <div className="value-item">
-              <h3>Easy to Use</h3>
-              <p>Intuitive interface designed to make fitness tracking simple and enjoyable.</p>
+              <h3>Seamless Experience</h3>
+              <p>Intuitive design that makes fitness tracking effortless and engaging.</p>
             </div>
           </div>
         </div>
