@@ -342,8 +342,20 @@ router.post('/login', async (req, res) => {
       return res.status(500).json({ message: 'Server configuration error' });
     }
 
-    // Find user
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    // Find user with profile information
+    const userResult = await pool.query(`
+      SELECT 
+        u.user_id, 
+        u.email, 
+        u.password_hash, 
+        u.email_verified,
+        u.is_admin,
+        CASE WHEN up.user_id IS NOT NULL THEN true ELSE false END as is_profile_complete
+      FROM users u
+      LEFT JOIN user_profiles up ON u.user_id = up.user_id
+      WHERE u.email = $1
+    `, [email]);
+
     const user = userResult.rows[0];
 
     // Extremely detailed logging
@@ -352,7 +364,8 @@ router.post('/login', async (req, res) => {
       userDetails: user ? {
         user_id: user.user_id,
         email: user.email,
-        email_verified: user.email_verified
+        email_verified: user.email_verified,
+        is_profile_complete: user.is_profile_complete
       } : null
     });
 
@@ -383,21 +396,21 @@ router.post('/login', async (req, res) => {
 
     // Token generation with extremely detailed logging
     try {
+      const isAdmin = user.is_admin === true || user.is_admin === 't';
+      const isProfileComplete = user.is_profile_complete === true;
+
       const tokenPayload = { 
         user_id: user.user_id, 
         email: user.email,
-        email_verified: user.email_verified === true || user.email_verified === 't'
+        email_verified: user.email_verified === true || user.email_verified === 't',
+        is_admin: user.is_admin === true || user.is_admin === 't', // Explicitly convert to boolean
+        is_profile_complete: user.is_profile_complete === true
       };
 
       console.log('Token Payload:', JSON.stringify(tokenPayload, null, 2));
-      
 
       const token = jwt.sign(
-        { 
-          user_id: user.user_id, 
-          email: user.email,
-          email_verified: user.email_verified === true || user.email_verified === 't'
-        }, 
+        tokenPayload, 
         process.env.JWT_SECRET, 
         { 
           algorithm: 'HS256', 
@@ -413,12 +426,13 @@ router.post('/login', async (req, res) => {
 
       // Explicit and complete response
       res.status(200).json({
-        token: token,  // Explicitly include token at top level
+        token: token,
         user: {
-          user_id: user.user_id,
+          user_id: user.userid,
           email: user.email,
           email_verified: user.email_verified === true || user.email_verified === 't',
-          is_profile_complete: true  // You might want to actually check this
+          is_admin: isAdmin,
+          is_profile_complete: isProfileComplete
         }
       });
   
@@ -447,6 +461,7 @@ router.post('/login', async (req, res) => {
     });
   }
 });
+
 
 
 module.exports = router;

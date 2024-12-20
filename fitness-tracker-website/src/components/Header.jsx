@@ -9,6 +9,7 @@ const Header = () => {
   const [userInitials, setUserInitials] = useState('');
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -28,6 +29,7 @@ const Header = () => {
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('isAdmin');  // Clear admin status
     navigate('/home');
     setIsMobileMenuOpen(false);
   };
@@ -49,6 +51,7 @@ const Header = () => {
         <nav className="desktop-nav">
           {isLoggedIn ? (
             <>
+              {/* Tracking Dropdown */}
               <div 
                 className="header-dropdown"
                 onClick={(e) => {
@@ -72,6 +75,7 @@ const Header = () => {
                 )}
               </div>
 
+              {/* Fitness Dropdown */}
               <div 
                 className="header-dropdown"
                 onClick={(e) => {
@@ -92,8 +96,32 @@ const Header = () => {
                 )}
               </div>
 
+              {/* Admin Dropdown - Only visible to admin users */}
+              {isAdmin && (
+                <div 
+                  className="header-dropdown"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveDropdown(activeDropdown === 'admin' ? null : 'admin');
+                  }}
+                >
+                  <span>Admin</span>
+                  {activeDropdown === 'admin' && (
+                    <div className="dropdown-menu">
+                      <Link to="/admin" className="dropdown-item">Dashboard</Link>
+                      <Link to="/admin/users" className="dropdown-item">User Management</Link>
+                      <Link to="/admin/content" className="dropdown-item">Content Moderation</Link>
+                      <Link to="/admin/workouts" className="dropdown-item">Workout Moderation</Link>
+                      <Link to="/admin/nutrition" className="dropdown-item">Nutrition Moderation</Link>
+                      <Link to="/admin/analytics" className="dropdown-item">System Analytics</Link>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <Link to="/dashboard" className="link">Dashboard</Link>
 
+              {/* Profile Dropdown */}
               <div 
                 className="header-dropdown profile-dropdown"
                 onClick={(e) => {
@@ -179,6 +207,21 @@ const Header = () => {
                       <Link to="/workout-plans" onClick={toggleMobileMenu}>Workout Plans</Link>
                     </div>
                   </div>
+
+                  {/* Mobile Admin Dropdown */}
+                  {isAdmin && (
+                    <div className="mobile-dropdown">
+                      <span>Admin</span>
+                      <div className="mobile-dropdown-content">
+                        <Link to="/admin" onClick={toggleMobileMenu}>Dashboard</Link>
+                        <Link to="/admin/users" onClick={toggleMobileMenu}>User Management</Link>
+                        <Link to="/admin/content" onClick={toggleMobileMenu}>Content Moderation</Link>
+                        <Link to="/admin/workouts" onClick={toggleMobileMenu}>Workout Moderation</Link>
+                        <Link to="/admin/nutrition" onClick={toggleMobileMenu}>Nutrition Moderation</Link>
+                        <Link to="/admin/analytics" onClick={toggleMobileMenu}>System Analytics</Link>
+                      </div>
+                    </div>
+                  )}
 
                   <button onClick={handleSignOut} className="mobile-signout">Sign Out</button>
                 </>

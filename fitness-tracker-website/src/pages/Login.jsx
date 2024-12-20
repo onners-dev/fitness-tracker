@@ -76,10 +76,10 @@ const Login = () => {
       
       // Navigate based on profile completeness
       if (!loginResponse.user.is_profile_complete) {
-        localStorage.setItem('firstTimeSetup', 'true');
         navigate('/profile-setup');
+      } else if (loginResponse.user.is_admin) {
+        navigate('/admin');
       } else {
-        localStorage.removeItem('firstTimeSetup');
         navigate('/dashboard');
       }
     } catch (err) {
@@ -92,6 +92,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+  
   
   
   return (

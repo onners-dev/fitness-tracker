@@ -21,6 +21,12 @@ import WorkoutPlans from './pages/WorkoutPlans';
 import NotFound from './pages/NotFound';
 import EmailVerification from './pages/EmailVerification';
 import EmailVerified from './pages/EmailVerified'
+import AdminDashboard from './admin/pages/AdminDashboard';
+import UserManagement from './admin/pages/UserManagement';
+import ContentModeration from './admin/pages/ContentModeration';
+import WorkoutModeration from './admin/pages/WorkoutModeration';
+import NutritionModeration from './admin/pages/NutritionModeration';
+import SystemAnalytics from './admin/pages/SystemAnalytics';
 
 function App() {
   return (
@@ -118,6 +124,46 @@ function App() {
               element={
                 <ProtectedRoute>
                   <WorkoutPlans />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <UserManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/content" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <ContentModeration />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/workouts" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <WorkoutModeration />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/analytics" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <SystemAnalytics />
                 </ProtectedRoute>
               } 
             />

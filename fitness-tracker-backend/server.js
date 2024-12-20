@@ -43,9 +43,9 @@ const routes = [
   { path: './routes/foods', name: 'foods', apiPath: '/api/foods' },
   { path: './routes/trends', name: 'trends', apiPath: '/api/trends' },
   { path: './routes/workouts', name: 'workouts', apiPath: '/api/workouts' },
-  {path: './routes/nutrition', name: 'nutrition', apiPath: '/api/nutrition'}
+  {path: './routes/nutrition', name: 'nutrition', apiPath: '/api/nutrition'},
+  {path: './routes/admin', name: 'admin', apiPath: '/api/admin'}
 ];
-
 
 const loadRoute = (routePath, routeName) => {
   try {
@@ -57,10 +57,15 @@ const loadRoute = (routePath, routeName) => {
     // Clear module cache to avoid issues with reloading
     delete require.cache[require.resolve(fullPath)];
 
-    const route = require(fullPath);
-    console.log(route); 
+    const routeModule = require(fullPath);
 
-    if (!route || typeof route.use !== 'function') {
+    // Handle potential exports
+    const route = routeModule.router || routeModule;
+
+    console.log('Loaded route:', route); 
+
+    // More flexible route validation
+    if (!route || (typeof route !== 'function' && typeof route.use !== 'function')) {
       console.error(`Invalid route module for ${routeName}`);
       return null;
     }
@@ -72,7 +77,6 @@ const loadRoute = (routePath, routeName) => {
     return null;
   }
 };
-
 
 
 routes.forEach(({ path, name, apiPath }) => {

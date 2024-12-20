@@ -1,12 +1,26 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
-module.exports = (req, res, next) => {
+// Main authorization middleware
+const authorization = (req, res, next) => {
   // Log full request details
   console.group('🔐 Authorization Middleware');
   console.log('Request URL:', req.originalUrl);
   console.log('Request Method:', req.method);
-  console.log('Full Headers:', JSON.stringify(req.headers, null, 2));
+
+  // Skip authorization for specific public routes
+  const publicRoutes = [
+    '/api/auth/login', 
+    '/api/auth/register', 
+    '/api/auth/verify-code', 
+    '/api/auth/resend-verification'
+  ];
+
+  if (publicRoutes.some(route => req.path.startsWith(route))) {
+    console.log('Public route, skipping authorization');
+    console.groupEnd();
+    return next();
+  }
 
   // Extract token from multiple possible sources
   const authHeader = 
@@ -36,25 +50,32 @@ module.exports = (req, res, next) => {
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET, {
-      // Optional: add additional verification options
-      algorithms: ['HS256'], // Specify allowed algorithms
-      maxAge: '1d' // Token expiration
+      algorithms: ['HS256'],
+      maxAge: '1d'
     });
 
-    console.log('Token Decoded Successfully:', {
-      user_id: decoded.user_id,
-      email: decoded.email,
-      email_verified: decoded.email_verified
-    });
+    console.log('Token Decoded Details:', JSON.stringify(decoded, null, 2));
+
+    // Ensure user_id is always set
+    const userId = decoded.user_id;
+
+    if (!userId) {
+      console.warn('❌ No user_id found in token');
+      return res.status(401).json({ 
+        message: 'Invalid token: missing user identifier',
+        details: 'No user_id found in token payload'
+      });
+    }
 
     // Add user from payload
     req.user = {
-      id: decoded.user_id,
+      id: userId,
       email: decoded.email,
-      email_verified: decoded.email_verified
+      email_verified: decoded.email_verified,
+      is_admin: decoded.is_admin
     };
 
-    console.log('✅ Authorization Successful');
+    console.log('✅ Authorization Successful with User:', JSON.stringify(req.user, null, 2));
     console.groupEnd();
 
     next();
@@ -62,7 +83,6 @@ module.exports = (req, res, next) => {
     console.group('🚨 Token Verification Error');
     console.error('Error Name:', err.name);
     console.error('Error Message:', err.message);
-    console.error('Full Error:', err);
     console.groupEnd();
 
     // Handle specific JWT errors
@@ -93,3 +113,105 @@ module.exports = (req, res, next) => {
     }
   }
 };
+
+// Separate admin check function (to be used in routes)
+const checkAdminAccess = async (req, res, next) => {
+  console.group('🛡️ Admin Access Check');
+  
+  try {
+    // Log the entire request object and headers for debugging
+    console.log('Full Request Details:', {
+      path: req.path,
+      method: req.method,
+      headers: req.headers,
+      user: req.user
+    });
+
+    // Ensure user object exists and is populated
+    if (!req.user) {
+      console.warn('❌ No user found in request');
+      console.groupEnd();
+      return res.status(403).json({ 
+        message: 'Authentication required',
+        details: 'No user object in request'
+      });
+    }
+
+    // More flexible and verbose admin check
+    console.log('Admin Check Details:', {
+      tokenAdminStatus: req.user.is_admin,
+      userEmail: req.user.email
+    });
+
+    // Check admin status explicitly with multiple checks
+    const isAdmin = req.user.is_admin === true || 
+                    req.user.is_admin === 't' || 
+                    req.user.is_admin === 'true';
+
+    if (isAdmin) {
+      console.log('✅ Admin access granted via token');
+      console.groupEnd();
+      return next();
+    }
+
+    // Fallback: Check admin status directly in the database
+    console.log('Performing database admin check');
+    const adminCheck = await pool.query(
+      'SELECT is_admin FROM users WHERE user_id = $1', 
+      [req.user.id]
+    );
+
+    console.log('Database Admin Check Result:', {
+      rows: adminCheck.rows,
+      rowCount: adminCheck.rowCount
+    });
+
+    if (adminCheck.rows.length === 0) {
+      console.warn('❌ No user found in database');
+      console.groupEnd();
+      return res.status(403).json({ 
+        message: 'User not found',
+        details: 'No matching user in database'
+      });
+    }
+
+    const isDbAdmin = adminCheck.rows[0].is_admin === true || 
+                      adminCheck.rows[0].is_admin === 't';
+
+    console.log('Database Admin Status:', {
+      isAdmin: isDbAdmin,
+      rawDbValue: adminCheck.rows[0].is_admin
+    });
+
+    if (!isDbAdmin) {
+      console.warn('❌ Non-admin access attempt');
+      console.groupEnd();
+      return res.status(403).json({ 
+        message: 'Admin access required',
+        details: 'User is not an admin in database'
+      });
+    }
+
+    console.log('✅ Admin access granted');
+    console.groupEnd();
+    next();
+  } catch (error) {
+    console.error('🚨 Admin Access Check Error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    console.groupEnd();
+    
+    res.status(500).json({ 
+      message: 'Authorization error', 
+      error: error.message 
+    });
+  }
+};
+
+
+
+// Modify the exports
+module.exports = authorization;
+authorization.checkAdminAccess = checkAdminAccess;

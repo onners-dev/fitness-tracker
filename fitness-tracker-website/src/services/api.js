@@ -89,7 +89,7 @@ export const authService = {
           console.log('Full Response:', response);
           console.log('Response Data:', response.data);
           console.groupEnd();
-      
+          
           // Very explicit token extraction
           const token = response.data.token;
           
@@ -98,6 +98,12 @@ export const authService = {
             throw new Error('No authentication token received');
           }
           
+          // Store admin status in localStorage
+          localStorage.setItem('isAdmin', response.data.user.is_admin || false);
+          localStorage.setItem('firstTimeSetup', 
+            (!response.data.user.is_profile_complete).toString()
+          );
+          
           return {
             token: token,
             user: {
@@ -105,7 +111,8 @@ export const authService = {
               email: response.data.user.email,
               email_verified: response.data.user.email_verified === true || 
                               response.data.user.email_verified === 't',
-              is_profile_complete: response.data.user.is_profile_complete
+              is_profile_complete: response.data.user.is_profile_complete,
+              is_admin: response.data.user.is_admin
             }
           };
         } catch (error) {
@@ -116,7 +123,8 @@ export const authService = {
           });
           throw error;
         }
-    },
+      },
+      
       
 
     register: async (userData) => {

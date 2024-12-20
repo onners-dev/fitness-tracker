@@ -115,236 +115,137 @@ function calculateNutrientGoals(profile) {
     };
 }
 
-// In routes/nutrition.js
-router.post('/calculate-goals', authorization, async (req, res) => {
-    try {
-      const userProfile = await pool.query(
-        `SELECT 
-          current_weight, 
-          height, 
-          date_part('year', age(date_of_birth)) AS age, 
-          fitness_goal, 
-          activity_level,
-          gender
-        FROM user_profiles 
-        WHERE user_id = $1`, 
-        [req.user.id]
-      );
-  
-      // Extensive logging
-      console.log('Profile Data for Goal Calculation:', {
-        rows: userProfile.rows,
-        rowCount: userProfile.rows.length
-      });
-  
-      // Ensure profile is complete before calculating
-      const profile = userProfile.rows[0];
-      if (!profile) {
-        return res.status(400).json({ 
-          message: 'No user profile found',
-          details: 'Unable to retrieve user profile for nutrition goals calculation'
-        });
-      }
-  
-      // Validate required fields
-      const requiredFields = [
-        'current_weight', 
-        'height', 
-        'age', 
-        'fitness_goal', 
-        'activity_level'
-      ];
-  
-      const missingFields = requiredFields.filter(field => 
-        !profile[field] || profile[field] === null
-      );
-  
-      if (missingFields.length > 0) {
-        return res.status(400).json({ 
-          message: 'Incomplete profile',
-          missingFields: missingFields
-        });
-      }
-  
-      try {
-        const nutritionGoals = calculateNutrientGoals(profile);
-  
-        await pool.query(
-          `UPDATE user_profiles 
-           SET daily_calories_goal = $1,
-               daily_protein_goal = $2,
-               daily_carbs_goal = $3,
-               daily_fats_goal = $4,
-               goals_last_calculated = CURRENT_TIMESTAMP
-           WHERE user_id = $5`,
-          [
-            nutritionGoals.daily_calories_goal,
-            nutritionGoals.daily_protein_goal,
-            nutritionGoals.daily_carbs_goal,
-            nutritionGoals.daily_fats_goal,
-            req.user.id
-          ]
-        );
-  
-        res.json(nutritionGoals);
-      } catch (calculationError) {
-        console.error('Nutrition Goals Calculation Error:', {
-          message: calculationError.message,
-          stack: calculationError.stack,
-          profile: profile
-        });
-  
-        res.status(500).json({ 
-          message: 'Error in nutrition goals calculation',
-          details: calculationError.message
-        });
-      }
-    } catch (error) {
-      console.error('Nutrition Goals Route Error:', {
-        message: error.message,
-        stack: error.stack
-      });
-  
-      res.status(500).json({ 
-        message: 'Error calculating nutrition goals',
-        details: error.message
-      });
-    }
-});
-
 router.post('/calculate-goals', authorization, async (req, res) => {
   try {
-    const userProfile = await pool.query(
-      `SELECT 
-        current_weight, 
-        height, 
-        date_part('year', age(date_of_birth)) AS age, 
-        fitness_goal, 
-        activity_level,
-        gender,
-        date_of_birth  // Include this to calculate age if needed
-      FROM user_profiles 
-      WHERE user_id = $1`, 
-      [req.user.id]
-    );
-
-    const profile = userProfile.rows[0];
-
-    // Calculate age if not already present
-    if (!profile.age && profile.date_of_birth) {
-      profile.age = new Date().getFullYear() - new Date(profile.date_of_birth).getFullYear();
-    }
-
-    // Provide default values if missing
-    profile.gender = profile.gender || 'male';  // Default to male if not specified
-    
-    // Validate required fields
-    const requiredFields = [
-      'current_weight', 
-      'height', 
-      'fitness_goal', 
-      'activity_level'
-    ];
-
-    const missingFields = requiredFields.filter(field => 
-      !profile[field] || profile[field] === null
-    );
-
-    if (missingFields.length > 0) {
-      return res.status(400).json({ 
-        message: 'Incomplete profile',
-        missingFields: missingFields
-      });
-    }
-
-    // Ensure age is calculated or provided
-    if (!profile.age) {
-      return res.status(400).json({
-        message: 'Unable to calculate age. Please update your date of birth.'
-      });
-    }
-
-    // Convert string values to numbers
-    const profileData = {
-      current_weight: Number(profile.current_weight),
-      height: Number(profile.height),
-      age: Number(profile.age),
-      fitness_goal: profile.fitness_goal,
-      activity_level: profile.activity_level,
-      gender: profile.gender
-    };
-
-    try {
-      const nutritionGoals = calculateNutrientGoals(profileData);
-
-      await pool.query(
-        `UPDATE user_profiles 
-         SET daily_calories_goal = $1,
-             daily_protein_goal = $2,
-             daily_carbs_goal = $3,
-             daily_fats_goal = $4,
-             goals_last_calculated = CURRENT_TIMESTAMP
-         WHERE user_id = $5`,
-        [
-          nutritionGoals.daily_calories_goal,
-          nutritionGoals.daily_protein_goal,
-          nutritionGoals.daily_carbs_goal,
-          nutritionGoals.daily_fats_goal,
-          req.user.id
-        ]
+      const userProfile = await pool.query(
+          `SELECT 
+              current_weight, 
+              height, 
+              date_part('year', age(date_of_birth)) AS age, 
+              fitness_goal, 
+              activity_level,
+              gender,
+              date_of_birth
+          FROM user_profiles 
+          WHERE user_id = $1`, 
+          [req.user.id]
       );
 
-      res.json(nutritionGoals);
-    } catch (calculationError) {
-      console.error('Nutrition Goals Calculation Error:', {
-        message: calculationError.message,
-        stack: calculationError.stack,
-        profile: profileData
+      const profile = userProfile.rows[0];
+
+      // Calculate age if not already present
+      if (!profile.age && profile.date_of_birth) {
+          profile.age = new Date().getFullYear() - new Date(profile.date_of_birth).getFullYear();
+      }
+
+      // Provide default values if missing
+      profile.gender = profile.gender || 'male';
+      
+      // Validate required fields
+      const requiredFields = [
+          'current_weight', 
+          'height', 
+          'fitness_goal', 
+          'activity_level'
+      ];
+
+      const missingFields = requiredFields.filter(field => 
+          !profile[field] || profile[field] === null
+      );
+
+      if (missingFields.length > 0) {
+          return res.status(400).json({ 
+              message: 'Incomplete profile',
+              missingFields: missingFields
+          });
+      }
+
+      // Ensure age is calculated or provided
+      if (!profile.age) {
+          return res.status(400).json({
+              message: 'Unable to calculate age. Please update your date of birth.'
+          });
+      }
+
+      // Convert string values to numbers
+      const profileData = {
+          current_weight: Number(profile.current_weight),
+          height: Number(profile.height),
+          age: Number(profile.age),
+          fitness_goal: profile.fitness_goal,
+          activity_level: profile.activity_level,
+          gender: profile.gender
+      };
+
+      try {
+          const nutritionGoals = calculateNutrientGoals(profileData);
+
+          await pool.query(
+              `UPDATE user_profiles 
+              SET daily_calories_goal = $1,
+                  daily_protein_goal = $2,
+                  daily_carbs_goal = $3,
+                  daily_fats_goal = $4,
+                  goals_last_calculated = CURRENT_TIMESTAMP
+              WHERE user_id = $5`,
+              [
+                  nutritionGoals.daily_calories_goal,
+                  nutritionGoals.daily_protein_goal,
+                  nutritionGoals.daily_carbs_goal,
+                  nutritionGoals.daily_fats_goal,
+                  req.user.id
+              ]
+          );
+
+          res.json(nutritionGoals);
+      } catch (calculationError) {
+          console.error('Nutrition Goals Calculation Error:', {
+              message: calculationError.message,
+              stack: calculationError.stack,
+              profile: profileData
+          });
+
+          res.status(500).json({ 
+              message: 'Error in nutrition goals calculation',
+              details: calculationError.message
+          });
+      }
+  } catch (error) {
+      console.error('Nutrition Goals Route Error:', {
+          message: error.message,
+          stack: error.stack
       });
 
       res.status(500).json({ 
-        message: 'Error in nutrition goals calculation',
-        details: calculationError.message
+          message: 'Error calculating nutrition goals',
+          details: error.message
       });
-    }
-  } catch (error) {
-    console.error('Nutrition Goals Route Error:', {
-      message: error.message,
-      stack: error.stack
-    });
-
-    res.status(500).json({ 
-      message: 'Error calculating nutrition goals',
-      details: error.message
-    });
   }
 });
-
-  
 
 // Route to get current nutrition goals
 router.get('/goals', authorization, async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT 
-        daily_calories_goal, 
-        daily_protein_goal, 
-        daily_carbs_goal, 
-        daily_fats_goal 
-      FROM user_profiles 
-      WHERE user_id = $1`,
-      [req.user.id]
-    );
+      const { rows } = await pool.query(
+          `SELECT 
+              daily_calories_goal, 
+              daily_protein_goal, 
+              daily_carbs_goal, 
+              daily_fats_goal 
+          FROM user_profiles 
+          WHERE user_id = $1`,
+          [req.user.id]
+      );
 
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'No nutrition goals found' });
-    }
+      if (rows.length === 0) {
+          return res.status(404).json({ message: 'No nutrition goals found' });
+      }
 
-    res.json(rows[0]);
+      res.json(rows[0]);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching nutrition goals' });
+      res.status(500).json({ message: 'Error fetching nutrition goals' });
   }
 });
 
 module.exports = router;
-exports.calculateNutrientGoals = calculateNutrientGoals;
+router.calculateNutrientGoals = calculateNutrientGoals;
