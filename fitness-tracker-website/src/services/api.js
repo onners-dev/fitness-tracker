@@ -260,13 +260,37 @@ export const userService = {
 
     updatePassword: async (passwordData) => {
         try {
-            const response = await api.put('/users/password', passwordData);
-            return response.data;
+          console.log('Attempting to update password:', {
+            currentPasswordLength: passwordData.currentPassword ? passwordData.currentPassword.length : 'N/A',
+            newPasswordLength: passwordData.newPassword ? passwordData.newPassword.length : 'N/A'
+          });
+      
+          const response = await api.put('/users/password', passwordData);
+          return response.data;
         } catch (error) {
-            console.error('Update password error', error);
-            throw error;
+          console.error('Update password error', {
+            error: error,
+            response: error.response,
+            message: error.message
+          });
+      
+          // More detailed error handling
+          if (error.response) {
+            // The request was made and the server responded with a status code
+            throw {
+              message: error.response.data.message || 'Failed to update password',
+              status: error.response.status
+            };
+          } else if (error.request) {
+            // The request was made but no response was received
+            throw new Error('No response received from server');
+          } else {
+            // Something happened in setting up the request that triggered an Error
+            throw new Error('Error setting up the password update request');
+          }
         }
     }
+      
 };
 
 // Exercise services

@@ -1,30 +1,31 @@
-import axios from 'axios';
-
-const BASE_URL = import.meta.env.VITE_API_URL;
+// adminService.js
+import api from './api';
 
 export const adminService = {
   // Dashboard Statistics
   getDashboardStats: async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/dashboard-stats`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/admin/dashboard-stats');
       return response.data;
     } catch (error) {
-      if (error.response && error.response.status === 403) {
-        // Handle forbidden access specifically
-        console.error('Access Denied: Admin privileges required', error.response.data);
-        throw new Error('Admin access required. Please log in with an admin account.');
-      }
-      
-      console.error('Full Axios Error:', {
+      console.error('Admin Dashboard Stats Error:', {
         status: error.response?.status,
         data: error.response?.data,
         message: error.message
       });
-      
+  
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            throw new Error('Unauthorized. Please log in again.');
+          case 403:
+            throw new Error('Access denied. Admin privileges required.');
+          case 500:
+            throw new Error('Server error. Please try again later.');
+          default:
+            throw new Error('Failed to fetch dashboard stats');
+        }
+      }
       throw error;
     }
   },
@@ -32,11 +33,7 @@ export const adminService = {
   // User Management
   getAllUsers: async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/users`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/admin/users');
       return response.data;
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -46,11 +43,7 @@ export const adminService = {
 
   banUser: async (userId) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/users/${userId}/ban`, {}, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.post(`/admin/users/${userId}/ban`);
       return response.data;
     } catch (error) {
       console.error('Error banning user:', error);
@@ -61,11 +54,7 @@ export const adminService = {
   // Content Moderation
   getFlaggedContent: async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/flagged-content`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/report/flagged-content');
       return response.data;
     } catch (error) {
       console.error('Error fetching flagged content:', error);
@@ -76,11 +65,7 @@ export const adminService = {
   // Workout and Nutrition Moderation
   getWorkoutSubmissions: async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/workout-submissions`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/admin/workout-submissions');
       return response.data;
     } catch (error) {
       console.error('Error fetching workout submissions:', error);
@@ -90,11 +75,7 @@ export const adminService = {
   
   getSystemAnalytics: async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/system-analytics`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/admin/system-analytics');
       return response.data;
     } catch (error) {
       console.error('Error fetching system analytics:', error);
@@ -104,11 +85,7 @@ export const adminService = {
   
   getNutritionSubmissions: async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/nutrition-submissions`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await api.get('/admin/nutrition-submissions');
       return response.data;
     } catch (error) {
       console.error('Error fetching nutrition submissions:', error);
@@ -118,55 +95,26 @@ export const adminService = {
   
   reviewNutritionSubmission: async (foodId, action) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/nutrition-submissions/${foodId}/review`, 
-        { status: action }, 
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
+      const response = await api.post(`/admin/nutrition-submissions/${foodId}/review`, { 
+        status: action 
+      });
       return response.data;
     } catch (error) {
       console.error('Error reviewing nutrition submission:', error);
       throw error;
     }
   },
-
-  getFlaggedContent: async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/report/flagged-content`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching flagged content:', error);
-      throw error;
-    }
-  },
   
   reviewFlaggedContent: async (contentType, flagId, action) => {
     try {
-      const response = await axios.post(
-        `${BASE_URL}/report/flagged-content/${flagId}/review`, 
-        { 
-          contentType, 
-          action 
-        }, 
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
+      const response = await api.post(`/report/flagged-content/${flagId}/review`, {
+        contentType,
+        action: action === 'approve' ? 'approved' : 'rejected'
+      });
       return response.data;
     } catch (error) {
-      console.error('Error reviewing flagged content:', error);
-      throw error;
+      console.error('Error reviewing flagged content:', error.response?.data || error);
+      throw error.response?.data || error;
     }
   }
-
-  
 };

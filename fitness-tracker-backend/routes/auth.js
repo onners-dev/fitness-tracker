@@ -428,7 +428,7 @@ router.post('/login', async (req, res) => {
       res.status(200).json({
         token: token,
         user: {
-          user_id: user.userid,
+          user_id: user.user_id,
           email: user.email,
           email_verified: user.email_verified === true || user.email_verified === 't',
           is_admin: isAdmin,

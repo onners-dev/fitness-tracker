@@ -118,30 +118,13 @@ const checkAdminAccess = async (req, res, next) => {
   console.group('🛡️ Admin Access Check');
   
   try {
-    // Log the entire request object for debugging
-    console.log('Request Details:', {
-      path: req.path,
-      method: req.method,
-      user: req.user  // Log the user object to see what's available
-    });
-
-    // Ensure user object exists and is populated
-    if (!req.user) {
-      console.warn('❌ No user found in request');
-      console.groupEnd();
-      return res.status(403).json({ 
-        message: 'Authentication required',
-        details: 'No user object in request'
-      });
-    }
-
-    // More verbose logging of admin status
     console.log('Admin Check Details:', {
       tokenAdminStatus: req.user.is_admin,
-      userEmail: req.user.email
+      userEmail: req.user.email,
+      fullUserObject: req.user
     });
 
-    // Flexible admin status check
+    // More flexible admin status check
     const isAdmin = 
       req.user.is_admin === true || 
       req.user.is_admin === 't' || 
@@ -153,10 +136,14 @@ const checkAdminAccess = async (req, res, next) => {
       return next();
     }
 
-    // Fallback: Database admin check
+    // Detailed database admin check
     console.log('Performing database admin check');
     const adminCheck = await pool.query(
-      'SELECT is_admin FROM users WHERE user_id = $1', 
+      `SELECT 
+        is_admin, 
+        email 
+      FROM users 
+      WHERE user_id = $1`, 
       [req.user.user_id]
     );
 
@@ -168,6 +155,11 @@ const checkAdminAccess = async (req, res, next) => {
         details: 'No matching user in database'
       });
     }
+
+    console.log('Database Admin Check:', {
+      databaseAdminStatus: adminCheck.rows[0].is_admin,
+      databaseEmail: adminCheck.rows[0].email
+    });
 
     const isDbAdmin = 
       adminCheck.rows[0].is_admin === true || 

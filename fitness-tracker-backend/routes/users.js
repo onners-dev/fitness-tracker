@@ -7,7 +7,7 @@ const { calculateNutrientGoals } = require('../routes/nutrition');
 
 router.get('/profile', authorization, async (req, res) => {
   try {
-      const userId = req.user.id;
+      const userId = req.user.user_id;
 
       const result = await pool.query(
           `SELECT 
@@ -15,7 +15,7 @@ router.get('/profile', authorization, async (req, res) => {
               u.email,
               up.first_name,
               up.last_name,
-              up.date_of_birth AS age,
+              up.date_of_birth, 
               up.gender,
               up.height,
               up.current_weight,
@@ -35,6 +35,8 @@ router.get('/profile', authorization, async (req, res) => {
 
       const profile = result.rows[0];
 
+      console.log('Fetched Profile:', profile); // Add detailed logging
+
       // Add profile completeness check
       const isProfileComplete = !!(
           profile.height &&
@@ -44,13 +46,32 @@ router.get('/profile', authorization, async (req, res) => {
           profile.primary_focus
       );
 
+      // Calculate age if needed
+      const calculateAge = (dateOfBirth) => {
+        if (!dateOfBirth) return null;
+        const birthDate = new Date(dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDifference = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        
+        return age;
+      };
+
       // Prepare the response
       const userProfile = {
           id: profile.user_id,
           email: profile.email,
           first_name: profile.first_name,
           last_name: profile.last_name,
-          age: profile.age ? new Date().getFullYear() - new Date(profile.age).getFullYear() : null,
+          // Directly use date_of_birth and format it
+          date_of_birth: profile.date_of_birth 
+              ? new Date(profile.date_of_birth).toISOString().split('T')[0] 
+              : null,
+          age: calculateAge(profile.date_of_birth),
           gender: profile.gender,
           height: profile.height,
           current_weight: profile.current_weight,
@@ -61,6 +82,8 @@ router.get('/profile', authorization, async (req, res) => {
           // Add profile completeness flag
           is_profile_complete: isProfileComplete
       };
+
+      console.log('Prepared User Profile:', userProfile); // Add detailed logging
 
       res.json(userProfile);
   } catch (error) {
@@ -74,30 +97,33 @@ router.get('/profile', authorization, async (req, res) => {
 });
 
 
+
 // Update profile route
 router.put('/profile', authorization, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.user_id;
     const { 
-      // Existing fitness fields
-      height, 
-      current_weight, 
-      target_weight, 
-      fitness_goal, 
-      activity_level,
-      primary_focus,
-      weight_unit,
-      height_unit,
-
-      // New personal information fields
+      // Personal information fields
       first_name,
       last_name,
       email,
       date_of_birth,
-      gender
+      gender,
+
+      // Fitness fields
+      height,
+      current_weight,
+      target_weight,
+      fitness_goal,
+      activity_level,
+      primary_focus,
+
+      // Units
+      weight_unit = 'kg',
+      height_unit = 'cm'
     } = req.body;
 
-    console.log('📥 Received Profile Update:', {
+    console.log('📢 COMPLETE Profile Update Request:', {
       userId,
       first_name,
       last_name,
@@ -118,9 +144,35 @@ router.put('/profile', authorization, async (req, res) => {
     const client = await pool.connect();
 
     try {
+      // Begin transaction
       await client.query('BEGIN');
 
-      // Update user_profiles table
+      // Fetch current profile to merge with incoming data
+      const currentProfileResult = await client.query(
+        `SELECT * FROM user_profiles WHERE user_id = $1`, 
+        [userId]
+      );
+      const currentProfile = currentProfileResult.rows[0];
+
+      // Careful date parsing
+      let parsedDateOfBirth = null;
+      if (date_of_birth) {
+        const inputDate = new Date(date_of_birth);
+        
+        // Validate date
+        if (!isNaN(inputDate.getTime())) {
+          // Ensure it's stored as a date, but without time component
+          parsedDateOfBirth = new Date(
+            Date.UTC(
+              inputDate.getFullYear(), 
+              inputDate.getMonth(), 
+              inputDate.getDate()
+            )
+          );
+        }
+      }
+
+      // Update user_profiles table with merged data
       const profileUpdateQuery = `
         UPDATE user_profiles
         SET 
@@ -144,32 +196,36 @@ router.put('/profile', authorization, async (req, res) => {
       const profileValues = [
         first_name,
         last_name,
-        date_of_birth ? new Date(date_of_birth) : null,
+        parsedDateOfBirth, // Use parsed date
         gender,
-        height,
-        current_weight,
-        target_weight,
+        height !== undefined ? parseFloat(height) : null,
+        current_weight !== undefined ? parseFloat(current_weight) : null,
+        target_weight !== undefined ? parseFloat(target_weight) : null,
         fitness_goal,
         activity_level,
         primary_focus,
-        weight_unit || 'kg',
-        height_unit || 'cm',
+        weight_unit,
+        height_unit,
         userId
       ];
+
+      console.log('🔍 Profile Update Values:', profileValues);
 
       // Execute profile update
       const profileResult = await client.query(profileUpdateQuery, profileValues);
 
+      console.log('✅ Profile Update Result:', profileResult.rows[0]);
+
       // Update email in users table if provided
-      let userResult;
       if (email) {
         const userUpdateQuery = `
           UPDATE users
-          SET email = $1
+          SET email = $1::varchar
           WHERE user_id = $2
           RETURNING *
         `;
-        userResult = await client.query(userUpdateQuery, [email, userId]);
+        const userUpdateResult = await client.query(userUpdateQuery, [email, userId]);
+        console.log('📧 Email Update Result:', userUpdateResult.rows[0]);
       }
 
       // Commit transaction
@@ -199,33 +255,19 @@ router.put('/profile', authorization, async (req, res) => {
 
       const finalProfileResult = await client.query(finalProfileQuery, [userId]);
 
-      // Prepare response
       const userProfile = finalProfileResult.rows[0];
-      const age = userProfile.date_of_birth 
-        ? new Date().getFullYear() - new Date(userProfile.date_of_birth).getFullYear() 
-        : null;
+      
+      console.log('🎉 Final Profile:', userProfile);
 
-      // Determine profile completeness
-      const isProfileComplete = !!(
-        userProfile.height &&
-        userProfile.current_weight &&
-        userProfile.fitness_goal &&
-        userProfile.activity_level &&
-        userProfile.primary_focus &&
-        userProfile.first_name &&
-        userProfile.last_name &&
-        userProfile.date_of_birth &&
-        userProfile.gender
-      );
-
-      // Construct detailed profile response
+      // Prepare response
       const responseProfile = {
         id: userProfile.user_id,
         email: userProfile.email,
         first_name: userProfile.first_name,
         last_name: userProfile.last_name,
-        date_of_birth: userProfile.date_of_birth,
-        age: age,
+        date_of_birth: userProfile.date_of_birth 
+          ? new Date(userProfile.date_of_birth).toISOString().split('T')[0]  // This ensures YYYY-MM-DD
+          : null,
         gender: userProfile.gender,
         height: userProfile.height,
         current_weight: userProfile.current_weight,
@@ -234,47 +276,8 @@ router.put('/profile', authorization, async (req, res) => {
         activity_level: userProfile.activity_level,
         primary_focus: userProfile.primary_focus,
         weight_unit: userProfile.weight_unit,
-        height_unit: userProfile.height_unit,
-        is_profile_complete: isProfileComplete
+        height_unit: userProfile.height_unit
       };
-
-      console.log('✅ Profile Update Success:', responseProfile);
-
-      // Trigger nutrition goals recalculation (existing logic)
-      if (responseProfile.current_weight && 
-          responseProfile.height && 
-          responseProfile.fitness_goal && 
-          age) {
-        try {
-          const nutritionGoals = calculateNutrientGoals({
-            current_weight: responseProfile.current_weight,
-            height: responseProfile.height,
-            age: age,
-            fitness_goal: responseProfile.fitness_goal,
-            activity_level: responseProfile.activity_level,
-            gender: responseProfile.gender
-          });
-
-          await pool.query(
-            `UPDATE user_profiles 
-             SET daily_calories_goal = $1,
-                 daily_protein_goal = $2,
-                 daily_carbs_goal = $3,
-                 daily_fats_goal = $4,
-                 goals_last_calculated = CURRENT_TIMESTAMP
-             WHERE user_id = $5`,
-            [
-              nutritionGoals.daily_calories_goal,
-              nutritionGoals.daily_protein_goal,
-              nutritionGoals.daily_carbs_goal,
-              nutritionGoals.daily_fats_goal,
-              userId
-            ]
-          );
-        } catch (calculationError) {
-          console.error('Error in nutrition goals calculation:', calculationError);
-        }
-      }
 
       res.json(responseProfile);
     } catch (updateError) {
@@ -309,6 +312,73 @@ router.put('/profile', authorization, async (req, res) => {
   }
 });
 
+
+// Add this route to users.js if not already present
+router.put('/password', authorization, async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const { currentPassword, newPassword } = req.body;
+
+    console.log('🔐 Password Update Request:', {
+      userId,
+      currentPasswordLength: currentPassword ? currentPassword.length : 'N/A',
+      newPasswordLength: newPassword ? newPassword.length : 'N/A'
+    });
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new passwords are required' });
+    }
+
+    // Fetch user's current password hash
+    const userResult = await pool.query(
+      'SELECT password_hash FROM users WHERE user_id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword, 
+      userResult.rows[0].password_hash
+    );
+
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    // Validate new password strength
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'New password must be at least 8 characters long' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE user_id = $2',
+      [hashedNewPassword, userId]
+    );
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('🚨 Password Update Error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+
+    res.status(500).json({ 
+      message: 'Error updating password',
+      error: error.message 
+    });
+  }
+});
 
 
 module.exports = router;

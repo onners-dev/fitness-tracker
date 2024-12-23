@@ -121,24 +121,36 @@ router.get('/flagged-content', authorization.checkAdminAccess, async (req, res) 
 
 // Route to review flagged content
 router.post('/flagged-content/:flagId/review', authorization.checkAdminAccess, async (req, res) => {
-  const { flagId } = req.params;
+  // Explicitly convert flagId to integer
+  const flagId = parseInt(req.params.flagId, 10);
   const { contentType, action } = req.body;
 
+  // Validate inputs
+  if (isNaN(flagId)) {
+    return res.status(400).json({ message: 'Invalid flag ID' });
+  }
+
+  if (!['approve', 'reject'].includes(action)) {
+    return res.status(400).json({ message: 'Invalid action' });
+  }
+
   try {
-    // Begin transaction
     const client = await db.connect();
 
     try {
       // Start transaction
       await client.query('BEGIN');
 
-      // First, update the flag status
+      // First, update the flag status with explicit type casting
       const flagUpdateResult = await client.query(`
         UPDATE content_flags
-        SET status = $1
-        WHERE flag_id = $2
-        RETURNING content_type, content_id
-      `, [action, flagId]);
+        SET status = $1::varchar(20)
+        WHERE flag_id = $2::integer
+        RETURNING content_type::varchar(50), content_id::integer
+      `, [
+        action === 'approve' ? 'approved' : 'rejected',
+        flagId
+      ]);
 
       if (flagUpdateResult.rows.length === 0) {
         throw new Error('Flag not found');
@@ -154,30 +166,42 @@ router.post('/flagged-content/:flagId/review', authorization.checkAdminAccess, a
         case 'contributed_food':
           contentUpdateQuery = `
             UPDATE user_contributed_foods
-            SET approval_status = $1, 
-                visibility = CASE WHEN $1 = 'approved' THEN 'public' ELSE 'personal' END
-            WHERE food_id = $2
+            SET approval_status = $1::varchar(20), 
+                visibility = CASE WHEN $1::varchar(20) = 'approved' THEN 'public' ELSE 'personal' END
+            WHERE food_id = $2::integer
           `;
-          contentUpdateParams = [action === 'approve' ? 'approved' : 'rejected', content_id];
+          contentUpdateParams = [
+            action === 'approve' ? 'approved' : 'rejected', 
+            content_id
+          ];
           break;
         
         case 'workout':
           contentUpdateQuery = `
             UPDATE user_workouts
-            SET status = $1
-            WHERE workout_id = $2
+            SET status = $1::varchar(20)
+            WHERE workout_id = $2::integer
           `;
-          contentUpdateParams = [action, content_id];
+          contentUpdateParams = [
+            action === 'approve' ? 'approved' : 'rejected', 
+            content_id
+          ];
           break;
         
         case 'meal':
           contentUpdateQuery = `
             UPDATE meals
-            SET status = $1
-            WHERE meal_id = $2
+            SET status = $1::varchar(20)
+            WHERE meal_id = $2::integer
           `;
-          contentUpdateParams = [action, content_id];
+          contentUpdateParams = [
+            action === 'approve' ? 'approved' : 'rejected', 
+            content_id
+          ];
           break;
+        
+        default:
+          throw new Error(`Unsupported content type: ${content_type}`);
       }
 
       if (contentUpdateQuery) {
@@ -195,6 +219,7 @@ router.post('/flagged-content/:flagId/review', authorization.checkAdminAccess, a
     } catch (error) {
       // Rollback transaction in case of error
       await client.query('ROLLBACK');
+      console.error('Transaction error:', error);
       throw error;
     } finally {
       // Release the client back to the pool
@@ -204,9 +229,11 @@ router.post('/flagged-content/:flagId/review', authorization.checkAdminAccess, a
     console.error('Error reviewing flagged content:', error);
     res.status(500).json({ 
       message: 'Failed to review flagged content',
-      error: error.message 
+      error: error.message,
+      details: error.toString()
     });
   }
 });
+
 
 module.exports = router;

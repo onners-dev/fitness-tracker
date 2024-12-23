@@ -117,10 +117,64 @@ const Settings = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+  
+    try {
+      // Try parsing the date, ensuring it works with various formats
+      const date = new Date(dateString);
+      
+      if (!isNaN(date.getTime())) {
+        // Convert to YYYY-MM-DD format
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}`;
+      }
+    } catch (error) {
+      console.error('Date parsing error:', error);
+    }
+  
+    return '';
+  };
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const profile = await userService.getProfile();
+        setUserProfile(profile);
+        
+        setFormData({
+          firstName: profile.first_name || '',
+          lastName: profile.last_name || '',
+          email: profile.email || '',
+          // Use the new formatting function
+          dateOfBirth: formatDateForInput(profile.date_of_birth),
+          gender: profile.gender || '',
+          height: profile.height || '',
+          currentWeight: profile.current_weight || '',
+          targetWeight: profile.target_weight || '',
+          fitnessGoal: profile.fitness_goal || '',
+          activityLevel: profile.activity_level || '',
+          primaryFocus: profile.primary_focus || '',
+          currentPassword: '',
+          newPassword: '',
+          confirmNewPassword: ''
+        });
+      } catch (error) {
+        console.error('Error fetching profile', error);
+      }
+    };
+  
+    fetchUserProfile();
+  }, []);
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccessMessage('');
-
+  
     let isValid = false;
     
     switch(activeSection) {
@@ -136,43 +190,136 @@ const Settings = () => {
       default:
         isValid = false;
     }
-
+  
     if (!isValid) return;
-
+  
     try {
+      console.log('Updating section:', activeSection);
+      console.log('Complete Form Data:', formData);
+  
       switch(activeSection) {
         case 'profile':
           await userService.updateProfile({
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            email: formData.email,
-            date_of_birth: formData.dateOfBirth,
-            gender: formData.gender
+            first_name: formData.firstName || null,
+            last_name: formData.lastName || null,
+            email: formData.email || null,
+            // Ensure date is in YYYY-MM-DD format
+            date_of_birth: formData.dateOfBirth || null,
+            gender: formData.gender || null,
+            // Preserve other profile data
+            height: userProfile?.height || null,
+            current_weight: userProfile?.current_weight || null,
+            target_weight: userProfile?.target_weight || null,
+            fitness_goal: userProfile?.fitness_goal || null,
+            activity_level: userProfile?.activity_level || null,
+            primary_focus: userProfile?.primary_focus || null,
+            weight_unit: 'kg',
+            height_unit: 'cm'
           });
           break;
         case 'fitness':
           await userService.updateProfile({
-            height: parseFloat(formData.height),
-            current_weight: parseFloat(formData.currentWeight),
-            target_weight: parseFloat(formData.targetWeight) || null,
+            height: formData.height ? parseFloat(formData.height) : null,
+            current_weight: formData.currentWeight ? parseFloat(formData.currentWeight) : null,
+            target_weight: formData.targetWeight ? parseFloat(formData.targetWeight) : null,
             fitness_goal: formData.fitnessGoal,
             activity_level: formData.activityLevel,
-            primary_focus: formData.primaryFocus // Add this
+            primary_focus: formData.primaryFocus,
+            // Preserve personal information
+            first_name: userProfile?.first_name || null,
+            last_name: userProfile?.last_name || null,
+            email: userProfile?.email || null,
+            date_of_birth: userProfile?.date_of_birth || null,
+            gender: userProfile?.gender || null,
+            weight_unit: 'kg',
+            height_unit: 'cm'
           });
           break;
         case 'security':
-          await userService.updatePassword({
-            currentPassword: formData.currentPassword,
-            newPassword: formData.newPassword
-          });
+          try {
+            console.log('Attempting password update:', {
+              currentPasswordLength: formData.currentPassword.length,
+              newPasswordLength: formData.newPassword.length
+            });
+  
+            await userService.updatePassword({
+              currentPassword: formData.currentPassword,
+              newPassword: formData.newPassword
+            });
+  
+            // Clear password fields after successful update
+            setFormData(prev => ({
+              ...prev,
+              currentPassword: '',
+              newPassword: '',
+              confirmNewPassword: ''
+            }));
+  
+            setSuccessMessage('Password updated successfully!');
+            
+            // Optional: Reset errors in case they were set previously
+            setErrors({});
+          } catch (passwordError) {
+            console.error('Password update error:', {
+              error: passwordError,
+              message: passwordError.message,
+              status: passwordError.status
+            });
+  
+            // More specific error handling
+            if (passwordError.status === 400) {
+              setErrors({ 
+                submit: passwordError.message || 'Invalid current password or new password',
+                currentPassword: passwordError.message || 'Current password is incorrect'
+              });
+            } else {
+              setErrors({ 
+                submit: passwordError.message || 'Failed to update password'
+              });
+            }
+  
+            // Prevent further execution
+            return;
+          }
           break;
       }
-
-      setSuccessMessage(`${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} updated successfully!`);
+  
+      // Fetch and update the profile after successful update
+      const updatedProfile = await userService.getProfile();
+      setUserProfile(updatedProfile);
+  
+      // If no specific success message was set, use a generic one
+      if (!successMessage) {
+        setSuccessMessage(`${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} updated successfully!`);
+      }
     } catch (error) {
-      setErrors({ submit: error.response?.data?.message || 'An error occurred' });
+      console.error('Profile update error:', {
+        error: error,
+        response: error.response,
+        message: error.message,
+        details: error.response?.data
+      });
+  
+      // More detailed error handling
+      if (error.response) {
+        // Server responded with an error
+        setErrors({ 
+          submit: error.response.data.message || 
+                  error.response.data.error || 
+                  'An error occurred while updating profile' 
+        });
+      } else if (error.request) {
+        // Request was made but no response received
+        setErrors({ submit: 'No response received from server' });
+      } else {
+        // Something happened in setting up the request
+        setErrors({ submit: 'Error setting up the request' });
+      }
     }
   };
+  
+  
+  
 
   const renderSection = () => {
     switch(activeSection) {

@@ -78,33 +78,68 @@ const Dashboard = () => {
       try {
         const profileData = await userService.getProfile();
         setUserProfile(profileData);
-
+  
         // Fetch recent workouts (last 7 days)
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const workouts = await workoutService.getWorkouts(sevenDaysAgo.toISOString());
         setRecentWorkouts(workouts.slice(0, 3)); // Latest 3 workouts
-
+  
         // Calculate workout insights
         const insights = calculateWorkoutFrequency(workouts);
         setWorkoutInsights(insights);
-
+  
         // Fetch nutrition trends
         const nutritionData = await trendService.getNutritionTrends(7);
         const summarizedTrends = summarizeNutritionTrends(nutritionData);
         setNutritionTrends(summarizedTrends);
-
+  
       } catch (err) {
-        console.error('Dashboard Error:', err);
-        setError('Failed to load dashboard data');
+        console.error('Dashboard Error - FULL ERROR:', {
+          name: err.name,
+          message: err.message,
+          response: err.response,
+          config: err.config,
+          stack: err.stack
+        });
+  
+        // More detailed error handling
+        if (err.response) {
+          // The request was made and the server responded with a status code
+          console.error('Error Response Data:', err.response.data);
+          console.error('Error Response Status:', err.response.status);
+          console.error('Error Response Headers:', err.response.headers);
+  
+          switch (err.response.status) {
+            case 401:
+              setError('Unauthorized. Please log in again.');
+              break;
+            case 403:
+              setError('You do not have permission to access this data.');
+              break;
+            case 404:
+              setError('Requested data not found.');
+              break;
+            default:
+              setError('Failed to load dashboard data. Please try again.');
+          }
+        } else if (err.request) {
+          // The request was made but no response was received
+          console.error('No response received:', err.request);
+          setError('No response from server. Please check your network connection.');
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error('Error setting up request:', err.message);
+          setError('An unexpected error occurred. Please try again.');
+        }
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchDashboardData();
   }, []);
-
+  
   // Calculate BMI safely
   const calculateBMI = (weight, height) => {
     if (!weight || !height) return 'N/A';
