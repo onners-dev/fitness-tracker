@@ -167,6 +167,14 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/admin/nutrition" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <NutritionModeration />
+                </ProtectedRoute>
+              }
+            />  
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

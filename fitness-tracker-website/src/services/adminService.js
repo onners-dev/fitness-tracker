@@ -114,6 +114,59 @@ export const adminService = {
       console.error('Error fetching nutrition submissions:', error);
       throw error;
     }
+  },
+  
+  reviewNutritionSubmission: async (foodId, action) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/admin/nutrition-submissions/${foodId}/review`, 
+        { status: action }, 
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error reviewing nutrition submission:', error);
+      throw error;
+    }
+  },
+
+  getFlaggedContent: async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/report/flagged-content`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching flagged content:', error);
+      throw error;
+    }
+  },
+  
+  reviewFlaggedContent: async (contentType, flagId, action) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/report/flagged-content/${flagId}/review`, 
+        { 
+          contentType, 
+          action 
+        }, 
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error reviewing flagged content:', error);
+      throw error;
+    }
   }
+
   
 };

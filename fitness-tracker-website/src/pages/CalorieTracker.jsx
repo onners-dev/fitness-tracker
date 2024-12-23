@@ -3,6 +3,7 @@ import { searchFood } from '../services/foodApi';
 import { mealService } from '../services/mealApi';
 import { contributedFoodService } from '../services/contributedFoodApi';
 import { nutritionService } from '../services/api';
+import { reportService } from '../services/reportService';
 import './CalorieTracker.css';
 
 
@@ -291,36 +292,70 @@ function CalorieTracker() {
   
   
 
-  // Updated addMeal to handle portion sizes
-  const addMeal = async (food) => {
-    // Get portion size for this specific food, default to 100g
-    const portionSize = portionSizes[food._id] || 100;
-    const portionMultiplier = portionSize / 100;
+// Updated addMeal method
+const addMeal = async (food) => {
+  // Determine the food name
+  const name = food.product_name || food.name || 'Unknown Food';
   
-    const mealData = {
-      name: food.product_name,
-      calories: (parseFloat(food.nutriments?.energy_100g) * portionMultiplier) || 0,
-      protein: (parseFloat(food.nutriments?.proteins_100g) * portionMultiplier) || 0,
-      carbs: (parseFloat(food.nutriments?.carbohydrates_100g) * portionMultiplier) || 0,
-      fats: (parseFloat(food.nutriments?.fat_100g) * portionMultiplier) || 0,
-      date: selectedDate,
-      serving: `${portionSize || 100}g`
-    };
-  
-    try {
-      const newMeal = await mealService.addMeal(mealData);
-      setMeals(prevMeals => [...(Array.isArray(prevMeals) ? prevMeals : []), newMeal]);
-      setSearchResults([]);
-      setSearchQuery('');
-    } catch (error) {
-      console.error('Failed to add meal:', error);
-      if (error.response?.status === 401) {
-        alert('Please log in again to continue.');
-      } else {
-        alert('Failed to save meal. Please try again.');
-      }
-    }
+  // Get portion size for this specific food, default to 100g
+  const foodId = food._id || food.food_id;
+  const portionSize = portionSizes[foodId] || 100;
+  const portionMultiplier = portionSize / 100;
+
+  // Handle different food sources (API foods vs contributed foods)
+  const mealData = {
+    name: name,
+    calories: food.nutriments 
+      ? (parseFloat(food.nutriments?.energy_100g) * portionMultiplier) || 0
+      : parseFloat(food.calories) || 0,
+    protein: food.nutriments 
+      ? (parseFloat(food.nutriments?.proteins_100g) * portionMultiplier) || 0
+      : parseFloat(food.protein) || 0,
+    carbs: food.nutriments 
+      ? (parseFloat(food.nutriments?.carbohydrates_100g) * portionMultiplier) || 0
+      : parseFloat(food.carbs) || 0,
+    fats: food.nutriments 
+      ? (parseFloat(food.nutriments?.fat_100g) * portionMultiplier) || 0
+      : parseFloat(food.fats) || 0,
+    date: selectedDate,
+    serving: `${portionSize || 100}g`
   };
+
+  // Validate meal data before sending
+  const isValidMeal = 
+    mealData.name && 
+    !isNaN(mealData.calories) && 
+    !isNaN(mealData.protein) && 
+    !isNaN(mealData.carbs) && 
+    !isNaN(mealData.fats);
+
+  if (!isValidMeal) {
+    console.error('Invalid meal data:', mealData);
+    alert('Unable to add meal. Invalid nutritional information.');
+    return;
+  }
+
+  try {
+    const newMeal = await mealService.addMeal(mealData);
+    setMeals(prevMeals => [...(Array.isArray(prevMeals) ? prevMeals : []), newMeal]);
+    setSearchResults([]);
+    setSearchQuery('');
+  } catch (error) {
+    console.error('Failed to add meal:', error);
+    
+    // More detailed error handling
+    const errorMessage = error.response?.data?.message || 
+      error.response?.data?.error || 
+      'Failed to save meal';
+    
+    if (error.response?.status === 401) {
+      alert('Please log in again to continue.');
+    } else {
+      alert(errorMessage);
+    }
+  }
+};
+
 
   // Handle portion size changes
   const handlePortionSizeChange = (foodId, value) => {
@@ -343,6 +378,87 @@ function CalorieTracker() {
       console.error('Error removing meal:', error);
     }
   };
+
+const [reportModalOpen, setReportModalOpen] = useState(false);
+const [selectedFoodToReport, setSelectedFoodToReport] = useState(null);
+const [reportReason, setReportReason] = useState('');
+  
+const handleReportFood = (food, event) => {
+  // Log all details for debugging
+  console.log('Report button clicked');
+  console.log('Food details:', food);
+  console.log('Event:', event);
+
+  console.log('Attempting to report food:', food);
+
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  // Ensure the food object has the correct structure
+  setSelectedFoodToReport({
+    food_id: food.food_id,
+    name: food.name,
+    visibility: food.visibility
+  });
+
+  // Open the modal
+  setReportModalOpen(true);
+  
+  // Log state changes
+  console.log('Selected food to report:', {
+    food_id: food.food_id,
+    name: food.name,
+    visibility: food.visibility
+  });
+  console.log('Report modal open:', true);
+};
+
+const submitReport = async () => {
+  console.log('Submitting report:', {
+    selectedFood: selectedFoodToReport,
+    reason: reportReason
+  });
+
+  // Check if a food is selected to report
+  if (!selectedFoodToReport) {
+    alert('No food selected to report');
+    return;
+  }
+
+  // Check if the food is publicly visible
+  if (selectedFoodToReport.visibility !== 'public') {
+    alert('Only public foods can be reported');
+    return;
+  }
+
+  // Check if a reason is selected
+  if (!reportReason) {
+    alert('Please select a reason for reporting');
+    return;
+  }
+
+  try {
+    const response = await reportService.reportContent(
+      'contributed_food', 
+      selectedFoodToReport.food_id, 
+      reportReason
+    );
+
+    console.log('Report submission response:', response);
+
+    alert('Food reported successfully. Our team will review it.');
+    
+    // Close the modal
+    setReportModalOpen(false);
+    setSelectedFoodToReport(null);
+    setReportReason('');
+  } catch (error) {
+    console.error('Failed to report food:', error);
+    alert('Failed to report food. Please try again.');
+  }
+};
 
   return (
     <div className="calorie-tracker">
@@ -378,7 +494,7 @@ function CalorieTracker() {
       </div>
 
       {/* Food Modal */}
-      {isFoodModalOpen && (
+      {isFoodModalOpen && isFoodModalOpen && (
         <div className="food-modal">
           <div className="food-modal-content">
             <button 
@@ -401,17 +517,29 @@ function CalorieTracker() {
               </button>
             </form>
 
-            {/* Contributed Foods Section */}
             {combinedFoodResults.contributedFoods.length > 0 && (
               <div className="contributed-foods-search-results">
-                <h4>Your Contributed Foods</h4>
+                <h4>Community Contributed Foods</h4>
                 {combinedFoodResults.contributedFoods.map(food => (
                   <div key={food.food_id} className="food-result-item">
                     <div>
                       <strong>{food.name}</strong>
                       <span>{food.calories} kcal</span>
                     </div>
-                    <button onClick={() => addMeal(food)}>Add</button>
+                    <div className="food-result-actions">
+                      <button onClick={() => addMeal(food)}>Add</button>
+                      {food.visibility === 'public' && (
+                        <button 
+                          className="report-button" 
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent any parent event handlers
+                            handleReportFood(food, e);
+                          }}
+                        >
+                          Report
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -697,6 +825,73 @@ function CalorieTracker() {
             goal={nutritionGoals.daily_fats_goal}
             color="rgb(75, 192, 192)"
           />
+        </div>
+      )}
+
+      {/* Report Modal - Render independently */}
+      {reportModalOpen && (
+        <div 
+          className="report-modal"
+          onClick={(e) => {
+            if (e.target.classList.contains('report-modal')) {
+              setReportModalOpen(false);
+              setSelectedFoodToReport(null);
+              setReportReason('');
+            }
+          }}
+        >
+          <div 
+            className="report-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              className="close-btn"
+              onClick={() => {
+                setReportModalOpen(false);
+                setSelectedFoodToReport(null);
+                setReportReason('');
+              }}
+            >
+              &times;
+            </button>
+            
+            <h3>Report Food Item</h3>
+            <p>Food: {selectedFoodToReport?.name}</p>
+            
+            <div className="form-group">
+              <label>Reason for Reporting</label>
+              <select
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+              >
+                <option value="">Select a reason</option>
+                <option value="incorrect_nutrition">Incorrect Nutrition Information</option>
+                <option value="inappropriate_content">Inappropriate Content</option>
+                <option value="spam">Spam</option>
+                <option value="other">Other</option>
+              </select>
+              
+              {reportReason === 'other' && (
+                <textarea
+                  placeholder="Please provide more details"
+                  onChange={(e) => setReportReason(e.target.value)}
+                />
+              )}
+            </div>
+            
+            <div className="modal-actions">
+              <button onClick={submitReport}>Submit Report</button>
+              <button 
+                onClick={() => {
+                  setReportModalOpen(false);
+                  setSelectedFoodToReport(null);
+                  setReportReason('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

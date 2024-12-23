@@ -20,9 +20,11 @@ const NutritionModeration = () => {
 
   const handleNutritionAction = async (submissionId, action) => {
     try {
-      // Implement nutrition submission review logic
-      console.log(`${action} nutrition submission with ID: ${submissionId}`);
-      // You might want to call a method in adminService to handle this
+      await adminService.reviewNutritionSubmission(submissionId, action);
+      // Remove the submission from the list or refresh the list
+      setNutritionSubmissions(prev => 
+        prev.filter(submission => submission.id !== submissionId)
+      );
     } catch (error) {
       console.error(`Failed to ${action} nutrition submission`, error);
     }
@@ -30,17 +32,21 @@ const NutritionModeration = () => {
 
   return (
     <div className="nutrition-moderation">
-      <h1>Nutrition Submissions</h1>
+      <h1>User Contributed Foods</h1>
       
       {nutritionSubmissions.map((submission) => (
         <div key={submission.id} className="nutrition-submission">
           <h2>{submission.name}</h2>
+          {submission.brand && <p>Brand: {submission.brand}</p>}
+          {submission.barcode && <p>Barcode: {submission.barcode}</p>}
           <p>Calories: {submission.calories}</p>
           <p>Protein: {submission.protein}g</p>
           <p>Carbs: {submission.carbs}g</p>
-          <p>Fat: {submission.fat}g</p>
-          <p>Submitted By: {submission.submittedBy}</p>
-          <p>Submitted At: {new Date(submission.submittedAt).toLocaleString()}</p>
+          <p>Fats: {submission.fats}g</p>
+          <p>Serving Size: {submission.serving_size || 'Not specified'}</p>
+          <p>Category: {submission.category || 'Uncategorized'}</p>
+          <p>Submitted By: {submission.email}</p>
+          <p>Submitted At: {new Date(submission.created_at).toLocaleString()}</p>
           
           <div className="nutrition-actions">
             <button 

@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
-// Main authorization middleware
 const authorization = (req, res, next) => {
   // Log full request details
   console.group('🔐 Authorization Middleware');
@@ -69,7 +68,7 @@ const authorization = (req, res, next) => {
 
     // Add user from payload
     req.user = {
-      id: userId,
+      user_id: userId,
       email: decoded.email,
       email_verified: decoded.email_verified,
       is_admin: decoded.is_admin
@@ -114,17 +113,16 @@ const authorization = (req, res, next) => {
   }
 };
 
-// Separate admin check function (to be used in routes)
+// Modify the checkAdminAccess to be more defensive
 const checkAdminAccess = async (req, res, next) => {
   console.group('🛡️ Admin Access Check');
   
   try {
-    // Log the entire request object and headers for debugging
-    console.log('Full Request Details:', {
+    // Log the entire request object for debugging
+    console.log('Request Details:', {
       path: req.path,
       method: req.method,
-      headers: req.headers,
-      user: req.user
+      user: req.user  // Log the user object to see what's available
     });
 
     // Ensure user object exists and is populated
@@ -137,16 +135,17 @@ const checkAdminAccess = async (req, res, next) => {
       });
     }
 
-    // More flexible and verbose admin check
+    // More verbose logging of admin status
     console.log('Admin Check Details:', {
       tokenAdminStatus: req.user.is_admin,
       userEmail: req.user.email
     });
 
-    // Check admin status explicitly with multiple checks
-    const isAdmin = req.user.is_admin === true || 
-                    req.user.is_admin === 't' || 
-                    req.user.is_admin === 'true';
+    // Flexible admin status check
+    const isAdmin = 
+      req.user.is_admin === true || 
+      req.user.is_admin === 't' || 
+      req.user.is_admin === 'true';
 
     if (isAdmin) {
       console.log('✅ Admin access granted via token');
@@ -154,17 +153,12 @@ const checkAdminAccess = async (req, res, next) => {
       return next();
     }
 
-    // Fallback: Check admin status directly in the database
+    // Fallback: Database admin check
     console.log('Performing database admin check');
     const adminCheck = await pool.query(
       'SELECT is_admin FROM users WHERE user_id = $1', 
-      [req.user.id]
+      [req.user.user_id]
     );
-
-    console.log('Database Admin Check Result:', {
-      rows: adminCheck.rows,
-      rowCount: adminCheck.rowCount
-    });
 
     if (adminCheck.rows.length === 0) {
       console.warn('❌ No user found in database');
@@ -175,13 +169,9 @@ const checkAdminAccess = async (req, res, next) => {
       });
     }
 
-    const isDbAdmin = adminCheck.rows[0].is_admin === true || 
-                      adminCheck.rows[0].is_admin === 't';
-
-    console.log('Database Admin Status:', {
-      isAdmin: isDbAdmin,
-      rawDbValue: adminCheck.rows[0].is_admin
-    });
+    const isDbAdmin = 
+      adminCheck.rows[0].is_admin === true || 
+      adminCheck.rows[0].is_admin === 't';
 
     if (!isDbAdmin) {
       console.warn('❌ Non-admin access attempt');
@@ -209,8 +199,6 @@ const checkAdminAccess = async (req, res, next) => {
     });
   }
 };
-
-
 
 // Modify the exports
 module.exports = authorization;

@@ -483,7 +483,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 1000; /* Increase z-index */
   overflow: auto;
   padding: var(--spacing-lg);
 }
@@ -683,4 +683,110 @@
   stroke-width: 2;
   width: 20px;
   height: 20px;
+}
+
+.food-result-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.report-button {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+.report-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100; /* Ensure it's above other modals */
+  overflow: auto;
+  padding: var(--spacing-lg);
+}
+
+.report-modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80%;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.report-modal-content .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--soft-text-medium);
+  transition: color 0.3s ease;
+}
+
+.report-modal-content .close-btn:hover {
+  color: var(--primary-dark);
+}
+
+.report-modal .form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.report-modal .form-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  color: var(--soft-text-dark);
+}
+
+.report-modal .form-group select,
+.report-modal .form-group textarea {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--border-radius-md);
+}
+
+.report-modal .modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-lg);
+}
+
+.report-modal .modal-actions button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.report-modal .modal-actions button:first-child {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.report-modal .modal-actions button:last-child {
+  background-color: var(--neutral-200);
+  color: var(--soft-text-medium);
+  border: none;
+}
+
+.report-modal .modal-actions button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
 }

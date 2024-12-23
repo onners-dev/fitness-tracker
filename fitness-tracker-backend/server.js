@@ -44,7 +44,8 @@ const routes = [
   { path: './routes/trends', name: 'trends', apiPath: '/api/trends' },
   { path: './routes/workouts', name: 'workouts', apiPath: '/api/workouts' },
   {path: './routes/nutrition', name: 'nutrition', apiPath: '/api/nutrition'},
-  {path: './routes/admin', name: 'admin', apiPath: '/api/admin'}
+  {path: './routes/admin', name: 'admin', apiPath: '/api/admin'},
+  {path: './routes/report', name: 'report', apiPath: '/api/report'}
 ];
 
 const loadRoute = (routePath, routeName) => {
