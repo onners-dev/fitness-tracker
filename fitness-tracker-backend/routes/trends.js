@@ -6,7 +6,7 @@ const authorization = require('../middleware/authorization');
 router.get('/nutrition', authorization, async (req, res) => {
     try {
         const { days = 30 } = req.query;
-        const userId = req.user.id;
+        const userId = req.user.user_id;
 
         const { rows } = await pool.query(`
             SELECT 
@@ -32,7 +32,7 @@ router.get('/nutrition', authorization, async (req, res) => {
 router.get('/workouts', authorization, async (req, res) => {
     try {
         const { days = 30 } = req.query;
-        const userId = req.user.id;
+        const userId = req.user.user_id;
 
         const { rows } = await pool.query(`
             SELECT 

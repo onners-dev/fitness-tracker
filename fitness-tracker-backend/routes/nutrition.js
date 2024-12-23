@@ -128,7 +128,7 @@ router.post('/calculate-goals', authorization, async (req, res) => {
               date_of_birth
           FROM user_profiles 
           WHERE user_id = $1`, 
-          [req.user.id]
+          [req.user.user_id]
       );
 
       const profile = userProfile.rows[0];
@@ -234,7 +234,7 @@ router.get('/goals', authorization, async (req, res) => {
               daily_fats_goal 
           FROM user_profiles 
           WHERE user_id = $1`,
-          [req.user.id]
+          [req.user.user_id]
       );
 
       if (rows.length === 0) {

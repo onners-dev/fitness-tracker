@@ -7,7 +7,7 @@ const authorization = require('../middleware/authorization');
 router.post('/add', authorization, async (req, res) => {
     try {
         const { exerciseId } = req.body;
-        const userId = req.user.id;  // Change from userId to id
+        const userId = req.user.user_id;  // Change from userId to id
 
         await pool.query(
             'INSERT INTO user_favorites (user_id, exercise_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
@@ -24,7 +24,7 @@ router.post('/add', authorization, async (req, res) => {
 router.delete('/remove', authorization, async (req, res) => {
     try {
         const { exerciseId } = req.body;
-        const userId = req.user.id;  // Change from userId to id
+        const userId = req.user.user_id;  // Change from userId to id
 
         await pool.query(
             'DELETE FROM user_favorites WHERE user_id = $1 AND exercise_id = $2',
@@ -40,7 +40,7 @@ router.delete('/remove', authorization, async (req, res) => {
 
 router.get('/', authorization, async (req, res) => {
     try {
-        const userId = req.user.id;  // Change from userId to id
+        const userId = req.user.user_id;  // Change from userId to id
         const favorites = await pool.query(
             'SELECT e.* FROM exercises e JOIN user_favorites uf ON e.exercise_id = uf.exercise_id WHERE uf.user_id = $1',
             [userId]

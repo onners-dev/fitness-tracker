@@ -6,11 +6,11 @@ const authorization = require('../middleware/authorization');
 router.get('/my-contributions', authorization, async (req, res) => {
     try {
         console.log('Received my-contributions request');
-        console.log('User ID:', req.user.id);
+        console.log('User ID:', req.user.user_id);
         
         const { rows } = await pool.query(
             'SELECT * FROM user_contributed_foods WHERE user_id = $1 ORDER BY created_at DESC',
-            [req.user.id]
+            [req.user.user_id]
         );
 
         console.log('Found contributions:', rows);
@@ -32,7 +32,7 @@ router.get('/search', authorization, async (req, res) => {
              WHERE 
              (visibility = 'public' OR user_id = $1) AND 
              (LOWER(name) LIKE LOWER($2) OR LOWER(brand) LIKE LOWER($2))`,
-            [req.user.id, `%${query}%`]
+            [req.user.user_id, `%${query}%`]
         );
         res.json(rows);
     } catch (err) {
@@ -69,7 +69,7 @@ router.post('/contribute', authorization, async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
             RETURNING *`,
             [
-                req.user.id, 
+                req.user.user_id, 
                 name, 
                 calories, 
                 protein || null, 

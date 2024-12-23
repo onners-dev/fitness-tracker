@@ -55,7 +55,7 @@ router.get('/', authorization, async (req, res) => {
             ORDER BY date DESC
         `;
 
-        const result = await client.query(query, [req.user.id, start, end]);
+        const result = await client.query(query, [req.user.user_id, start, end]);
 
         res.json(result.rows);
     } catch (err) {
@@ -139,7 +139,7 @@ router.post('/', authorization, async (req, res) => {
     try {
         console.log('Received workout logging request');
         console.log('Request body:', req.body);
-        console.log('User ID:', req.user.id);
+        console.log('User ID:', req.user.user_id);
 
         const { 
             workout_type,  // Predefined or 'Custom'
@@ -173,7 +173,7 @@ router.post('/', authorization, async (req, res) => {
             (user_id, workout_type, workout_name, date, total_duration, total_calories_burned, notes) 
             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING workout_id`,
             [
-                req.user.id, 
+                req.user.user_id, 
                 workout_type,
                 workout_name || null, 
                 date, 
@@ -284,7 +284,7 @@ router.get('/plans', authorization, async (req, res) => {
             LIMIT 5
         `;
 
-        const result = await client.query(query, [req.user.id]);
+        const result = await client.query(query, [req.user.user_id]);
 
         const plans = result.rows.map(plan => ({
             plan_id: plan.plan_id,
@@ -318,7 +318,7 @@ router.get('/plans/generate', authorization, async (req, res) => {
     try {
         // Extract query parameters
         const { fitnessGoal, activityLevel, primaryFocus } = req.query;
-        const userId = req.user.id;
+        const userId = req.user.user_id;
 
         // Validate parameters
         if (!fitnessGoal) {

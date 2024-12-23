@@ -16,13 +16,13 @@ router.post('/', authorization, async (req, res) => {
         
         console.log('Request body:', req.body);
         console.log('User from request:', req.user);
-        console.log('User ID being used:', req.user.id);
+        console.log('User ID being used:', req.user.user_id);
         
         const { rows } = await pool.query(
             `INSERT INTO meals (user_id, name, calories, protein, carbs, fats, date, serving) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
              RETURNING *`,
-            [req.user.id, name, calories, protein, carbs, fats, date, serving]
+            [req.user.user_id, name, calories, protein, carbs, fats, date, serving]
         );
 
         console.log('Inserted meal:', rows[0]);
@@ -44,7 +44,7 @@ router.delete('/:id', authorization, async (req, res) => {
     const { id } = req.params;
     await pool.query(
       'DELETE FROM meals WHERE meal_id = $1 AND user_id = $2',
-      [id, req.user.id]
+      [id, req.user.user_id]
     );
     res.json({ message: 'Meal deleted' });
   } catch (err) {
@@ -59,14 +59,14 @@ router.get('/date/:date', authorization, async (req, res) => {
       const { date } = req.params;
       console.log('Received date request:', {
         date,
-        userId: req.user.id,
+        userId: req.user.user_id,
         fullRequestPath: req.path,
         fullRequestUrl: req.url
       });
   
       const { rows } = await pool.query(
         'SELECT * FROM meals WHERE user_id = $1 AND date = $2 ORDER BY created_at',
-        [req.user.id, date]
+        [req.user.user_id, date]
       );
   
       console.log('Query results:', {
