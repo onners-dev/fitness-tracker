@@ -38,6 +38,22 @@ export const workoutService = {
 
 // Workout Plan Service
 export const workoutPlanService = {
+    
+    createCustomWorkoutPlan: async (planDetails) => {
+        try {
+          const response = await axios.post(`${BASE_URL}/workouts/plans/create-custom`, planDetails, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          return response.data;
+        } catch (error) {
+          console.error('Error creating custom workout plan', error);
+          throw error;
+        }
+      },
+
+
     generateWorkoutPlan: async (userProfile) => {
         try {
             console.log('Generating Workout Plan with Profile:', {
@@ -85,55 +101,83 @@ export const workoutPlanService = {
         }
     },
 
-    // New method to fetch user's workout plans
     getUserWorkoutPlans: async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/workouts/plans`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            return response.data;
+          const response = await axios.get(`${BASE_URL}/workouts/plans`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          return response.data;
         } catch (error) {
-            console.error('Error fetching workout plans:', error);
-            throw error;
+          console.error('Error fetching workout plans:', error);
+          throw error;
         }
     },
-
-    // Get workout plan details
-    getUserWorkoutPlans: async () => {
+    
+      // Method to delete a custom workout plan
+      deleteCustomWorkoutPlan: async (planId) => {
         try {
-            const response = await axios.get(`${BASE_URL}/workouts/plans`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            return response.data;
+          const response = await axios.delete(`${BASE_URL}/workouts/plans/${planId}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          return response.data;
         } catch (error) {
-            console.error('Error fetching workout plans:', error);
-            throw error;
+          console.error('Error deleting workout plan:', error);
+          throw error;
         }
     }
+    
 };
 
 // Exercise Library Service
 export const exerciseLibraryService = {
-    // Fetch exercises by muscle group or other filters
+    getMuscles: async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/workouts/muscles`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching muscles:', error);
+        throw error;
+      }
+    },
+  
     getExercises: async (filters = {}) => {
-        try {
-            const response = await axios.get(`${BASE_URL}/exercises`, { 
-                params: filters,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching exercises:', error);
-            throw error;
-        }
+      try {
+        console.log('Filters being sent:', filters);
+  
+        const queryParams = Object.keys(filters)
+          .filter(key => filters[key])
+          .map(key => `${key}=${encodeURIComponent(filters[key])}`)
+          .join('&');
+  
+        const url = queryParams 
+          ? `${BASE_URL}/workouts/exercises?${queryParams}` 
+          : `${BASE_URL}/workouts/exercises`;
+  
+        console.log('Fetch URL:', url);
+  
+        const response = await axios.get(url, { 
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        console.log('Response data:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching exercises:', error);
+        throw error;
+      }
     }
 };
+  
 
 export default {
     workoutService,

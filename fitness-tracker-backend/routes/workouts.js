@@ -70,6 +70,121 @@ router.get('/', authorization, async (req, res) => {
 });
 
 
+router.get('/exercises', authorization, async (req, res) => {
+    const client = await pool.connect();
+  
+    try {
+      const { muscleGroup, difficulty, equipment } = req.query;
+  
+      let query = `
+        SELECT DISTINCT 
+          e.exercise_id, 
+          e.name, 
+          e.description,
+          e.difficulty,
+          e.equipment,
+          array_agg(DISTINCT m.name) AS muscles
+        FROM exercises e
+        JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+        JOIN muscles m ON em.muscle_id = m.muscle_id
+        WHERE 1=1
+      `;
+  
+      const queryParams = [];
+      let paramCount = 1;
+  
+      // Muscle Filter
+      if (muscleGroup) {
+        query += ` AND LOWER(m.name) = LOWER($${paramCount})`;
+        queryParams.push(muscleGroup);
+        paramCount++;
+      }
+  
+      // Difficulty Filter
+      if (difficulty) {
+        query += ` AND LOWER(e.difficulty) = LOWER($${paramCount})`;
+        queryParams.push(difficulty);
+        paramCount++;
+      }
+  
+      // Equipment Filter
+      if (equipment) {
+        query += ` AND LOWER(e.equipment) = LOWER($${paramCount})`;
+        queryParams.push(equipment);
+        paramCount++;
+      }
+  
+      query += ` GROUP BY 
+        e.exercise_id, 
+        e.name, 
+        e.description, 
+        e.difficulty, 
+        e.equipment
+      `;
+  
+      const result = await client.query(query, queryParams);
+  
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching exercises:', error);
+      res.status(500).json({ 
+        message: 'Error fetching exercises',
+        error: error.message 
+      });
+    } finally {
+      client.release();
+    }
+});
+
+router.get('/muscles', authorization, async (req, res) => {
+    const client = await pool.connect();
+  
+    try {
+      const query = `
+        SELECT DISTINCT name 
+        FROM muscles 
+        ORDER BY name
+      `;
+  
+      const result = await client.query(query);
+      res.json(result.rows.map(row => row.name));
+    } catch (error) {
+      console.error('Error fetching muscles:', error);
+      res.status(500).json({ 
+        message: 'Error fetching muscles',
+        error: error.message 
+      });
+    } finally {
+      client.release();
+    }
+});
+
+// New route to fetch muscle groups
+router.get('/muscle-groups', authorization, async (req, res) => {
+    const client = await pool.connect();
+  
+    try {
+      // Query to fetch distinct muscle groups
+      const query = `
+        SELECT DISTINCT name 
+        FROM muscle_groups 
+        ORDER BY name
+      `;
+  
+      const result = await client.query(query);
+      res.json(result.rows.map(row => row.name));
+    } catch (error) {
+      console.error('Error fetching muscle groups:', error);
+      res.status(500).json({ 
+        message: 'Error fetching muscle groups',
+        error: error.message 
+      });
+    } finally {
+      client.release();
+    }
+});
+  
+
 router.get('/exercises/details', authorization, async (req, res) => {
     const client = await pool.connect();
 
@@ -696,6 +811,116 @@ router.get('/plans/generate', authorization, async (req, res) => {
         client.release();
     }
 });
+
+router.post('/plans/create-custom', authorization, async (req, res) => {
+    const client = await pool.connect();
+  
+    try {
+      const { 
+        name, 
+        fitnessGoal, 
+        workoutDays, 
+        selectedExercises 
+      } = req.body;
+  
+      await client.query('BEGIN');
+  
+      // Insert custom workout plan
+      const planResult = await client.query(
+        `INSERT INTO user_workout_plans 
+        (user_id, plan_name, fitness_goal, is_custom) 
+        VALUES ($1, $2, $3, $4) 
+        RETURNING plan_id`,
+        [
+          req.user.user_id, 
+          name, 
+          fitnessGoal, 
+          true
+        ]
+      );
+      const planId = planResult.rows[0].plan_id;
+  
+      // Insert plan days and exercises
+      for (const day of workoutDays) {
+        const dayResult = await client.query(
+          `INSERT INTO workout_plan_days 
+          (plan_id, day_of_week, focus) 
+          VALUES ($1, $2, $3) 
+          RETURNING plan_day_id`,
+          [planId, day, 'Custom']
+        );
+        const planDayId = dayResult.rows[0].plan_day_id;
+  
+        // Insert exercises for this day
+        const dayExercises = selectedExercises[day] || [];
+        for (const [index, exercise] of dayExercises.entries()) {
+          await client.query(
+            `INSERT INTO workout_plan_exercises 
+            (plan_day_id, exercise_id, sets, reps, order_index) 
+            VALUES ($1, $2, $3, $4, $5)`,
+            [
+              planDayId, 
+              exercise.exercise_id, 
+              exercise.sets || 3, 
+              exercise.reps || 10, 
+              index + 1
+            ]
+          );
+        }
+      }
+  
+      await client.query('COMMIT');
+  
+      res.status(201).json({ 
+        message: 'Custom workout plan created successfully',
+        planId: planId
+      });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error creating custom workout plan:', error);
+      res.status(500).json({ 
+        message: 'Failed to create custom workout plan',
+        error: error.message
+      });
+    } finally {
+      client.release();
+    }
+});
+  
+
+router.delete('/plans/:planId', authorization, async (req, res) => {
+    const client = await pool.connect();
+    
+    try {
+      const planId = req.params.planId;
+      
+      await client.query('BEGIN');
+      
+      // Delete associated exercises
+      await client.query('DELETE FROM workout_plan_exercises WHERE plan_day_id IN (SELECT plan_day_id FROM workout_plan_days WHERE plan_id = $1)', [planId]);
+      
+      // Delete plan days
+      await client.query('DELETE FROM workout_plan_days WHERE plan_id = $1', [planId]);
+      
+      // Delete the plan itself
+      const result = await client.query('DELETE FROM user_workout_plans WHERE plan_id = $1 AND user_id = $2', [planId, req.user.user_id]);
+      
+      await client.query('COMMIT');
+      
+      if (result.rowCount === 0) {
+        return res.status(404).json({ message: 'Workout plan not found or unauthorized' });
+      }
+      
+      res.json({ message: 'Workout plan deleted successfully' });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error deleting workout plan:', error);
+      res.status(500).json({ message: 'Error deleting workout plan', error: error.message });
+    } finally {
+      client.release();
+    }
+});
+  
 
 
 module.exports = router;

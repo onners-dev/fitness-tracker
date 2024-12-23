@@ -1,7 +1,43 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api';
+import { workoutPlanService } from '../services/workoutApi';
 import './Header.css';
+
+const WorkoutPlansLink = ({ onClick, className }) => {
+  const navigate = useNavigate();
+  const [hasExistingPlans, setHasExistingPlans] = useState(false);
+
+  useEffect(() => {
+    const checkExistingPlans = async () => {
+      try {
+        const plans = await workoutPlanService.getUserWorkoutPlans();
+        setHasExistingPlans(plans.length > 0);
+      } catch (error) {
+        console.error('Error checking existing workout plans:', error);
+        // Fallback to onboarding if there's an error
+        setHasExistingPlans(false);
+      }
+    };
+
+    checkExistingPlans();
+  }, []);
+
+  const handleClick = () => {
+    if (onClick) onClick();
+    navigate(hasExistingPlans ? '/workout-plans/existing' : '/workout-plans/onboarding');
+  };
+
+  return (
+    <span 
+      onClick={handleClick} 
+      style={{ cursor: 'pointer' }}
+      className={className}
+    >
+      Workout Plans
+    </span>
+  );
+};
 
 const Header = () => {
   const navigate = useNavigate();
@@ -89,9 +125,10 @@ const Header = () => {
                     <Link to="/workouts" className="dropdown-item">
                       Workout Library
                     </Link>
-                    <Link to="/workout-plans" className="dropdown-item">
-                      Workout Plans
-                    </Link>
+                    <WorkoutPlansLink 
+                      onClick={() => setActiveDropdown(null)} 
+                      className="dropdown-item"
+                    />
                   </div>
                 )}
               </div>
@@ -204,7 +241,10 @@ const Header = () => {
                     <span>Fitness</span>
                     <div className="mobile-dropdown-content">
                       <Link to="/workouts" onClick={toggleMobileMenu}>Workout Library</Link>
-                      <Link to="/workout-plans" onClick={toggleMobileMenu}>Workout Plans</Link>
+                      <WorkoutPlansLink 
+                        onClick={toggleMobileMenu}
+                        className="mobile-dropdown-item"
+                      />
                     </div>
                   </div>
 
