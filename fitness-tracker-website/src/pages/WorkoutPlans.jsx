@@ -13,6 +13,41 @@ const WorkoutPlans = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Date formatting function
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown Date';
+    
+    try {
+        // First, try parsing the date string
+        const date = new Date(dateString);
+        
+        // Fallback formatting if Date constructor doesn't work
+        if (isNaN(date.getTime())) {
+            console.error('Invalid date:', dateString);
+            return 'Unknown Date';
+        }
+
+        // More robust date formatting
+        return new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }).format(date);
+    } catch (error) {
+        console.error('Date formatting error:', {
+            error,
+            dateString
+        });
+        return 'Unknown Date';
+    }
+  };
+
+
+  
+
   // Fetch workout plans when component mounts
   useEffect(() => {
     const fetchWorkoutPlans = async () => {
@@ -61,12 +96,28 @@ const WorkoutPlans = () => {
 
   // View plan details
   const handleViewPlanDetails = (plan) => {
-    navigate('/workout-plans/details', { state: { plan } });
+    navigate('/workout-plans/details', { 
+        state: { 
+            plan: {
+                ...plan,
+                workouts: Object.entries(plan.workouts).map(([day, exercises]) => ({
+                    day,
+                    exercises
+                }))
+            } 
+        } 
+    });
   };
+
 
   // Render loading state
   if (loading) {
-    return <div className="loading">Loading workout plans...</div>;
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+        <p>Loading workout plans...</p>
+      </div>
+    );
   }
 
   // Render error state
@@ -112,8 +163,12 @@ const WorkoutPlans = () => {
               </h2>
               <div className="plan-details">
                 <p><strong>Fitness Goal:</strong> {formatGoal(plan.fitnessGoal)}</p>
-                <p><strong>Activity Level:</strong> {plan.activityLevel}</p>
-                <p><strong>Created:</strong> {new Date(plan.created_at).toLocaleDateString()}</p>
+                <p>
+                  <strong>Workout Frequency:</strong> {plan.workoutDaysCount} days a week
+                </p>
+                <p>
+                  <strong>Created:</strong> {formatDate(plan.created_at)}
+                </p>
               </div>
               <div className="plan-actions">
                 <button 

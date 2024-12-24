@@ -30,6 +30,7 @@ import SystemAnalytics from './admin/pages/SystemAnalytics';
 import WorkoutPlanBuilder from './pages/WorkoutPlanBuilder';
 import WorkoutPlanGenerate from './pages/WorkoutPlanGenerate';
 import WorkoutPlanOnboarding from './pages/WorkoutPlanOnboarding';
+import WorkoutPlanDetails from './pages/WorkoutPlanDetails';
 
 
 function App() {
@@ -152,6 +153,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <WorkoutPlans />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workout-plans/details"
+              element={
+                <ProtectedRoute>
+                  <WorkoutPlanDetails />
                 </ProtectedRoute>
               }
             />

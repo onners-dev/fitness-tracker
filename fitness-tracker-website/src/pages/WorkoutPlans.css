@@ -1,422 +1,200 @@
-:root {
-  /* Pastel Color Palette */
-  --pastel-blue: #6FA6D6;
-  --pastel-blue-light: #A5C4E3;
-  --pastel-blue-dark: #4D8AB3;
-  
-  --pastel-green: #8FBC8F;
-  --pastel-green-light: #B5D6B2;
-  --pastel-green-dark: #6B9F6B;
-  
-  --pastel-coral: #F0A0A0;
-  --pastel-gray-light: #F7F7F7;
-  --pastel-gray-medium: #E9E9E9;
-}
-
+/* WorkoutPlans.css */
 .workout-plans-page {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-  background-color: var(--pastel-gray-light);
+  padding: var(--spacing-md);
 }
 
-.workout-plan-container {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  background-color: var(--pastel-gray-medium);
-  border-radius: 8px;
-  padding: 15px;
-}
-
-.workout-day {
-  background-color: white;
-  border-radius: 8px;
-  border: 1px solid var(--pastel-gray-medium);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  padding: 10px;
+.page-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.create-plan-btn {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
   cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.create-plan-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+.no-plans {
+  text-align: center;
+  padding: var(--spacing-lg);
+  background-color: var(--neutral-100);
+  border-radius: var(--border-radius-lg);
+}
+
+.get-started-btn {
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  margin-top: var(--spacing-md);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.get-started-btn:hover {
+  background-color: var(--secondary-dark);
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.plan-card {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-md);
+  padding: var(--spacing-md);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  min-height: 120px; /* Added minimal height */
 }
 
-.workout-day:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+.plan-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--box-shadow-lg);
 }
 
-.workout-day h2 {
-  text-align: center;
-  margin-bottom: 10px;
-  font-size: 0.9em;
-  color: var(--pastel-blue-dark);
-  border-bottom: 2px solid var(--pastel-blue);
-  padding-bottom: 5px;
+.plan-card h2 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-dark);
+  font-size: 1.5rem;
 }
 
-.workout-day p {
-  text-align: center;
-  font-size: 0.8em;
-  color: var(--pastel-blue-dark);
+.plan-details {
+  margin-bottom: var(--spacing-md);
 }
 
-.exercises-grid {
+.plan-details p {
+  margin: var(--spacing-sm) 0;
+  color: var(--text-muted);
+}
+
+.plan-details p strong {
+  color: var(--text-dark);
+}
+
+.plan-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: space-between;
+}
+
+.plan-actions button {
+  flex: 1;
+  padding: var(--spacing-sm);
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.view-details-btn {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+}
+
+.view-details-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+.delete-plan-btn {
+  background-color: var(--accent-color);
+  color: var(--text-light);
+}
+
+.delete-plan-btn:hover {
+  background-color: var(--accent-dark);
+}
+
+.start-workout-btn {
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+}
+
+.start-workout-btn:hover {
+  background-color: var(--secondary-dark);
+}
+
+.loading {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
 }
 
+.spinner {
+  border: 4px solid var(--neutral-200);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  text-align: center;
+  padding: var(--spacing-lg);
+  background-color: var(--neutral-100);
+  border-radius: var(--border-radius-lg);
+}
+
+.error-message button {
+  background-color: var(--accent-color);
+  color: var(--text-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  margin-top: var(--spacing-md);
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .workout-plan-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .workout-plan-container {
+  .plans-grid {
     grid-template-columns: 1fr;
   }
-}
 
-/* Day Workouts Modal Styles */
-.day-workouts-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.day-workouts-modal-content {
-  background-color: white;
-  border-radius: 10px;
-  padding: 30px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 80vh;
-  overflow-y: auto;
-  position: relative;
-  border: 1px solid var(--pastel-gray-medium);
-}
-
-.day-workouts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 15px;
-}
-
-.day-workout-card {
-  background-color: var(--pastel-gray-light);
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid var(--pastel-gray-medium);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.day-workout-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: var(--pastel-green-light);
-}
-
-.day-workout-card h3 {
-  margin-bottom: 10px;
-  color: var(--pastel-blue-dark);
-}
-
-.workout-card-details {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.workout-sets-reps {
-  display: flex;
-  justify-content: space-between;
-  background-color: var(--pastel-blue-light);
-  padding: 8px;
-  border-radius: 6px;
-  color: var(--pastel-blue-dark);
-}
-
-/* Rest of the existing CSS remains the same */
-
-.exercise-card {
-  background-color: white;
-  border-radius: 10px;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  width: 100%;
-  cursor: pointer;
-}
-
-.exercise-card:hover {
-  transform: scale(1.02);
-}
-
-.exercise-card h4 {
-  margin-bottom: 15px;
-  font-size: 1.2em;
-  color: #2c3e50;
-}
-
-.exercise-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  font-size: 0.9em;
-  color: #495057;
-}
-
-.exercise-sets-reps {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f0f4f8;
-  padding: 10px 15px;
-  border-radius: 6px;
-  margin-top: 15px;
-  border: 1px solid #e1e8f0;
-}
-
-.exercise-sets-reps span {
-  display: flex;
-  align-items: center;
-}
-
-.exercise-sets-reps span strong {
-  margin-right: 10px;
-}
-
-.exercise-sets-reps span::before {
-  content: '';
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background-color: #007bff;
-  mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>');
-  mask-size: cover;
-  margin-left: 8px;
-  opacity: 0.7;
-  vertical-align: middle;
-}
-
-.video-link {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 8px 15px;
-  background-color: #007bff;
-  color: white;
-  text-decoration: none;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
-}
-
-.video-link:hover {
-  background-color: #0056b3;
-}
-
-.exercise-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.exercise-modal-content {
-  background-color: white;
-  border-radius: 10px;
-  padding: 30px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.modal-close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #888;
-}
-
-.modal-exercise-details {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.detail-section {
-  background-color: #f9f9f9;
-  padding: 15px;
-  border-radius: 8px;
-}
-
-.detail-section h3 {
-  margin-bottom: 10px;
-  border-bottom: 2px solid #007bff;
-  padding-bottom: 5px;
-}
-
-@media (max-width: 1200px) {
-  .workout-day {
-    flex: 0 1 calc(50% - 30px);
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
-}
 
-@media (max-width: 768px) {
-  .workout-day {
-    flex: 0 1 100%;
-    min-width: 100%;
+  .create-plan-btn {
+    width: 100%;
+    margin-top: var(--spacing-sm);
   }
-}
 
-.exercise-instructions {
-  padding-left: 20px;
-  margin-top: 10px;
-}
+  .plan-actions {
+    flex-direction: column;
+  }
 
-.exercise-instructions li {
-  margin-bottom: 10px;
-  line-height: 1.6;
-  color: #333;
-}
-
-.exercise-instructions li::marker {
-  color: #007bff;
-  font-weight: bold;
-}
-
-/* Add these styles to your existing CSS */
-.day-workouts-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.day-workouts-modal-content {
-  background-color: white;
-  border-radius: 10px;
-  padding: 30px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 80vh;
-  overflow-y: auto;
-  position: relative;
-}
-
-.modal-close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-}
-
-
-.workout-day.current-day {
-  background-color: var(--pastel-blue-light);
-  border: 2px solid var(--pastel-blue);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2); /* Slightly stronger shadow */
-}
-
-.workout-day.current-day h2 {
-  color: var(--pastel-blue-dark);
-  font-weight: bold;
-}
-
-.workout-day.current-day p {
-  color: var(--pastel-blue-dark);
-  font-weight: 600;
-}
-
-.workout-day.current-day::before {
-  content: 'Today';
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background-color: var(--pastel-blue);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.7em;
-  font-weight: bold;
-}
-
-
-.start-logging-button {
-  margin-bottom: 20px; /* Space below the button */
-  padding: 10px 20px;
-  background-color: var(--pastel-blue);
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.start-logging-button:hover {
-  background-color: var(--pastel-blue-dark);
-}
-
-/* Ensure modals are above the header */
-.modal-overlay, .exercise-modal-overlay, .day-workouts-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1500; /* Ensure this is higher than the header's z-index */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow-y: auto; /* Allow scrolling within the modal if needed */
-}
-
-.modal-content, .exercise-modal-content, .day-workouts-modal-content {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  max-width: 90%;
-  max-height: 90%;
-  overflow-y: auto;
-  z-index: 1600; /* Ensure content is above the overlay */
-}
-
-/* Prevent scrolling when modal is open */
-body.modal-open {
-  overflow: hidden;
+  .plan-actions button {
+    width: 100%;
+  }
 }

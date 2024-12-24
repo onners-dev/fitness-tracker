@@ -86,6 +86,22 @@ export const workoutPlanService = {
     
     },
 
+
+    createGeneratedWorkoutPlan: async (planData) => {
+      try {
+          const response = await axios.post(`${BASE_URL}/workouts/plans/generate-save`, planData, {
+              headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+          });
+          return response.data;
+      } catch (error) {
+          console.error('Error creating generated workout plan:', error);
+          throw error;
+      }
+    },
+
+
     getWorkoutPlanExerciseDetails: async (exerciseIds) => {
         try {
             const response = await axios.get(`${BASE_URL}/workouts/exercises/details`, {
@@ -110,7 +126,11 @@ export const workoutPlanService = {
           });
           return response.data;
         } catch (error) {
-          console.error('Error fetching workout plans:', error);
+          console.error('Error fetching workout plans:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+          });
           throw error;
         }
     },

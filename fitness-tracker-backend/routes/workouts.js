@@ -364,12 +364,32 @@ router.get('/plans', authorization, async (req, res) => {
                 JOIN muscles m ON em.muscle_id = m.muscle_id
                 JOIN muscle_groups mg ON m.group_id = mg.group_id
                 GROUP BY wpe.plan_day_id, e.exercise_id, e.name, wpe.sets, wpe.reps
+            ),
+            workout_days AS (
+                SELECT 
+                    uwp.plan_id,
+                    COUNT(DISTINCT wpd.day_of_week) FILTER (WHERE wpd.focus != 'Rest') AS workout_days_count
+                FROM user_workout_plans uwp
+                JOIN workout_plan_days wpd ON uwp.plan_id = wpd.plan_id
+                WHERE uwp.user_id = $1
+                GROUP BY uwp.plan_id
             )
             SELECT 
                 uwp.plan_id,
+                COALESCE(uwp.plan_name, 
+                    CASE 
+                        WHEN uwp.fitness_goal = 'muscle_gain' THEN 'Muscle Gain Plan'
+                        WHEN uwp.fitness_goal = 'weight_loss' THEN 'Weight Loss Plan'
+                        WHEN uwp.fitness_goal = 'maintenance' THEN 'Maintenance Plan'
+                        WHEN uwp.fitness_goal = 'endurance' THEN 'Endurance Plan'
+                        ELSE 'Workout Plan'
+                    END
+                ) AS plan_name,
                 uwp.fitness_goal,
                 uwp.activity_level,
                 uwp.created_at,
+                wd.workout_days_count,
+                TO_CHAR(uwp.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS formatted_created_at,
                 json_agg(
                     json_build_object(
                         'day', wpd.day_of_week,
@@ -378,6 +398,7 @@ router.get('/plans', authorization, async (req, res) => {
                 ) AS workouts
             FROM user_workout_plans uwp
             JOIN workout_plan_days wpd ON uwp.plan_id = wpd.plan_id
+            JOIN workout_days wd ON uwp.plan_id = wd.plan_id
             LEFT JOIN (
                 SELECT 
                     plan_day_id,
@@ -394,7 +415,7 @@ router.get('/plans', authorization, async (req, res) => {
                 GROUP BY plan_day_id
             ) ed ON wpd.plan_day_id = ed.plan_day_id
             WHERE uwp.user_id = $1
-            GROUP BY uwp.plan_id, uwp.fitness_goal, uwp.activity_level, uwp.created_at
+            GROUP BY uwp.plan_id, uwp.plan_name, uwp.fitness_goal, uwp.activity_level, uwp.created_at, wd.workout_days_count
             ORDER BY uwp.created_at DESC
             LIMIT 5
         `;
@@ -403,8 +424,11 @@ router.get('/plans', authorization, async (req, res) => {
 
         const plans = result.rows.map(plan => ({
             plan_id: plan.plan_id,
+            planName: plan.plan_name,
             fitnessGoal: plan.fitness_goal,
             activityLevel: plan.activity_level,
+            workoutDaysCount: plan.workout_days_count,
+            created_at: plan.formatted_created_at || plan.created_at,
             workouts: plan.workouts.reduce((acc, day) => {
                 acc[day.day] = day.exercises || [];
                 return acc;
@@ -422,7 +446,6 @@ router.get('/plans', authorization, async (req, res) => {
         client.release();
     }
 });
-
 
 
 
@@ -811,6 +834,95 @@ router.get('/plans/generate', authorization, async (req, res) => {
         client.release();
     }
 });
+
+router.post('/plans/generate-save', authorization, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const { 
+            workouts, 
+            fitnessGoal, 
+            activityLevel, 
+            planName, 
+            primaryFocus 
+        } = req.body;
+
+        // Generate a default name if no name provided
+        const defaultPlanName = planName || (() => {
+            switch(fitnessGoal) {
+                case 'muscle_gain': return 'Muscle Gain Plan';
+                case 'weight_loss': return 'Weight Loss Plan';
+                case 'maintenance': return 'Maintenance Plan';
+                case 'endurance': return 'Endurance Plan';
+                default: return 'Workout Plan';
+            }
+        })();
+
+        await client.query('BEGIN');
+
+        // Insert workout plan with guaranteed name
+        const planResult = await client.query(
+            `INSERT INTO user_workout_plans 
+            (user_id, plan_name, fitness_goal, activity_level, primary_focus) 
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING plan_id`,
+            [
+                req.user.user_id, 
+                defaultPlanName, 
+                fitnessGoal, 
+                activityLevel, 
+                primaryFocus || null
+            ]
+        );
+        const planId = planResult.rows[0].plan_id;
+
+        // Process each workout day
+        for (const [day, exercises] of Object.entries(workouts)) {
+            // Insert plan day
+            const dayResult = await client.query(
+                `INSERT INTO workout_plan_days 
+                (plan_id, day_of_week, focus) 
+                VALUES ($1, $2, $3) 
+                RETURNING plan_day_id`,
+                [planId, day, 'Generated Plan']
+            );
+            const planDayId = dayResult.rows[0].plan_day_id;
+
+            // Insert exercises for this day
+            for (let [index, exercise] of exercises.entries()) {
+                await client.query(
+                    `INSERT INTO workout_plan_exercises 
+                    (plan_day_id, exercise_id, sets, reps, order_index) 
+                    VALUES ($1, $2, $3, $4, $5)`,
+                    [
+                        planDayId, 
+                        exercise.exercise_id, 
+                        exercise.sets || 3, 
+                        exercise.reps || 12, 
+                        index + 1
+                    ]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+
+        res.status(201).json({ 
+            message: 'Workout plan saved successfully', 
+            planId: planId 
+        });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error saving generated workout plan:', error);
+        res.status(500).json({ 
+            message: 'Failed to save generated workout plan',
+            error: error.message 
+        });
+    } finally {
+        client.release();
+    }
+});
+
 
 router.post('/plans/create-custom', authorization, async (req, res) => {
     const client = await pool.connect();

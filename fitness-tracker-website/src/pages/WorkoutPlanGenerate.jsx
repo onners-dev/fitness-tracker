@@ -10,6 +10,8 @@ const WorkoutPlanGenerate = () => {
   const [workoutPlan, setWorkoutPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [planName, setPlanName] = useState('');
+  const [isNamingPlan, setIsNamingPlan] = useState(false);
 
   const formatGoal = (goal) => {
     const goalMap = {
@@ -60,6 +62,7 @@ const WorkoutPlanGenerate = () => {
 
         setWorkoutPlan(enrichedPlan);
         setLoading(false);
+        setIsNamingPlan(true);
       } catch (err) {
         console.error('Workout Plan Generation Error:', err);
         setError(err.message || 'Failed to generate workout plan');
@@ -69,6 +72,27 @@ const WorkoutPlanGenerate = () => {
 
     fetchWorkoutPlan();
   }, []);
+
+  const handleSavePlan = async () => {
+    if (!planName.trim()) {
+      alert('Please enter a name for your workout plan');
+      return;
+    }
+
+    try {
+      // Save the plan with the provided name
+      const savedPlan = await workoutPlanService.createGeneratedWorkoutPlan({
+        ...workoutPlan,
+        planName: planName.trim()
+      });
+
+      // Navigate to existing plans
+      navigate('/workout-plans/existing');
+    } catch (error) {
+      console.error('Error saving workout plan:', error);
+      alert('Failed to save workout plan');
+    }
+  };
 
   const renderDayWorkouts = (day, exercises) => {
     if (!exercises || exercises.length === 0) {
@@ -87,6 +111,40 @@ const WorkoutPlanGenerate = () => {
             </div>
           </div>
         ))}
+      </div>
+    );
+  };
+
+  // Plan Naming Modal
+  const PlanNamingModal = () => {
+    return (
+      <div className="plan-naming-modal">
+        <div className="plan-naming-content">
+          <h2>Name Your Workout Plan</h2>
+          <p>Give your personalized workout plan a memorable name</p>
+          <input 
+            type="text" 
+            placeholder="Enter plan name"
+            value={planName}
+            onChange={(e) => setPlanName(e.target.value)}
+            className="plan-name-input"
+          />
+          <div className="plan-naming-actions">
+            <button 
+              onClick={handleSavePlan}
+              disabled={!planName.trim()}
+              className="save-plan-btn"
+            >
+              Save Plan
+            </button>
+            <button 
+              onClick={() => navigate('/workout-plans/onboarding')}
+              className="cancel-btn"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
@@ -113,51 +171,34 @@ const WorkoutPlanGenerate = () => {
   }
 
   return (
-    <div className="workout-plan-generate">
-      <div className="plan-header">
-        <h1>Your Personalized Workout Plan</h1>
-        <div className="plan-summary">
-          <p>
-            <strong>Fitness Goal:</strong> {formatGoal(workoutPlan.fitnessGoal)}
-          </p>
-          {workoutPlan.planNotes && (
-            <div className="plan-notes">
-              <h3>Plan Insights</h3>
-              <p>{workoutPlan.planNotes}</p>
+    <>
+      {isNamingPlan && <PlanNamingModal />}
+      <div className="workout-plan-generate">
+        <div className="plan-header">
+          <h1>Your Personalized Workout Plan</h1>
+          <div className="plan-summary">
+            <p>
+              <strong>Fitness Goal:</strong> {formatGoal(workoutPlan.fitnessGoal)}
+            </p>
+            {workoutPlan.planNotes && (
+              <div className="plan-notes">
+                <h3>Plan Insights</h3>
+                <p>{workoutPlan.planNotes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="workout-days-grid">
+          {Object.entries(workoutPlan.workouts).map(([day, exercises]) => (
+            <div key={day} className="workout-day">
+              <h2>{day}</h2>
+              {renderDayWorkouts(day, exercises)}
             </div>
-          )}
+          ))}
         </div>
       </div>
-
-      <div className="workout-days-grid">
-        {Object.entries(workoutPlan.workouts).map(([day, exercises]) => (
-          <div key={day} className="workout-day">
-            <h2>{day}</h2>
-            {renderDayWorkouts(day, exercises)}
-          </div>
-        ))}
-      </div>
-
-      <div className="plan-actions">
-        <button 
-          onClick={() => navigate('/workout-logging', { 
-            state: { 
-              source: 'workoutPlans',
-              planId: workoutPlan.workoutPlanId 
-            } 
-          })}
-          className="start-workout-btn"
-        >
-          Start Workout
-        </button>
-        <button 
-          onClick={() => navigate('/workout-plans/builder')}
-          className="customize-plan-btn"
-        >
-          Customize Plan
-        </button>
-      </div>
-    </div>
+    </>
   );
 };
 

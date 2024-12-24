@@ -1,310 +1,306 @@
 .workout-plan-builder {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  background-color: var(--background-light);
+  min-height: 100vh;
+}
+
+.plan-details-section {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.plan-name-input, 
+.fitness-goal-select {
+  flex: 1;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--border-radius-md);
+  font-size: 1rem;
+}
+
+.workout-days {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.workout-days button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--neutral-300);
+  background-color: var(--neutral-200);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.workout-days button:hover {
+  background-color: var(--neutral-300);  
+  border-color: var(--primary-color);
+}
+
+.workout-days button.active {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  border-color: var(--primary-color);
+}
+
+.workout-days button.selected {
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  border-color: var(--secondary-color);
+}
+
+.exercise-filters {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.exercise-filters select {
+  flex: 1;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--border-radius-md);
+}
+
+.exercise-selection {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.available-exercises, 
+.selected-exercises {
+  flex: 1;
+  background-color: white;
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm);
+}
+
+.exercise-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.exercise-item {
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm);
+  text-align: left;
+}
+
+.exercise-item h4 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-dark);
+}
+
+.exercise-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.add-to-day-btn {
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-to-day-btn:hover {
+  background-color: var(--secondary-dark);
+}
+
+.selected-exercises {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.day-exercises {
+  margin-bottom: var(--spacing-md);
+}
+
+.day-exercises h4 {
+  border-bottom: 1px solid var(--neutral-300);
+  padding-bottom: var(--spacing-sm);
+}
+
+.selected-exercise {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.selected-exercise .exercise-details {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.selected-exercise input {
+  width: 70px;
+  padding: var(--spacing-xs);
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--border-radius-sm);
+}
+
+.remove-exercise-btn {
+  background-color: var(--accent-color);
+  color: var(--text-light);
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.remove-exercise-btn:hover {
+  background-color: var(--accent-dark);
+}
+
+.plan-actions {
+  margin-top: var(--spacing-md);
+  text-align: center;
+}
+
+.save-plan-btn {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.save-plan-btn:disabled {
+  background-color: var(--neutral-400);
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .workout-plan-builder {
+    padding: var(--spacing-sm);
   }
-  
+
   .plan-details-section {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
+    flex-direction: column;
   }
-  
-  .plan-name-input, 
-  .fitness-goal-select {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 16px;
-  }
-  
+
   .workout-days {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  
-  .workout-days button {
-    padding: 10px 15px;
-    border: 2px solid #e0e0e0;
-    background-color: #f4f4f4;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: #333; /* Darker default text color */
-    font-weight: 500; /* Slightly bolder font */
-  }
-  
-  .workout-days button:hover {
-    background-color: #e0e0e0;  
-    border-color: #007bff;
-  }
-  
-  .workout-days button.active {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
-  }
-  
-  .workout-days button.selected {
-    background-color: #28a745;
-    color: white;
-    border-color: #28a745;
-  }
-  
-  .exercise-filters {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    gap: 15px;
-  }
-  
-  .exercise-filters select {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-  }
-  
-  .exercise-selection {
-    display: flex;
-    gap: 20px;
-  }
-  
-  .available-exercises, 
-  .selected-exercises {
-    flex: 1;
-    background-color: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 15px;
-  }
-  
-  .exercise-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-  }
-  
-  .exercise-item {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 10px;
-    text-align: left;
-  }
-  
-  .exercise-item h4 {
-    margin-bottom: 10px;
-    color: #333;
-  }
-  
-  .exercise-actions {
-    display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 10px;
-  }
-  
-  .add-to-day-btn {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .add-to-day-btn:hover {
-    background-color: #218838;
-  }
-  
-  .selected-exercises {
-    max-height: 600px;
-    overflow-y: auto;
-  }
-  
-  .day-exercises {
-    margin-bottom: 20px;
-  }
-  
-  .day-exercises h4 {
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 10px;
-  }
-  
-  .selected-exercise {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  
-  .selected-exercise .exercise-details {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .selected-exercise input {
-    width: 70px;
-    padding: 5px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-  }
-  
-  .remove-exercise-btn {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .remove-exercise-btn:hover {
-    background-color: #c82333;
-  }
-  
-  .plan-actions {
-    margin-top: 20px;
-    text-align: center;
-  }
-  
-  .save-plan-btn {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .save-plan-btn:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-  }
-  
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .workout-plan-builder {
-      padding: 10px;
-    }
-  
-    .plan-details-section {
-      flex-direction: column;
-    }
-  
-    .workout-days {
-      flex-wrap: wrap;
-    }
-  
-    .exercise-filters {
-      flex-direction: column;
-    }
-  
-    .exercise-selection {
-      flex-direction: column;
-    }
   }
 
-  
-  .day-workout-builder {
-    animation: fadeIn 0.3s ease-in-out;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  .workout-days button {
-    position: relative;
-    transition: all 0.3s ease;
-  }
-  
-  .workout-days button.has-exercises {
-    background-color: #4CAF50; /* Softer green */
-    color: white;
-    border-color: #4CAF50;
-  }
-  
-  .workout-days button.has-exercises .day-completed-checkmark {
-    color: #4CAF50; /* Match button background */
-    background-color: white;
-  }
-  
-  /* Keep existing active and selected styles */
-  .workout-days button.active {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
-  }
-  
-  .workout-days button.selected {
-    background-color: #28a745;
-    color: white;
-    border-color: #28a745;
-  }
-  
-  .day-completed-checkmark {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    color: #00ff00; /* Bright green */
-    background-color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    z-index: 10;
-  }
-  
-  .workout-days button.active .day-completed-checkmark,
-  .workout-days button.selected .day-completed-checkmark {
-    color: #00ff00; /* Bright green */
-    background-color: white;
+  .exercise-filters {
+    flex-direction: column;
   }
 
-  .exercise-pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    gap: 15px;
+  .exercise-selection {
+    flex-direction: column;
   }
-  
-  .pagination-btn {
-    padding: 8px 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .pagination-btn:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-  
-  .page-info {
-    font-weight: bold;
-    color: #333;
-  }
-  
-  
+}
+
+.day-workout-builder {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.workout-days button {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.workout-days button.has-exercises {
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  border-color: var(--secondary-color);
+}
+
+.workout-days button.has-exercises .day-completed-checkmark {
+  color: var(--secondary-color);
+  background-color: var(--text-light);
+}
+
+.workout-days button.active {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  border-color: var(--primary-color);
+}
+
+.workout-days button.selected {
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  border-color: var(--secondary-color);
+}
+
+.day-completed-checkmark {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  color: var(--secondary-color);
+  background-color: var(--text-light);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.workout-days button.active .day-completed-checkmark,
+.workout-days button.selected .day-completed-checkmark {
+  color: var(--secondary-color);
+  background-color: var(--text-light);
+}
+
+.exercise-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.pagination-btn {
+  padding: var(--spacing-sm);
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pagination-btn:disabled {
+  background-color: var(--neutral-300);
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-weight: bold;
+  color: var(--text-dark);
+}
