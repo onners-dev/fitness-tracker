@@ -103,19 +103,38 @@ export const workoutPlanService = {
 
 
     getWorkoutPlanExerciseDetails: async (exerciseIds) => {
-        try {
-            const response = await axios.get(`${BASE_URL}/workouts/exercises/details`, {
-                params: { exerciseIds: exerciseIds.join(',') },
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching exercise details:', error);
-            throw error;
-        }
+      try {
+          console.log('Fetching Exercise Details for IDs:', exerciseIds);
+          
+          const response = await axios.get(`${BASE_URL}/workouts/exercises/details`, {
+              params: { exerciseIds: exerciseIds.join(',') },
+              headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+          });
+          
+          console.log('Exercise Details Response:', JSON.stringify(response.data, null, 2));
+          
+          // Log specific fields for debugging
+          response.data.forEach(exercise => {
+              console.log(`Exercise ${exercise.exercise_id}:`, {
+                  name: exercise.name,
+                  description: exercise.description ? 'Present' : 'Missing',
+                  instructions: exercise.instructions ? 'Present' : 'Missing'
+              });
+          });
+          
+          return response.data;
+      } catch (error) {
+          console.error('Detailed Error fetching exercise details:', {
+              message: error.message,
+              response: error.response?.data,
+              status: error.response?.status
+          });
+          throw error;
+      }
     },
+  
 
     getUserWorkoutPlans: async () => {
         try {

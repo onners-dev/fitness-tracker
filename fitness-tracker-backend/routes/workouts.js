@@ -192,6 +192,8 @@ router.get('/exercises/details', authorization, async (req, res) => {
         // Parse exercise IDs from query string
         const exerciseIds = req.query.exerciseIds.split(',').map(id => parseInt(id));
 
+        console.log('Received Exercise IDs:', exerciseIds);  // Add this line
+
         // Fetch detailed exercise information
         const query = `
             SELECT 
@@ -222,8 +224,11 @@ router.get('/exercises/details', authorization, async (req, res) => {
 
         const result = await client.query(query, [exerciseIds]);
 
+        console.log('Query Result:', JSON.stringify(result.rows, null, 2));  // Add this line
+
         // If no exercises found, return appropriate response
         if (result.rows.length === 0) {
+            console.log('No exercises found for IDs:', exerciseIds);  // Add this line
             return res.status(404).json({ 
                 message: 'No exercises found',
                 exerciseIds: exerciseIds
@@ -246,6 +251,7 @@ router.get('/exercises/details', authorization, async (req, res) => {
         client.release();
     }
 });
+
 
 // Log a new workout
 router.post('/', authorization, async (req, res) => {
@@ -355,6 +361,11 @@ router.get('/plans', authorization, async (req, res) => {
                     wpe.plan_day_id,
                     e.exercise_id,
                     e.name,
+                    e.description,
+                    e.equipment,
+                    e.difficulty,
+                    e.instructions,
+                    e.video_url,
                     wpe.sets,
                     wpe.reps,
                     array_agg(DISTINCT mg.name) AS muscle_groups
@@ -363,16 +374,17 @@ router.get('/plans', authorization, async (req, res) => {
                 JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
                 JOIN muscles m ON em.muscle_id = m.muscle_id
                 JOIN muscle_groups mg ON m.group_id = mg.group_id
-                GROUP BY wpe.plan_day_id, e.exercise_id, e.name, wpe.sets, wpe.reps
-            ),
-            workout_days AS (
-                SELECT 
-                    uwp.plan_id,
-                    COUNT(DISTINCT wpd.day_of_week) FILTER (WHERE wpd.focus != 'Rest') AS workout_days_count
-                FROM user_workout_plans uwp
-                JOIN workout_plan_days wpd ON uwp.plan_id = wpd.plan_id
-                WHERE uwp.user_id = $1
-                GROUP BY uwp.plan_id
+                GROUP BY 
+                    wpe.plan_day_id, 
+                    e.exercise_id, 
+                    e.name, 
+                    e.description,
+                    e.equipment,
+                    e.difficulty,
+                    e.instructions,
+                    e.video_url,
+                    wpe.sets, 
+                    wpe.reps
             )
             SELECT 
                 uwp.plan_id,
@@ -388,8 +400,12 @@ router.get('/plans', authorization, async (req, res) => {
                 uwp.fitness_goal,
                 uwp.activity_level,
                 uwp.created_at,
-                wd.workout_days_count,
-                TO_CHAR(uwp.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS formatted_created_at,
+                (
+                    SELECT COUNT(DISTINCT wpd.day_of_week)
+                    FROM workout_plan_days wpd
+                    JOIN workout_plan_exercises wpe ON wpd.plan_day_id = wpe.plan_day_id
+                    WHERE wpd.plan_id = uwp.plan_id
+                ) AS workout_days_count,
                 json_agg(
                     json_build_object(
                         'day', wpd.day_of_week,
@@ -398,7 +414,6 @@ router.get('/plans', authorization, async (req, res) => {
                 ) AS workouts
             FROM user_workout_plans uwp
             JOIN workout_plan_days wpd ON uwp.plan_id = wpd.plan_id
-            JOIN workout_days wd ON uwp.plan_id = wd.plan_id
             LEFT JOIN (
                 SELECT 
                     plan_day_id,
@@ -408,6 +423,11 @@ router.get('/plans', authorization, async (req, res) => {
                             'name', name,
                             'sets', sets,
                             'reps', reps,
+                            'description', description,
+                            'equipment', equipment,
+                            'difficulty', difficulty,
+                            'instructions', instructions,
+                            'video_url', video_url,
                             'muscle_groups', muscle_groups
                         )
                     ) AS exercises
@@ -415,7 +435,7 @@ router.get('/plans', authorization, async (req, res) => {
                 GROUP BY plan_day_id
             ) ed ON wpd.plan_day_id = ed.plan_day_id
             WHERE uwp.user_id = $1
-            GROUP BY uwp.plan_id, uwp.plan_name, uwp.fitness_goal, uwp.activity_level, uwp.created_at, wd.workout_days_count
+            GROUP BY uwp.plan_id, uwp.plan_name, uwp.fitness_goal, uwp.activity_level, uwp.created_at
             ORDER BY uwp.created_at DESC
             LIMIT 5
         `;
@@ -427,8 +447,8 @@ router.get('/plans', authorization, async (req, res) => {
             planName: plan.plan_name,
             fitnessGoal: plan.fitness_goal,
             activityLevel: plan.activity_level,
-            workoutDaysCount: plan.workout_days_count,
-            created_at: plan.formatted_created_at || plan.created_at,
+            workoutDaysCount: plan.workout_days_count || 0,
+            created_at: plan.created_at,
             workouts: plan.workouts.reduce((acc, day) => {
                 acc[day.day] = day.exercises || [];
                 return acc;
@@ -447,7 +467,118 @@ router.get('/plans', authorization, async (req, res) => {
     }
 });
 
+router.get('/plans', authorization, async (req, res) => {
+    const client = await pool.connect();
 
+    try {
+        const query = `
+            WITH exercise_details AS (
+                SELECT
+                    wpe.plan_day_id,
+                    e.exercise_id,
+                    e.name,
+                    e.description,
+                    e.equipment,
+                    e.difficulty,
+                    e.instructions,
+                    e.video_url,
+                    wpe.sets,
+                    wpe.reps,
+                    array_agg(DISTINCT mg.name) AS muscle_groups
+                FROM workout_plan_exercises wpe
+                JOIN exercises e ON wpe.exercise_id = e.exercise_id
+                JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+                JOIN muscles m ON em.muscle_id = m.muscle_id
+                JOIN muscle_groups mg ON m.group_id = mg.group_id
+                GROUP BY 
+                    wpe.plan_day_id, 
+                    e.exercise_id, 
+                    e.name, 
+                    e.description,
+                    e.equipment,
+                    e.difficulty,
+                    e.instructions,
+                    e.video_url,
+                    wpe.sets, 
+                    wpe.reps
+            )
+            SELECT 
+                uwp.plan_id,
+                COALESCE(uwp.plan_name, 
+                    CASE 
+                        WHEN uwp.fitness_goal = 'muscle_gain' THEN 'Muscle Gain Plan'
+                        WHEN uwp.fitness_goal = 'weight_loss' THEN 'Weight Loss Plan'
+                        WHEN uwp.fitness_goal = 'maintenance' THEN 'Maintenance Plan'
+                        WHEN uwp.fitness_goal = 'endurance' THEN 'Endurance Plan'
+                        ELSE 'Workout Plan'
+                    END
+                ) AS plan_name,
+                uwp.fitness_goal,
+                uwp.activity_level,
+                uwp.created_at,
+                (
+                    SELECT COUNT(DISTINCT wpd.day_of_week)
+                    FROM workout_plan_days wpd
+                    JOIN workout_plan_exercises wpe ON wpd.plan_day_id = wpe.plan_day_id
+                    WHERE wpd.plan_id = uwp.plan_id
+                ) AS workout_days_count,
+                json_agg(
+                    json_build_object(
+                        'day', wpd.day_of_week,
+                        'exercises', (
+                            SELECT json_agg(
+                                json_build_object(
+                                    'exercise_id', ed.exercise_id,
+                                    'name', ed.name,
+                                    'sets', ed.sets,
+                                    'reps', ed.reps,
+                                    'description', ed.description,
+                                    'equipment', ed.equipment,
+                                    'difficulty', ed.difficulty,
+                                    'instructions', ed.instructions,
+                                    'video_url', ed.video_url,
+                                    'muscle_groups', ed.muscle_groups
+                                )
+                            )
+                            FROM exercise_details ed
+                            WHERE ed.plan_day_id = wpd.plan_day_id
+                        )
+                    )
+                ) AS workouts
+            FROM user_workout_plans uwp
+            JOIN workout_plan_days wpd ON uwp.plan_id = wpd.plan_id
+            WHERE uwp.user_id = $1
+            GROUP BY uwp.plan_id, uwp.plan_name, uwp.fitness_goal, uwp.activity_level, uwp.created_at
+            ORDER BY uwp.created_at DESC
+            LIMIT 5
+        `;
+
+        const result = await client.query(query, [req.user.user_id]);
+
+        const plans = result.rows.map(plan => ({
+            plan_id: plan.plan_id,
+            planName: plan.plan_name,
+            fitnessGoal: plan.fitness_goal,
+            activityLevel: plan.activity_level,
+            workoutDaysCount: plan.workout_days_count || 0,
+            created_at: plan.created_at,
+            workouts: plan.workouts.reduce((acc, day) => {
+                acc[day.day] = day.exercises || [];
+                return acc;
+            }, {})
+        }));
+
+        res.json(plans);
+    } catch (error) {
+        console.error('Error fetching workout plans:', error);
+        res.status(500).json({ 
+            message: 'Error fetching workout plans', 
+            error: error.message 
+        });
+    } finally {
+        client.release();
+    }
+});
 
 
 router.get('/plans/generate', authorization, async (req, res) => {
@@ -498,6 +629,11 @@ router.get('/plans/generate', authorization, async (req, res) => {
                         'name', e.name,
                         'sets', wpe.sets,
                         'reps', wpe.reps,
+                        'description', e.description,
+                        'equipment', e.equipment,
+                        'difficulty', e.difficulty,
+                        'instructions', e.instructions,
+                        'video_url', e.video_url,
                         'muscle_groups', mg.muscle_groups
                     )
                 ) AS exercises
@@ -615,7 +751,12 @@ router.get('/plans/generate', authorization, async (req, res) => {
                     ...restExercise,
                     sets: 0,
                     reps: 0,
-                    day: dayInfo.day
+                    day: dayInfo.day,
+                    description: exercise.description || '',
+                    equipment: exercise.equipment || '',
+                    difficulty: exercise.difficulty || '',
+                    instructions: exercise.instructions || '',
+                    video_url: exercise.video_url || ''
                 });
 
                 continue; // Skip to next day
@@ -672,7 +813,12 @@ router.get('/plans/generate', authorization, async (req, res) => {
                         ...exercise,
                         sets: 2,
                         reps: 12,
-                        day: dayInfo.day
+                        day: dayInfo.day,
+                        description: exercise.description || '',
+                        equipment: exercise.equipment || '',
+                        difficulty: exercise.difficulty || '',
+                        instructions: exercise.instructions || '',
+                        video_url: exercise.video_url || ''
                     });
                 }
 
@@ -782,7 +928,12 @@ router.get('/plans/generate', authorization, async (req, res) => {
                     ...exercise,
                     sets: 3,
                     reps: 12,
-                    day: dayInfo.day
+                    day: dayInfo.day,
+                    description: exercise.description || '',
+                    equipment: exercise.equipment || '',
+                    difficulty: exercise.difficulty || '',
+                    instructions: exercise.instructions || '',
+                    video_url: exercise.video_url || ''
                 });
             }
         }
@@ -801,7 +952,8 @@ router.get('/plans/generate', authorization, async (req, res) => {
                     difficulty: ex.difficulty,
                     equipment: ex.equipment,
                     muscle_groups: ex.muscle_groups,
-                    muscles: ex.muscles,
+                    description: ex.description,
+                    instructions: ex.instructions,
                     video_url: ex.video_url
                 }));
             return acc;
@@ -890,6 +1042,25 @@ router.post('/plans/generate-save', authorization, async (req, res) => {
 
             // Insert exercises for this day
             for (let [index, exercise] of exercises.entries()) {
+                // Ensure comprehensive exercise details are saved
+                const exerciseDetailsQuery = `
+                    SELECT 
+                        description, 
+                        equipment, 
+                        difficulty, 
+                        instructions, 
+                        video_url 
+                    FROM exercises 
+                    WHERE exercise_id = $1
+                `;
+                
+                const exerciseDetailsResult = await client.query(
+                    exerciseDetailsQuery, 
+                    [exercise.exercise_id]
+                );
+                
+                const exerciseDetails = exerciseDetailsResult.rows[0] || {};
+
                 await client.query(
                     `INSERT INTO workout_plan_exercises 
                     (plan_day_id, exercise_id, sets, reps, order_index) 
@@ -902,6 +1073,17 @@ router.post('/plans/generate-save', authorization, async (req, res) => {
                         index + 1
                     ]
                 );
+
+                // Optional: Log exercise details for debugging
+                console.log('Saving Exercise Details:', {
+                    exerciseId: exercise.exercise_id,
+                    name: exercise.name,
+                    sets: exercise.sets || 3,
+                    reps: exercise.reps || 12,
+                    description: exerciseDetails.description,
+                    equipment: exerciseDetails.equipment,
+                    difficulty: exerciseDetails.difficulty
+                });
             }
         }
 
@@ -909,7 +1091,8 @@ router.post('/plans/generate-save', authorization, async (req, res) => {
 
         res.status(201).json({ 
             message: 'Workout plan saved successfully', 
-            planId: planId 
+            planId: planId,
+            planName: defaultPlanName
         });
     } catch (error) {
         await client.query('ROLLBACK');

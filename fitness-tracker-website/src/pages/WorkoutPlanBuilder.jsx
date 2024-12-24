@@ -233,25 +233,95 @@ const WorkoutPlanBuilder = () => {
     });
   };
 
+  const copyExercisesFromDay = () => {
+    if (!selectedDay || !planDetails.selectedExercises[selectedDay]) {
+      alert('No exercises to copy');
+      return;
+    }
+  
+    const exercisesToCopy = planDetails.selectedExercises[selectedDay];
+    localStorage.setItem('copiedExercises', JSON.stringify({
+      sourceDay: selectedDay,
+      exercises: exercisesToCopy
+    }));
+    
+    alert(`Copied ${exercisesToCopy.length} exercises from ${selectedDay}`);
+  };
+  
+  const pasteExercisesToDay = () => {
+    if (!selectedDay) {
+      alert('Select a target day to paste exercises');
+      return;
+    }
+  
+    const copiedData = JSON.parse(localStorage.getItem('copiedExercises') || '{}');
+    
+    if (!copiedData.exercises || copiedData.exercises.length === 0) {
+      alert('No exercises to paste');
+      return;
+    }
+  
+    if (copiedData.sourceDay === selectedDay) {
+      alert('Cannot paste to the same day');
+      return;
+    }
+  
+    setPlanDetails(prev => {
+      const updatedSelectedExercises = {...prev.selectedExercises};
+      
+      // Filter out duplicates
+      const newExercises = copiedData.exercises.filter(copiedEx => 
+        !((updatedSelectedExercises[selectedDay] || []).some(
+          existingEx => existingEx.exercise_id === copiedEx.exercise_id
+        ))
+      );
+  
+      updatedSelectedExercises[selectedDay] = [
+        ...(updatedSelectedExercises[selectedDay] || []),
+        ...newExercises
+      ];
+  
+      return {
+        ...prev,
+        workoutDays: prev.workoutDays.includes(selectedDay) 
+          ? prev.workoutDays 
+          : [...prev.workoutDays, selectedDay],
+        selectedExercises: updatedSelectedExercises
+      };
+    });
+  
+    alert(`Pasted ${newExercises.length} exercises to ${selectedDay}`);
+  };
+  
+
   const handleSavePlan = async () => {
     // Validate plan details
     if (!planDetails.name.trim()) {
       alert('Please enter a plan name');
       return;
     }
-
+  
     if (!planDetails.fitnessGoal) {
       alert('Please select a fitness goal');
       return;
     }
-
-    if (planDetails.workoutDays.length === 0) {
-      alert('Please select at least one workout day');
-      return;
-    }
-
+  
+    // Ensure all days are accounted for
+    const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    
+    // Prepare plan details with rest days
+    const finalPlanDetails = {
+      ...planDetails,
+      workoutDays: allDays,
+      selectedExercises: allDays.reduce((acc, day) => {
+        // If day was not previously selected, add it with an empty exercise array (rest day)
+        acc[day] = planDetails.selectedExercises[day] || [];
+        return acc;
+      }, {})
+    };
+  
     try {
-      const savedPlan = await workoutPlanService.createCustomWorkoutPlan(planDetails);
+      const savedPlan = await workoutPlanService.createCustomWorkoutPlan(finalPlanDetails);
       alert('Workout plan saved successfully!');
       navigate('/workout-plans/existing');
     } catch (error) {
@@ -306,7 +376,7 @@ const WorkoutPlanBuilder = () => {
             >
               {day}
               {planDetails.selectedExercises[day] && 
-               planDetails.selectedExercises[day].length > 0 && (
+              planDetails.selectedExercises[day].length > 0 && (
                 <span 
                   className="day-completed-checkmark"
                   title={`${planDetails.selectedExercises[day].length} exercises added`}
@@ -320,6 +390,23 @@ const WorkoutPlanBuilder = () => {
 
       {selectedDay && (
         <>
+          <div className="copy-paste-section">
+            <div className="copy-paste-actions">
+              <button 
+                onClick={copyExercisesFromDay}
+                className="copy-paste-btn"
+              >
+                📋 Copy Exercises from {selectedDay}
+              </button>
+              <button 
+                onClick={pasteExercisesToDay}
+                className="copy-paste-btn"
+              >
+                📝 Paste Exercises to {selectedDay}
+              </button>
+            </div>
+          </div>
+
           <div className="exercise-filters">
             <select 
               name="muscleGroup"
@@ -429,6 +516,7 @@ const WorkoutPlanBuilder = () => {
           </div>
         </>
       )}
+
 
       <div className="plan-actions">
         <button 

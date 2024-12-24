@@ -304,3 +304,42 @@
   font-weight: bold;
   color: var(--text-dark);
 }
+
+
+
+.copy-paste-section {
+  display: flex;
+  justify-content: center;
+  margin: var(--spacing-md) 0;
+}
+
+.copy-paste-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  background-color: var(--neutral-200);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.copy-paste-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.copy-paste-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+.copy-paste-btn:first-child {
+  margin-right: var(--spacing-sm);
+}
