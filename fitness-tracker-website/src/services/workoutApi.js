@@ -54,19 +54,21 @@ export const workoutPlanService = {
       },
 
 
-    generateWorkoutPlan: async (userProfile) => {
+      generateWorkoutPlan: async (userProfile) => {
         try {
             console.log('Generating Workout Plan with Profile:', {
                 fitnessGoal: userProfile.fitness_goal,
                 activityLevel: userProfile.activity_level,
-                primaryFocus: userProfile.primary_focus || ''
+                primaryFocus: userProfile.primary_focus || '',
+                planName: userProfile.planName || '' // Add planName
             });
             
             const response = await axios.get(`${BASE_URL}/workouts/plans/generate`, {
                 params: {
                     fitnessGoal: userProfile.fitness_goal,
                     activityLevel: userProfile.activity_level,
-                    primaryFocus: userProfile.primary_focus || ''
+                    primaryFocus: userProfile.primary_focus || '',
+                    planName: userProfile.planName || '' // Pass planName to backend
                 },
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -83,24 +85,8 @@ export const workoutPlanService = {
     
             throw error;
         }
+      },
     
-    },
-
-
-    createGeneratedWorkoutPlan: async (planData) => {
-      try {
-          const response = await axios.post(`${BASE_URL}/workouts/plans/generate-save`, planData, {
-              headers: {
-                  'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-          });
-          return response.data;
-      } catch (error) {
-          console.error('Error creating generated workout plan:', error);
-          throw error;
-      }
-    },
-
 
     getWorkoutPlanExerciseDetails: async (exerciseIds) => {
       try {

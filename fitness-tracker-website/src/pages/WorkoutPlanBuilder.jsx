@@ -489,30 +489,36 @@ const WorkoutPlanBuilder = () => {
               <h3>Exercises for {selectedDay}</h3>
               {planDetails.selectedExercises[selectedDay]?.map((exercise, index) => (
                 <div key={exercise.exercise_id} className="selected-exercise">
-                  <span>{exercise.name}</span>
-                  <div className="exercise-details">
-                    <input 
-                      type="number" 
-                      value={exercise.sets} 
-                      placeholder="Sets"
-                      onChange={(e) => updateExerciseDetail(index, 'sets', e.target.value)}
-                    />
-                    <input 
-                      type="number" 
-                      value={exercise.reps} 
-                      placeholder="Reps"
-                      onChange={(e) => updateExerciseDetail(index, 'reps', e.target.value)}
-                    />
-                    <button 
-                      onClick={() => removeExerciseFromDay(exercise.exercise_id)}
-                      className="remove-exercise-btn"
-                    >
-                      Remove
-                    </button>
+                  <div className="exercise-info">
+                    <span className="exercise-name">{exercise.name}</span>
+                    <div className="exercise-volume">
+                      <div className="sets-input">
+                        <span className="input-label">Sets</span>
+                        <input 
+                          type="number" 
+                          value={exercise.sets} 
+                          onChange={(e) => updateExerciseDetail(index, 'sets', e.target.value)}
+                        />
+                      </div>
+                      <div className="reps-input">
+                        <span className="input-label">Reps</span>
+                        <input 
+                          type="number" 
+                          value={exercise.reps} 
+                          onChange={(e) => updateExerciseDetail(index, 'reps', e.target.value)}
+                        />
+                      </div>
+                      <button 
+                        onClick={() => removeExerciseFromDay(exercise.exercise_id)}
+                        className="remove-exercise-btn"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
-            </div>
+            </div>  
           </div>
         </>
       )}

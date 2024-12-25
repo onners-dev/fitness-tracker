@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './WorkoutPlanDetails.css';
 
@@ -38,19 +38,54 @@ const WorkoutPlanDetails = () => {
         return acc;
     }, {});
 
-    const handleDayClick = (dayPlan) => {
-        setSelectedDayWorkouts(dayPlan);
-        setSelectedExercise(null);
-    };
-
-    const handleExerciseClick = (exercise) => {
-        setSelectedExercise(exercise);
+    const openModal = (modalContent) => {
+        // Add body class to prevent scrolling
+        document.body.classList.add('modal-open');
+        
+        // Set the modal content
+        if (modalContent.type === 'day') {
+            setSelectedDayWorkouts(modalContent.data);
+            // DO NOT reset selectedExercise here
+        } else if (modalContent.type === 'exercise') {
+            setSelectedExercise(modalContent.data);
+            // Keep the day modal open
+        }
     };
 
     const closeModal = () => {
+        // Remove body class to restore scrolling
+        document.body.classList.remove('modal-open');
+        
+        // Clear modal content
         setSelectedDayWorkouts(null);
         setSelectedExercise(null);
     };
+
+    const handleDayClick = (dayPlan) => {
+        openModal({ type: 'day', data: dayPlan });
+    };
+
+    const handleExerciseClick = (exercise) => {
+        openModal({ type: 'exercise', data: exercise });
+    };
+
+    useEffect(() => {
+        const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        };
+
+        if (selectedDayWorkouts || selectedExercise) {
+            document.addEventListener('keydown', handleEscapeKey);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscapeKey);
+        };
+    }, [selectedDayWorkouts, selectedExercise]);
+
+    
 
     return (
         <div className="workout-plan-details">

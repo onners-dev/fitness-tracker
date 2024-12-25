@@ -4,6 +4,17 @@ import { userService } from '../services/api';
 import { workoutPlanService } from '../services/workoutApi';
 import './WorkoutPlanGenerate.css';
 
+const formatGoal = (goal) => {
+  const goalMap = {
+      'muscle_gain': 'Muscle Gain',
+      'weight_loss': 'Weight Loss',
+      'maintenance': 'Weight Maintenance',
+      'endurance': 'Endurance Training',
+      'general_fitness': 'Overall Fitness'
+  };
+  return goalMap[goal] || goal;
+};
+
 const WorkoutPlanGenerate = () => {
   const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState(null);
@@ -11,87 +22,95 @@ const WorkoutPlanGenerate = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [planName, setPlanName] = useState('');
-  const [isNamingPlan, setIsNamingPlan] = useState(false);
-
-  const formatGoal = (goal) => {
-    const goalMap = {
-      'muscle_gain': 'Muscle Gain',
-      'weight_loss': 'Weight Loss',
-      'maintenance': 'Weight Maintenance',
-      'endurance': 'Endurance Training',
-      'general_fitness': 'Overall Fitness'
-    };
-    return goalMap[goal] || goal;
-  };
+  const [isNamingPlan, setIsNamingPlan] = useState(true);
 
   useEffect(() => {
-    const fetchWorkoutPlan = async () => {
+    const fetchInitialData = async () => {
       try {
         const profile = await userService.getProfile();
         setUserProfile(profile);
-
-        const plan = await workoutPlanService.generateWorkoutPlan(profile);
-
-        if (!plan || !plan.workouts) {
-          throw new Error('No workout plan generated');
-        }
-
-        // Fetch detailed exercise information
-        const exerciseIds = Object.values(plan.workouts).reduce((acc, dayExercises) => {
-          return acc.concat(
-            Array.isArray(dayExercises)
-              ? dayExercises.map(exercise => exercise.exercise_id)
-              : []
-          );
-        }, []);
-
-        const exerciseDetails = exerciseIds.length > 0 
-          ? await workoutPlanService.getWorkoutPlanExerciseDetails(exerciseIds)
-          : [];
-
-        // Enrich plan with exercise details
-        const enrichedPlan = { ...plan };
-        Object.keys(enrichedPlan.workouts).forEach(day => {
-          if (Array.isArray(enrichedPlan.workouts[day])) {
-            enrichedPlan.workouts[day] = enrichedPlan.workouts[day].map(exercise => {
-              const details = exerciseDetails.find(detail => detail.exercise_id === exercise.exercise_id);
-              return { ...exercise, details };
-            });
-          }
-        });
-
-        setWorkoutPlan(enrichedPlan);
         setLoading(false);
-        setIsNamingPlan(true);
       } catch (err) {
-        console.error('Workout Plan Generation Error:', err);
-        setError(err.message || 'Failed to generate workout plan');
+        console.error('Error fetching profile:', err);
+        setError(err.message || 'Failed to load profile');
         setLoading(false);
       }
     };
 
-    fetchWorkoutPlan();
+    fetchInitialData();
   }, []);
 
-  const handleSavePlan = async () => {
+  const generateWorkoutPlan = async () => {
     if (!planName.trim()) {
       alert('Please enter a name for your workout plan');
       return;
     }
-
+  
     try {
-      // Save the plan with the provided name
-      const savedPlan = await workoutPlanService.createGeneratedWorkoutPlan({
-        ...workoutPlan,
+      setLoading(true);
+      const plan = await workoutPlanService.generateWorkoutPlan({
+        ...userProfile,
         planName: planName.trim()
       });
-
-      // Navigate to existing plans
+  
+      const exerciseIds = Object.values(plan.workouts).reduce((acc, dayExercises) => {
+        return acc.concat(
+          Array.isArray(dayExercises)
+            ? dayExercises.map(exercise => exercise.exercise_id)
+            : []
+        );
+      }, []);
+  
+      const exerciseDetails = exerciseIds.length > 0 
+        ? await workoutPlanService.getWorkoutPlanExerciseDetails(exerciseIds)
+        : [];
+  
+      const enrichedPlan = { 
+        ...plan, 
+        planName: planName.trim(),
+        workouts: { ...plan.workouts }
+      };
+  
+      Object.keys(enrichedPlan.workouts).forEach(day => {
+        if (Array.isArray(enrichedPlan.workouts[day])) {
+          enrichedPlan.workouts[day] = enrichedPlan.workouts[day].map(exercise => {
+            const details = exerciseDetails.find(detail => detail.exercise_id === exercise.exercise_id);
+            return { ...exercise, details };
+          });
+        }
+      });
+  
+      setWorkoutPlan(enrichedPlan);
+      setIsNamingPlan(false);
+      setLoading(false);
+    } catch (error) {
+      console.error('Workout Plan Generation Error:', error);
+      setError(error.message || 'Failed to generate workout plan');
+      setLoading(false);
+    }
+  };
+  
+  // Add a new method to save the plan
+  const saveWorkoutPlan = async () => {
+    try {
+      setLoading(true);
+      const savedPlan = await workoutPlanService.generateWorkoutPlan({
+        ...userProfile,
+        planName: planName.trim(),
+        saveAutomatically: 'true'
+      });
+  
       navigate('/workout-plans/existing');
     } catch (error) {
-      console.error('Error saving workout plan:', error);
-      alert('Failed to save workout plan');
+      console.error('Workout Plan Save Error:', error);
+      setError(error.message || 'Failed to save workout plan');
+      setLoading(false);
     }
+  };
+
+  const handlePlanNameChange = (e) => {
+    const value = e.target.value;
+    setPlanName(value);  // Make sure this updates the state
   };
 
   const renderDayWorkouts = (day, exercises) => {
@@ -107,7 +126,7 @@ const WorkoutPlanGenerate = () => {
             <div className="exercise-details">
               <p>Sets: {exercise.sets}</p>
               <p>Reps: {exercise.reps}</p>
-              <p>Muscle Groups: {exercise.details?.muscle_groups?.join(', ') || 'N/A'}</p>
+              <p>Muscle Groups: {exercise.muscle_groups?.join(', ') || 'N/A'}</p>
             </div>
           </div>
         ))}
@@ -115,7 +134,6 @@ const WorkoutPlanGenerate = () => {
     );
   };
 
-  // Plan Naming Modal
   const PlanNamingModal = () => {
     return (
       <div className="plan-naming-modal">
@@ -124,18 +142,26 @@ const WorkoutPlanGenerate = () => {
           <p>Give your personalized workout plan a memorable name</p>
           <input 
             type="text" 
-            placeholder="Enter plan name"
+            placeholder="Enter plan name (e.g., Summer Shred, Strength Builder)"
             value={planName}
-            onChange={(e) => setPlanName(e.target.value)}
+            onInput={(e) => {
+              e.stopPropagation();  // Prevent event bubbling
+              setPlanName(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();  // Additional prevention of event interference
+            }}
+            autoComplete="off"
+            autoFocus
             className="plan-name-input"
           />
           <div className="plan-naming-actions">
             <button 
-              onClick={handleSavePlan}
+              onClick={generateWorkoutPlan}
               disabled={!planName.trim()}
               className="save-plan-btn"
             >
-              Save Plan
+              Generate Plan
             </button>
             <button 
               onClick={() => navigate('/workout-plans/onboarding')}
@@ -148,6 +174,7 @@ const WorkoutPlanGenerate = () => {
       </div>
     );
   };
+  
 
   if (loading) {
     return (
@@ -173,31 +200,52 @@ const WorkoutPlanGenerate = () => {
   return (
     <>
       {isNamingPlan && <PlanNamingModal />}
-      <div className="workout-plan-generate">
-        <div className="plan-header">
-          <h1>Your Personalized Workout Plan</h1>
-          <div className="plan-summary">
-            <p>
-              <strong>Fitness Goal:</strong> {formatGoal(workoutPlan.fitnessGoal)}
-            </p>
-            {workoutPlan.planNotes && (
-              <div className="plan-notes">
-                <h3>Plan Insights</h3>
-                <p>{workoutPlan.planNotes}</p>
+      {workoutPlan ? (
+        <div className="workout-plan-generate">
+          <div className="plan-header">
+            <h1>Your Personalized Workout Plan</h1>
+            <div className="plan-actions">
+              <button 
+                onClick={saveWorkoutPlan} 
+                className="save-plan-btn"
+              >
+                Save This Plan
+              </button>
+              <button 
+                onClick={() => navigate('/workout-plans/customize')} 
+                className="customize-plan-btn"
+              >
+                Customize Plan
+              </button>
+            </div>
+            <div className="plan-summary">
+              <p>
+                <strong>Fitness Goal:</strong> {formatGoal(workoutPlan.fitnessGoal)}
+              </p>
+              {workoutPlan.planNotes && (
+                <div className="plan-notes">
+                  <h3>Plan Insights</h3>
+                  <p>{workoutPlan.planNotes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+  
+          <div className="workout-days-grid">
+            {Object.entries(workoutPlan.workouts).map(([day, exercises]) => (
+              <div key={day} className="workout-day">
+                <h2>{day}</h2>
+                {renderDayWorkouts(day, exercises)}
               </div>
-            )}
+            ))}
           </div>
         </div>
-
-        <div className="workout-days-grid">
-          {Object.entries(workoutPlan.workouts).map(([day, exercises]) => (
-            <div key={day} className="workout-day">
-              <h2>{day}</h2>
-              {renderDayWorkouts(day, exercises)}
-            </div>
-          ))}
+      ) : (
+        <div className="workout-plan-generate loading">
+          <div className="spinner"></div>
+          <p>Generating your personalized workout plan...</p>
         </div>
-      </div>
+      )}
     </>
   );
 };
