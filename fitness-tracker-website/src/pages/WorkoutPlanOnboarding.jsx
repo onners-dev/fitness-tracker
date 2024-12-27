@@ -34,7 +34,7 @@ const WorkoutPlanOnboarding = () => {
   const handleOptionSelect = () => {
     switch(selectedOption) {
       case 'auto-generate':
-        navigate('/workout-plans/generate');
+        navigate('/fitness-profile-onboarding');
         break;
       case 'custom-create':
         navigate('/workout-plans/builder');

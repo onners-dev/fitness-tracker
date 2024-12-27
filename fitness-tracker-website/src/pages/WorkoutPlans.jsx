@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { workoutPlanService } from '../services/workoutApi';
+import { workoutPlanService } from '../services/workoutPlanService';
 import { userService } from '../services/api';
 import './WorkoutPlans.css';
 
@@ -84,7 +84,12 @@ const WorkoutPlans = () => {
   // Delete a workout plan
   const handleDeletePlan = async (planId) => {
     try {
-      await workoutPlanService.deleteCustomWorkoutPlan(planId);
+      if (!window.confirm('Are you sure you want to delete this plan?')) {
+        return;
+      }
+
+      await workoutPlanService.deletePlan(planId); // Changed from deleteCustomWorkoutPlan to deletePlan
+      
       setWorkoutPlans(currentPlans => 
         currentPlans.filter(plan => plan.plan_id !== planId)
       );

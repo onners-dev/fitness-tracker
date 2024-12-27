@@ -1,0 +1,81 @@
+.fitness-profile-onboarding {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    padding: 20px;
+  }
+  
+  .onboarding-container {
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    width: 100%;
+    padding: 40px;
+    text-align: center;
+  }
+  
+  .onboarding-section {
+    margin-bottom: 30px;
+  }
+  
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .option {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .option:hover {
+    border-color: #007bff;
+  }
+  
+  .option.selected {
+    border-color: #007bff;
+    background-color: #e6f2ff;
+  }
+  
+  .option h3 {
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .option p {
+    color: #666;
+    font-size: 0.9em;
+  }
+  
+  .checkmark {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #007bff;
+    font-size: 20px;
+  }
+  
+  .continue-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .continue-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  

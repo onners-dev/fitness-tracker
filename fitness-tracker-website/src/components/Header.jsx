@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api';
-import { workoutPlanService } from '../services/workoutApi';
+import { workoutPlanService } from '../services/workoutPlanService';
 import './Header.css';
 
 const WorkoutPlansLink = ({ onClick, className }) => {

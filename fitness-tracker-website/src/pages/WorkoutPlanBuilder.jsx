@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { exerciseLibraryService, workoutPlanService } from '../services/workoutApi';
+import { exerciseLibraryService } from '../services/workoutApi';
+import { workoutPlanService } from '../services/workoutPlanService';
 import './WorkoutPlanBuilder.css';
 
 const WorkoutPlanBuilder = () => {

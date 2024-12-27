@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { workoutService, exerciseLibraryService, workoutPlanService } from '../services/workoutApi';
+import { workoutService, exerciseLibraryService } from '../services/workoutApi';
+import { workoutPlanService } from '../services/workoutPlanService';
 import { useLocation } from 'react-router-dom';
 import './WorkoutLogging.css';
 

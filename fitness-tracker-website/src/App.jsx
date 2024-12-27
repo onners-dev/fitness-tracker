@@ -31,6 +31,7 @@ import WorkoutPlanBuilder from './pages/WorkoutPlanBuilder';
 import WorkoutPlanGenerate from './pages/WorkoutPlanGenerate';
 import WorkoutPlanOnboarding from './pages/WorkoutPlanOnboarding';
 import WorkoutPlanDetails from './pages/WorkoutPlanDetails';
+import FitnessProfileOnboarding from './pages/FitnessProfileOnboarding';
 
 
 function App() {
@@ -164,6 +165,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/fitness-profile-onboarding"
+              element={
+                <ProtectedRoute>
+                  <FitnessProfileOnboarding />
+                </ProtectedRoute>
+              }
+            />  
             <Route 
               path="/admin" 
               element={

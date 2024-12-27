@@ -1,42 +1,8 @@
 const router = require('express').Router();
 const pool = require('../db');
 const authorization = require('../middleware/authorization');
+const workoutPlanGenerator = require('../services/workoutPlanGenerator');
 
-
-
-
-function generatePlanNotes(fitnessGoal, activityLevel, primaryFocus) {
-    const goalNotes = {
-        'weight_loss': 'Focus on high-intensity exercises and maintain a calorie deficit.',
-        'muscle_gain': 'Prioritize progressive overload and adequate protein intake.',
-        'maintenance': 'Maintain a balanced approach to strength and cardiovascular fitness.',
-        'endurance': 'Gradually increase workout intensity and duration.',
-        'general_fitness': 'Mix different types of exercises for overall fitness.'
-    };
-
-    const activityNotes = {
-        'sedentary': 'Start slow and gradually increase workout intensity.',
-        'lightly_active': 'Consistently challenge yourself while avoiding overexertion.',
-        'moderately_active': 'Maintain a steady progression in your fitness journey.',
-        'very_active': 'Continue pushing your limits with varied and intense workouts.'
-    };
-
-    const focusNotes = {
-        'strength': 'Emphasize compound movements and progressive overload.',
-        'cardio': 'Incorporate varied cardiovascular exercises.',
-        'flexibility': 'Include dynamic stretching and mobility work.',
-        'weight_management': 'Balance strength training with cardiovascular exercises.',
-        'overall_wellness': 'Maintain a holistic approach to fitness and health.',
-        '': 'Develop a well-rounded fitness approach.'
-    };
-
-    // Safely retrieve notes with fallback
-    const goalNote = goalNotes[fitnessGoal] || 'Pursue your fitness goals consistently.';
-    const activityNote = activityNotes[activityLevel] || 'Listen to your body and progress gradually.';
-    const focusNote = focusNotes[primaryFocus] || 'Maintain a balanced fitness routine.';
-
-    return `${goalNote} ${activityNote} ${focusNote} Always listen to your body and adjust the plan as needed.`;
-}
 
 router.get('/', authorization, async (req, res) => {
     const client = await pool.connect();
@@ -467,918 +433,453 @@ router.get('/plans', authorization, async (req, res) => {
     }
 });
 
-
-router.get('/plans/generate', authorization, async (req, res) => {
+router.post('/plans/generate', authorization, async (req, res) => {
     const client = await pool.connect();
+    let planId = null;
 
     try {
-        // Extract query parameters
         const { 
-            fitnessGoal, 
-            activityLevel, 
-            primaryFocus, 
-            planName,
-            saveAutomatically
-        } = req.query;
-        const userId = req.user.user_id;
+            fitness_goal, 
+            activity_level, 
+            primary_focus = '',
+            plan_name,
+            plan_id  // for updating existing plan
+        } = req.body;
 
-        // Validate parameters
-        if (!fitnessGoal) {
+        // Validate required inputs
+        if (!fitness_goal || !activity_level) {
             return res.status(400).json({
-                message: 'Fitness goal is required',
-                userProfile: req.query
+                message: 'Missing required parameters: fitness_goal and activity_level are required',
+                receivedParams: { fitness_goal, activity_level }
             });
         }
 
+        // Validate fitness goal and activity level values
+        const validFitnessGoals = [
+            'muscle_gain', 'weight_loss', 'maintenance', 'endurance', 'general_fitness'
+        ];
+        const validActivityLevels = [
+            'sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'
+        ];
 
-        const finalPlanName = planName || (() => {
-            switch(fitnessGoal) {
-                case 'muscle_gain': return 'Muscle Gain Plan';
-                case 'weight_loss': return 'Weight Loss Plan';
-                case 'maintenance': return 'Maintenance Plan';
-                case 'endurance': return 'Endurance Plan';
-                default: return 'Workout Plan';
-            }
-        })();
-
-        // Check for existing plan
-        const existingPlanQuery = `
-            SELECT plan_id, fitness_goal, activity_level, created_at
-            FROM user_workout_plans
-            WHERE user_id = $1 AND fitness_goal = $2 AND activity_level = $3
-            ORDER BY created_at DESC
-            LIMIT 1
-        `;
-        const existingPlanResult = await client.query(existingPlanQuery, [userId, fitnessGoal, activityLevel]);
-
-        if (existingPlanResult.rows.length > 0) {
-            const existingPlan = existingPlanResult.rows[0];
-            console.log('Returning existing workout plan:', existingPlan.plan_id);
-
-            // Fetch workouts for the existing plan
-            const workoutsQuery = `
-                WITH muscle_groups_agg AS (
-                    SELECT 
-                        e.exercise_id,
-                        array_agg(DISTINCT mg.name) AS muscle_groups
-                    FROM exercises e
-                    JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                    JOIN muscles m ON em.muscle_id = m.muscle_id
-                    JOIN muscle_groups mg ON m.group_id = mg.group_id
-                    GROUP BY e.exercise_id
-                )
-                SELECT wpd.day_of_week, json_agg(
-                    json_build_object(
-                        'exercise_id', e.exercise_id,
-                        'name', e.name,
-                        'sets', wpe.sets,
-                        'reps', wpe.reps,
-                        'description', e.description,
-                        'equipment', e.equipment,
-                        'difficulty', e.difficulty,
-                        'instructions', e.instructions,
-                        'video_url', e.video_url,
-                        'muscle_groups', mg.muscle_groups
-                    )
-                ) AS exercises
-                FROM workout_plan_days wpd
-                JOIN workout_plan_exercises wpe ON wpd.plan_day_id = wpe.plan_day_id
-                JOIN exercises e ON wpe.exercise_id = e.exercise_id
-                JOIN muscle_groups_agg mg ON e.exercise_id = mg.exercise_id
-                WHERE wpd.plan_id = $1
-                GROUP BY wpd.day_of_week
-            `;
-            const workoutsResult = await client.query(workoutsQuery, [existingPlan.plan_id]);
-
-            const workouts = workoutsResult.rows.reduce((acc, row) => {
-                acc[row.day_of_week] = row.exercises;
-                return acc;
-            }, {});
-
-            return res.json({
-                workoutPlanId: existingPlan.plan_id,
-                workouts,
-                planNotes: generatePlanNotes(fitnessGoal, activityLevel, primaryFocus)
+        if (!validFitnessGoals.includes(fitness_goal)) {
+            return res.status(400).json({
+                message: 'Invalid fitness goal',
+                received: fitness_goal,
+                valid: validFitnessGoals
             });
         }
 
-        // If no existing plan, generate a new one
-        const workoutDaysMap = {
-            'sedentary': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Thursday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Friday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Saturday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Sunday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] }
-            ],
-            'lightly_active': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
-                { day: 'Friday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Saturday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Sunday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] }
-            ],
-            'moderately_active': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
-                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Thursday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
-                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Obliques'] },
-                { day: 'Saturday', muscleGroups: ['Upper Body'], specificMuscles: ['Shoulders'] },
-                { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
-            ],
-            'very_active': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
-                { day: 'Wednesday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
-                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Calves', 'Glutes'] },
-                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Obliques'] },
-                { day: 'Saturday', muscleGroups: ['Upper Body'], specificMuscles: ['Shoulders'] },
-                { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
-            ],
-            'extremely_active': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
-                { day: 'Wednesday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
-                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Calves', 'Glutes'] },
-                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Obliques'] },
-                { day: 'Saturday', muscleGroups: ['Upper Body'], specificMuscles: ['Shoulders'] },
-                { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
-            ]
-        };
+        if (!validActivityLevels.includes(activity_level)) {
+            return res.status(400).json({
+                message: 'Invalid activity level',
+                received: activity_level,
+                valid: validActivityLevels
+            });
+        }
 
-        const workoutDays = workoutDaysMap[activityLevel] || workoutDaysMap['very_active'];
-        const allExercises = [];
-
-        // Insert workout plan
         await client.query('BEGIN');
-        const planResult = await client.query(
-            `INSERT INTO user_workout_plans 
-            (user_id, plan_name, fitness_goal, activity_level, primary_focus) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING plan_id`,
-            [
-                userId, 
-                finalPlanName,  // Use the final plan name here 
-                fitnessGoal, 
-                activityLevel, 
-                primaryFocus
-            ]
+
+        // Check for any pending transaction for the same user
+        const pendingCheck = await client.query(
+            `SELECT plan_id FROM user_workout_plans 
+             WHERE user_id = $1 
+             AND created_at > NOW() - INTERVAL '5 seconds'`,
+            [req.user.user_id]
         );
-        const planId = planResult.rows[0].plan_id;
 
-        // Process each workout day
-        for (let dayInfo of workoutDays) {
-            // Special handling for Rest days
-            if (dayInfo.muscleGroups.includes('Rest')) {
-                // Insert plan day for Rest
-                const dayResult = await client.query(
-                    `INSERT INTO workout_plan_days 
-                    (plan_id, day_of_week, focus) 
-                    VALUES ($1, $2, $3) 
-                    RETURNING plan_day_id`,
-                    [planId, dayInfo.day, 'Rest']
-                );
-                const planDayId = dayResult.rows[0].plan_day_id;
+        if (pendingCheck.rows.length > 0 && !plan_id) {
+            await client.query('ROLLBACK');
+            return res.status(429).json({
+                message: 'Please wait a moment before creating another plan',
+                existingPlanId: pendingCheck.rows[0].plan_id
+            });
+        }
 
-                // Create a Rest Day entry
-                const restExercise = {
-                    exercise_id: 0,
-                    name: 'Rest Day',
-                    difficulty: 'Rest',
-                    equipment: 'None',
-                    video_url: 'Rest and recovery',
-                    muscle_groups: ['Rest'],
-                    muscles: ['Rest']
-                };
+        if (plan_id) {
+            // Verify plan exists and belongs to user
+            const existingPlan = await client.query(
+                `SELECT plan_id FROM user_workout_plans 
+                 WHERE plan_id = $1 AND user_id = $2`,
+                [plan_id, req.user.user_id]
+            );
 
-                // Add to allExercises
-                allExercises.push({
-                    ...restExercise,
-                    sets: 0,
-                    reps: 0,
-                    day: dayInfo.day,
-                    description: exercise.description || '',
-                    equipment: exercise.equipment || '',
-                    difficulty: exercise.difficulty || '',
-                    instructions: exercise.instructions || '',
-                    video_url: exercise.video_url || ''
-                });
-
-                continue; // Skip to next day
+            if (existingPlan.rows.length === 0) {
+                throw new Error('Plan not found or unauthorized');
             }
 
-            // Special handling for Recovery days
-            if (dayInfo.muscleGroups.includes('Recovery')) {
-                const recoveryExercises = await client.query(
-                    `SELECT 
-                        e.exercise_id, 
-                        e.name, 
-                        e.description,
-                        e.difficulty,
-                        e.equipment,
-                        e.video_url,
-                        array_agg(DISTINCT mg.name) AS muscle_groups,
-                        array_agg(DISTINCT m.name) AS muscles
-                    FROM exercises e
-                    JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                    JOIN muscles m ON em.muscle_id = m.muscle_id
-                    JOIN muscle_groups mg ON m.group_id = mg.group_id
-                    WHERE mg.name = 'Recovery'
-                    GROUP BY 
-                        e.exercise_id, 
-                        e.name, 
-                        e.description, 
-                        e.difficulty,
-                        e.equipment,
-                        e.video_url
-                    ORDER BY RANDOM()
-                    LIMIT 4`
-                );
+            planId = plan_id;
 
-                // Insert plan day for Recovery
-                const dayResult = await client.query(
-                    `INSERT INTO workout_plan_days 
-                    (plan_id, day_of_week, focus) 
-                    VALUES ($1, $2, $3) 
-                    RETURNING plan_day_id`,
-                    [planId, dayInfo.day, 'Recovery']
-                );
-                const planDayId = dayResult.rows[0].plan_day_id;
+            // Update existing plan metadata
+            await client.query(
+                `UPDATE user_workout_plans 
+                 SET plan_name = $1,
+                     fitness_goal = $2,
+                     activity_level = $3,
+                     primary_focus = $4,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE plan_id = $5`,
+                [plan_name, fitness_goal, activity_level, primary_focus, planId]
+            );
 
-                // Insert recovery exercises
-                for (let [index, exercise] of recoveryExercises.rows.entries()) {
-                    await client.query(
-                        `INSERT INTO workout_plan_exercises 
-                        (plan_day_id, exercise_id, sets, reps, order_index) 
-                        VALUES ($1, $2, $3, $4, $5)`,
-                        [planDayId, exercise.exercise_id, 2, 12, index + 1]
-                    );
+            // Clear existing exercises and days
+            await client.query(
+                `DELETE FROM workout_plan_exercises 
+                 WHERE plan_day_id IN (
+                     SELECT plan_day_id 
+                     FROM workout_plan_days 
+                     WHERE plan_id = $1
+                 )`,
+                [planId]
+            );
+            await client.query(
+                `DELETE FROM workout_plan_days 
+                 WHERE plan_id = $1`,
+                [planId]
+            );
 
-                    allExercises.push({
-                        ...exercise,
-                        sets: 2,
-                        reps: 12,
-                        day: dayInfo.day,
-                        description: exercise.description || '',
-                        equipment: exercise.equipment || '',
-                        difficulty: exercise.difficulty || '',
-                        instructions: exercise.instructions || '',
-                        video_url: exercise.video_url || ''
-                    });
-                }
-
-                continue; // Skip to next day
-            }
-
-            // Existing logic for workout days
-            const exercisesResult = await client.query(
-                `WITH exercise_muscles_agg AS (
-                    SELECT 
-                        e.exercise_id, 
-                        array_agg(DISTINCT mg.name) AS muscle_groups,
-                        array_agg(DISTINCT m.name) AS muscles
-                    FROM exercises e
-                    JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                    JOIN muscles m ON em.muscle_id = m.muscle_id
-                    JOIN muscle_groups mg ON m.group_id = mg.group_id
-                    GROUP BY e.exercise_id
-                )
-                SELECT DISTINCT 
-                    e.exercise_id, 
-                    e.name, 
-                    e.difficulty,
-                    e.equipment,
-                    e.video_url,
-                    em.muscle_groups,
-                    em.muscles
-                FROM exercises e
-                JOIN exercise_muscles_agg em ON e.exercise_id = em.exercise_id
-                WHERE 
-                    (em.muscle_groups && $1 OR em.muscles && $1)
-                    AND em.muscles && $2
-                    AND (
-                        CASE 
-                            WHEN $3 = 'weight_loss' THEN e.difficulty IN ('Beginner', 'Intermediate')
-                            WHEN $3 = 'muscle_gain' THEN e.difficulty IN ('Intermediate', 'Advanced')
-                            ELSE true
-                        END
-                    )
-                    AND (
-                        $4 = 'very_active' OR 
-                        ($4 IN ('moderately_active', 'lightly_active') AND e.difficulty != 'Advanced')
-                    )
-                LIMIT 4`,
+            console.log('Existing plan updated:', planId);
+        } else {
+            // Create new plan
+            const newPlanResult = await client.query(
+                `INSERT INTO user_workout_plans 
+                (user_id, plan_name, fitness_goal, activity_level, primary_focus, status) 
+                VALUES ($1, $2, $3, $4, $5, $6) 
+                RETURNING plan_id`,
                 [
-                    dayInfo.muscleGroups, 
-                    dayInfo.specificMuscles, 
-                    fitnessGoal, 
-                    activityLevel
+                    req.user.user_id,
+                    plan_name || `${fitness_goal.replace('_', ' ').toUpperCase()} Plan`,
+                    fitness_goal,
+                    activity_level,
+                    primary_focus,
+                    'active'
                 ]
             );
+            planId = newPlanResult.rows[0].plan_id;
+            console.log('New plan created:', planId);
+        }
 
-            if (activityLevel === 'sedentary') {
-                // If no exercises found, create default bodyweight exercises
-                if (exercisesResult.rows.length === 0) {
-                    exercisesResult.rows = [
-                        {
-                            exercise_id: 0,
-                            name: 'Wall Push-Ups',
-                            difficulty: 'Beginner',
-                            equipment: 'Bodyweight',
-                            video_url: '',
-                            muscle_groups: ['Upper Body'],
-                            muscles: ['Chest', 'Triceps']
-                        },
-                        {
-                            exercise_id: 1,
-                            name: 'Assisted Dips',
-                            difficulty: 'Beginner',
-                            equipment: 'Bodyweight',
-                            video_url: '',
-                            muscle_groups: ['Upper Body'],
-                            muscles: ['Triceps', 'Chest']
-                        }
-                    ];
-                }
-            }
+        // Verify plan exists
+        const planVerification = await client.query(
+            `SELECT * FROM user_workout_plans WHERE plan_id = $1`,
+            [planId]
+        );
 
-            // Log exercise selection details
-            console.log(`Exercises for ${dayInfo.day}:`, {
-                muscleGroups: dayInfo.muscleGroups,
-                specificMuscles: dayInfo.specificMuscles,
-                exerciseCount: exercisesResult.rowCount,
-                exercises: exercisesResult.rows
-            });
+        if (!planVerification.rows.length) {
+            throw new Error('Plan verification failed');
+        }
 
-            // Insert plan day
-            const dayResult = await client.query(
-                `INSERT INTO workout_plan_days 
-                (plan_id, day_of_week, focus) 
-                VALUES ($1, $2, $3) 
-                RETURNING plan_day_id`,
-                [planId, dayInfo.day, dayInfo.muscleGroups.join(' and ')]
-            );
-            const planDayId = dayResult.rows[0].plan_day_id;
+        console.log('Generating workout days for plan:', planId);
 
-            // Insert exercises for this day
-            for (let [index, exercise] of exercisesResult.rows.entries()) {
-                await client.query(
-                    `INSERT INTO workout_plan_exercises 
-                    (plan_day_id, exercise_id, sets, reps, order_index) 
-                    VALUES ($1, $2, $3, $4, $5)`,
-                    [planDayId, exercise.exercise_id, 3, 12, index + 1]
-                );
+        // Generate workout days and exercises
+        const generatedPlan = await workoutPlanGenerator.generatePlan(client, req.user.user_id, {
+            fitnessGoal: fitness_goal,
+            activityLevel: activity_level,
+            primaryFocus: primary_focus,
+            planName: plan_name,
+            planId: planId
+        });
 
-                allExercises.push({
-                    ...exercise,
-                    sets: 3,
-                    reps: 12,
-                    day: dayInfo.day,
-                    description: exercise.description || '',
-                    equipment: exercise.equipment || '',
-                    difficulty: exercise.difficulty || '',
-                    instructions: exercise.instructions || '',
-                    video_url: exercise.video_url || ''
-                });
-            }
+        // Verify workout days were created
+        const daysVerification = await client.query(
+            `SELECT COUNT(*) as day_count 
+             FROM workout_plan_days 
+             WHERE plan_id = $1`,
+            [planId]
+        );
+
+        console.log('Days created for plan:', {
+            planId,
+            dayCount: daysVerification.rows[0].day_count
+        });
+
+        if (daysVerification.rows[0].day_count === 0) {
+            throw new Error('No workout days were created');
         }
 
         await client.query('COMMIT');
 
-        // Construct workouts object
-        const workouts = workoutDays.reduce((acc, day) => {
-            acc[day.day] = allExercises
-                .filter(ex => ex.day === day.day)
-                .map(ex => ({
-                    exercise_id: ex.exercise_id,
-                    name: ex.name,
-                    sets: ex.sets,
-                    reps: ex.reps,
-                    difficulty: ex.difficulty,
-                    equipment: ex.equipment,
-                    muscle_groups: ex.muscle_groups,
-                    description: ex.description,
-                    instructions: ex.instructions,
-                    video_url: ex.video_url
-                }));
-            return acc;
-        }, {});
-
-        // Generate plan notes
-        const planNotes = generatePlanNotes(fitnessGoal, activityLevel, primaryFocus);
-
-        // Respond with workout plan
-        res.json({ 
-            workoutPlanId: planId, 
-            workouts,
-            planName: finalPlanName,
-            planNotes
+        return res.json({
+            ...generatedPlan,
+            workoutPlanId: planId,
+            message: plan_id ? 'Plan updated successfully' : 'New plan created successfully'
         });
-        
+
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Full Error Details:', {
-            message: error.message,
+        console.error('Plan Generation Error:', {
+            error: error.message,
             stack: error.stack,
-            query: req.query
+            userId: req.user.user_id,
+            requestBody: req.body,
+            planId: planId
         });
-
+        
         res.status(500).json({ 
             message: 'Error generating workout plan',
             error: error.message,
-            details: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     } finally {
         client.release();
     }
 });
 
-router.post('/plans/generate-save', authorization, async (req, res) => {
+
+
+router.get('/plans/:planId', authorization, async (req, res) => {
     const client = await pool.connect();
+
     try {
-        // Extract query parameters
-        const { 
-            fitnessGoal, 
-            activityLevel, 
-            primaryFocus, 
-            planName,
-            saveAutomatically
-        } = req.query;
-        const userId = req.user.user_id;
-    
-        // Validate parameters
-        if (!fitnessGoal) {
-            return res.status(400).json({
-                message: 'Fitness goal is required',
-                userProfile: req.query
+        const planId = req.params.planId;
+        
+        console.log('Fetching plan details:', {
+            planId,
+            userId: req.user.user_id
+        });
+
+        // First verify the plan exists and belongs to user
+        const planCheck = await client.query(
+            `SELECT EXISTS(
+                SELECT 1 FROM user_workout_plans 
+                WHERE plan_id = $1 AND user_id = $2
+            )`,
+            [planId, req.user.user_id]
+        );
+
+        if (!planCheck.rows[0].exists) {
+            console.log('Plan not found or unauthorized:', {
+                planId,
+                userId: req.user.user_id
+            });
+            return res.status(404).json({ 
+                message: 'Workout plan not found or unauthorized',
+                planId: planId
             });
         }
-    
-        const finalPlanName = planName || (() => {
-            switch(fitnessGoal) {
-                case 'muscle_gain': return 'Muscle Gain Plan';
-                case 'weight_loss': return 'Weight Loss Plan';
-                case 'maintenance': return 'Maintenance Plan';
-                case 'endurance': return 'Endurance Plan';
-                default: return 'Workout Plan';
-            }
-        })();
-    
-        // Check for existing plan
-        const existingPlanQuery = `
-            SELECT plan_id, fitness_goal, activity_level, created_at
-            FROM user_workout_plans
-            WHERE user_id = $1 AND fitness_goal = $2 AND activity_level = $3
-            ORDER BY created_at DESC
-            LIMIT 1
-        `;
-        const existingPlanResult = await client.query(existingPlanQuery, [userId, fitnessGoal, activityLevel]);
-    
-        if (existingPlanResult.rows.length > 0) {
-            const existingPlan = existingPlanResult.rows[0];
-            console.log('Returning existing workout plan:', existingPlan.plan_id);
-    
-            // Fetch workouts for the existing plan
-            const workoutsQuery = `
-                WITH muscle_groups_agg AS (
-                    SELECT 
-                        e.exercise_id,
-                        array_agg(DISTINCT mg.name) AS muscle_groups
-                    FROM exercises e
-                    JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                    JOIN muscles m ON em.muscle_id = m.muscle_id
-                    JOIN muscle_groups mg ON m.group_id = mg.group_id
-                    GROUP BY e.exercise_id
-                )
-                SELECT wpd.day_of_week, json_agg(
-                    json_build_object(
-                        'exercise_id', e.exercise_id,
-                        'name', e.name,
-                        'sets', wpe.sets,
-                        'reps', wpe.reps,
-                        'description', e.description,
-                        'equipment', e.equipment,
-                        'difficulty', e.difficulty,
-                        'instructions', e.instructions,
-                        'video_url', e.video_url,
-                        'muscle_groups', mg.muscle_groups
-                    )
-                ) AS exercises
-                FROM workout_plan_days wpd
-                JOIN workout_plan_exercises wpe ON wpd.plan_day_id = wpe.plan_day_id
+
+        const query = `
+            WITH exercise_details AS (
+                SELECT
+                    wpe.plan_day_id,
+                    e.exercise_id,
+                    e.name,
+                    e.description,
+                    e.equipment,
+                    e.difficulty,
+                    e.instructions,
+                    e.video_url,
+                    wpe.sets,
+                    wpe.reps,
+                    array_agg(DISTINCT mg.name) AS muscle_groups
+                FROM workout_plan_exercises wpe
                 JOIN exercises e ON wpe.exercise_id = e.exercise_id
-                JOIN muscle_groups_agg mg ON e.exercise_id = mg.exercise_id
-                WHERE wpd.plan_id = $1
-                GROUP BY wpd.day_of_week
-            `;
-            const workoutsResult = await client.query(workoutsQuery, [existingPlan.plan_id]);
-    
-            const workouts = workoutsResult.rows.reduce((acc, row) => {
-                acc[row.day_of_week] = row.exercises;
-                return acc;
-            }, {});
-    
-            const planResponse = {
-                workoutPlanId: existingPlan.plan_id,
-                workouts,
-                planName: finalPlanName,
-                planNotes: generatePlanNotes(fitnessGoal, activityLevel, primaryFocus)
-            };
-    
-            // If saveAutomatically is true, save the existing plan
-            if (saveAutomatically === 'true') {
-                await client.query('BEGIN');
-                
-                // Save the existing plan again (this will create a new entry)
-                const newPlanResult = await client.query(
-                    `INSERT INTO user_workout_plans 
-                    (user_id, plan_name, fitness_goal, activity_level, primary_focus) 
-                    VALUES ($1, $2, $3, $4, $5) 
-                    RETURNING plan_id`,
-                    [
-                        userId, 
-                        finalPlanName,
-                        fitnessGoal, 
-                        activityLevel, 
-                        primaryFocus
-                    ]
-                );
-                const newPlanId = newPlanResult.rows[0].plan_id;
-    
-                // Copy plan days and exercises
-                const copyPlanDaysQuery = `
-                    INSERT INTO workout_plan_days (plan_id, day_of_week, focus)
-                    SELECT $1, day_of_week, focus
-                    FROM workout_plan_days
-                    WHERE plan_id = $2
-                    RETURNING plan_day_id, day_of_week
-                `;
-                const copiedDaysResult = await client.query(copyPlanDaysQuery, [newPlanId, existingPlan.plan_id]);
-    
-                // Copy exercises for each day
-                for (const dayRow of copiedDaysResult.rows) {
-                    const oldPlanDay = await client.query(
-                        `SELECT plan_day_id FROM workout_plan_days 
-                        WHERE plan_id = $1 AND day_of_week = $2`,
-                        [existingPlan.plan_id, dayRow.day_of_week]
-                    );
-    
-                    await client.query(
-                        `INSERT INTO workout_plan_exercises 
-                        (plan_day_id, exercise_id, sets, reps, order_index)
-                        SELECT $1, exercise_id, sets, reps, order_index
-                        FROM workout_plan_exercises
-                        WHERE plan_day_id = $2`,
-                        [dayRow.plan_day_id, oldPlanDay.rows[0].plan_day_id]
-                    );
-                }
-    
-                await client.query('COMMIT');
-    
-                // Update the response with the new plan ID
-                planResponse.workoutPlanId = newPlanId;
-            }
-    
-            return res.json(planResponse);
-        }
-        // If no existing plan, generate a new one
-        const workoutDaysMap = {
-            'sedentary': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Thursday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Friday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Saturday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Sunday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] }
-            ],
-            'lightly_active': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
-                { day: 'Friday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Saturday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Sunday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] }
-            ],
-            'moderately_active': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
-                { day: 'Wednesday', muscleGroups: ['Rest'], specificMuscles: ['Rest'] },
-                { day: 'Thursday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
-                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Obliques'] },
-                { day: 'Saturday', muscleGroups: ['Upper Body'], specificMuscles: ['Shoulders'] },
-                { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
-            ],
-            'very_active': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
-                { day: 'Wednesday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
-                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Calves', 'Glutes'] },
-                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Obliques'] },
-                { day: 'Saturday', muscleGroups: ['Upper Body'], specificMuscles: ['Shoulders'] },
-                { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
-            ],
-            'extremely_active': [
-                { day: 'Monday', muscleGroups: ['Upper Body'], specificMuscles: ['Chest', 'Triceps'] },
-                { day: 'Tuesday', muscleGroups: ['Lower Body'], specificMuscles: ['Quadriceps', 'Hamstrings'] },
-                { day: 'Wednesday', muscleGroups: ['Upper Body'], specificMuscles: ['Back', 'Biceps'] },
-                { day: 'Thursday', muscleGroups: ['Lower Body'], specificMuscles: ['Calves', 'Glutes'] },
-                { day: 'Friday', muscleGroups: ['Core'], specificMuscles: ['Abs', 'Obliques'] },
-                { day: 'Saturday', muscleGroups: ['Upper Body'], specificMuscles: ['Shoulders'] },
-                { day: 'Sunday', muscleGroups: ['Recovery'], specificMuscles: ['Mobility', 'Stretching'] }
-            ]
-        };
-    
-        const workoutDays = workoutDaysMap[activityLevel] || workoutDaysMap['very_active'];
-        const allExercises = [];
-        
-        // Insert workout plan
-        await client.query('BEGIN');
-        const planResult = await client.query(
-            `INSERT INTO user_workout_plans 
-            (user_id, plan_name, fitness_goal, activity_level, primary_focus) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING plan_id`,
-            [
-                userId, 
-                finalPlanName,  // Use the final plan name here 
-                fitnessGoal, 
-                activityLevel, 
-                primaryFocus
-            ]
-        );
-        const planId = planResult.rows[0].plan_id;
-        // Process each workout day
-        for (let dayInfo of workoutDays) {
-            // Special handling for Rest days
-            if (dayInfo.muscleGroups.includes('Rest')) {
-                // Insert plan day for Rest
-                const dayResult = await client.query(
-                    `INSERT INTO workout_plan_days 
-                    (plan_id, day_of_week, focus) 
-                    VALUES ($1, $2, $3) 
-                    RETURNING plan_day_id`,
-                    [planId, dayInfo.day, 'Rest']
-                );
-                const planDayId = dayResult.rows[0].plan_day_id;
-    
-                // Create a Rest Day entry
-                const restExercise = {
-                    exercise_id: 0,
-                    name: 'Rest Day',
-                    difficulty: 'Rest',
-                    equipment: 'None',
-                    video_url: 'Rest and recovery',
-                    muscle_groups: ['Rest'],
-                    muscles: ['Rest']
-                };
-    
-                // Add to allExercises
-                allExercises.push({
-                    ...restExercise,
-                    sets: 0,
-                    reps: 0,
-                    day: dayInfo.day,
-                    description: restExercise.description || '',
-                    equipment: restExercise.equipment || '',
-                    difficulty: restExercise.difficulty || '',
-                    instructions: restExercise.instructions || '',
-                    video_url: restExercise.video_url || ''
-                });
-    
-                continue; // Skip to next day
-            }
-    
-            // Special handling for Recovery days
-            if (dayInfo.muscleGroups.includes('Recovery')) {
-                const recoveryExercises = await client.query(
-                    `SELECT 
-                        e.exercise_id, 
-                        e.name, 
-                        e.description,
-                        e.difficulty,
-                        e.equipment,
-                        e.video_url,
-                        array_agg(DISTINCT mg.name) AS muscle_groups,
-                        array_agg(DISTINCT m.name) AS muscles
-                    FROM exercises e
-                    JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                    JOIN muscles m ON em.muscle_id = m.muscle_id
-                    JOIN muscle_groups mg ON m.group_id = mg.group_id
-                    WHERE mg.name = 'Recovery'
-                    GROUP BY 
-                        e.exercise_id, 
-                        e.name, 
-                        e.description, 
-                        e.difficulty,
-                        e.equipment,
-                        e.video_url
-                    ORDER BY RANDOM()
-                    LIMIT 4`
-                );
-    
-                // Insert plan day for Recovery
-                const dayResult = await client.query(
-                    `INSERT INTO workout_plan_days 
-                    (plan_id, day_of_week, focus) 
-                    VALUES ($1, $2, $3) 
-                    RETURNING plan_day_id`,
-                    [planId, dayInfo.day, 'Recovery']
-                );
-                const planDayId = dayResult.rows[0].plan_day_id;
-    
-                // Insert recovery exercises
-                for (let [index, exercise] of recoveryExercises.rows.entries()) {
-                    await client.query(
-                        `INSERT INTO workout_plan_exercises 
-                        (plan_day_id, exercise_id, sets, reps, order_index) 
-                        VALUES ($1, $2, $3, $4, $5)`,
-                        [planDayId, exercise.exercise_id, 2, 12, index + 1]
-                    );
-    
-                    allExercises.push({
-                        ...exercise,
-                        sets: 2,
-                        reps: 12,
-                        day: dayInfo.day,
-                        description: exercise.description || '',
-                        equipment: exercise.equipment || '',
-                        difficulty: exercise.difficulty || '',
-                        instructions: exercise.instructions || '',
-                        video_url: exercise.video_url || ''
-                    });
-                }
-    
-                continue; // Skip to next day
-            }
-            // Existing logic for workout days
-            const exercisesResult = await client.query(
-                `WITH exercise_muscles_agg AS (
-                    SELECT 
-                        e.exercise_id, 
-                        array_agg(DISTINCT mg.name) AS muscle_groups,
-                        array_agg(DISTINCT m.name) AS muscles
-                    FROM exercises e
-                    JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                    JOIN muscles m ON em.muscle_id = m.muscle_id
-                    JOIN muscle_groups mg ON m.group_id = mg.group_id
-                    GROUP BY e.exercise_id
-                )
-                SELECT DISTINCT 
+                JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+                JOIN muscles m ON em.muscle_id = m.muscle_id
+                JOIN muscle_groups mg ON m.group_id = mg.group_id
+                GROUP BY 
+                    wpe.plan_day_id, 
                     e.exercise_id, 
                     e.name, 
-                    e.difficulty,
+                    e.description,
                     e.equipment,
+                    e.difficulty,
+                    e.instructions,
                     e.video_url,
-                    em.muscle_groups,
-                    em.muscles
-                FROM exercises e
-                JOIN exercise_muscles_agg em ON e.exercise_id = em.exercise_id
-                WHERE 
-                    (em.muscle_groups && $1 OR em.muscles && $1)
-                    AND em.muscles && $2
-                    AND (
-                        CASE 
-                            WHEN $3 = 'weight_loss' THEN e.difficulty IN ('Beginner', 'Intermediate')
-                            WHEN $3 = 'muscle_gain' THEN e.difficulty IN ('Intermediate', 'Advanced')
-                            ELSE true
-                        END
-                    )
-                    AND (
-                        $4 = 'very_active' OR 
-                        ($4 IN ('moderately_active', 'lightly_active') AND e.difficulty != 'Advanced')
-                    )
-                LIMIT 4`,
-                [
-                    dayInfo.muscleGroups, 
-                    dayInfo.specificMuscles, 
-                    fitnessGoal, 
-                    activityLevel
-                ]
-            );
-    
-            if (activityLevel === 'sedentary') {
-                // If no exercises found, create default bodyweight exercises
-                if (exercisesResult.rows.length === 0) {
-                    exercisesResult.rows = [
-                        {
-                            exercise_id: 0,
-                            name: 'Wall Push-Ups',
-                            difficulty: 'Beginner',
-                            equipment: 'Bodyweight',
-                            video_url: '',
-                            muscle_groups: ['Upper Body'],
-                            muscles: ['Chest', 'Triceps']
-                        },
-                        {
-                            exercise_id: 1,
-                            name: 'Assisted Dips',
-                            difficulty: 'Beginner',
-                            equipment: 'Bodyweight',
-                            video_url: '',
-                            muscle_groups: ['Upper Body'],
-                            muscles: ['Triceps', 'Chest']
-                        }
-                    ];
-                }
-            }
-    
-            // Log exercise selection details
-            console.log(`Exercises for ${dayInfo.day}:`, {
-                muscleGroups: dayInfo.muscleGroups,
-                specificMuscles: dayInfo.specificMuscles,
-                exerciseCount: exercisesResult.rowCount,
-                exercises: exercisesResult.rows
+                    wpe.sets, 
+                    wpe.reps
+            )
+            SELECT 
+                uwp.plan_id AS workoutPlanId,
+                uwp.plan_name AS planName,
+                uwp.fitness_goal AS fitnessGoal,
+                uwp.activity_level AS activityLevel,
+                json_object_agg(
+                    wpd.day_of_week, 
+                    COALESCE(ed.exercises, '[]'::json)
+                ) AS workouts
+            FROM user_workout_plans uwp
+            JOIN workout_plan_days wpd ON uwp.plan_id = wpd.plan_id
+            LEFT JOIN (
+                SELECT 
+                    plan_day_id,
+                    json_agg(
+                        json_build_object(
+                            'exercise_id', exercise_id,
+                            'name', name,
+                            'sets', sets,
+                            'reps', reps,
+                            'description', description,
+                            'equipment', equipment,
+                            'difficulty', difficulty,
+                            'muscle_groups', muscle_groups
+                        )
+                    ) AS exercises
+                FROM exercise_details
+                GROUP BY plan_day_id
+            ) ed ON wpd.plan_day_id = ed.plan_day_id
+            WHERE uwp.plan_id = $1
+            GROUP BY 
+                uwp.plan_id, 
+                uwp.plan_name, 
+                uwp.fitness_goal, 
+                uwp.activity_level
+        `;
+
+        const result = await client.query(query, [planId]);
+
+        if (result.rows.length === 0) {
+            console.log('No plan data found:', {
+                planId,
+                userId: req.user.user_id
             });
-    
-            // Insert plan day
-            const dayResult = await client.query(
-                `INSERT INTO workout_plan_days 
-                (plan_id, day_of_week, focus) 
-                VALUES ($1, $2, $3) 
-                RETURNING plan_day_id`,
-                [planId, dayInfo.day, dayInfo.muscleGroups.join(' and ')]
-            );
-            const planDayId = dayResult.rows[0].plan_day_id;
-    
-            // Insert exercises for this day
-            for (let [index, exercise] of exercisesResult.rows.entries()) {
-                await client.query(
-                    `INSERT INTO workout_plan_exercises 
-                    (plan_day_id, exercise_id, sets, reps, order_index) 
-                    VALUES ($1, $2, $3, $4, $5)`,
-                    [planDayId, exercise.exercise_id, 3, 12, index + 1]
-                );
-    
-                allExercises.push({
-                    ...exercise,
-                    sets: 3,
-                    reps: 12,
-                    day: dayInfo.day,
-                    description: exercise.description || '',
-                    equipment: exercise.equipment || '',
-                    difficulty: exercise.difficulty || '',
-                    instructions: exercise.instructions || '',
-                    video_url: exercise.video_url || ''
-                });
-            }
+            return res.status(404).json({ 
+                message: 'No plan data found',
+                planId: planId
+            });
         }
-    
-        await client.query('COMMIT');
-    
-        // Construct workouts object
-        const workouts = workoutDays.reduce((acc, day) => {
-            acc[day.day] = allExercises
-                .filter(ex => ex.day === day.day)
-                .map(ex => ({
-                    exercise_id: ex.exercise_id,
-                    name: ex.name,
-                    sets: ex.sets,
-                    reps: ex.reps,
-                    difficulty: ex.difficulty,
-                    equipment: ex.equipment,
-                    muscle_groups: ex.muscle_groups,
-                    description: ex.description,
-                    instructions: ex.instructions,
-                    video_url: ex.video_url
-                }));
-            return acc;
-        }, {});
-    
-        // Generate plan notes
-        const planNotes = generatePlanNotes(fitnessGoal, activityLevel, primaryFocus);
-    
-        // Respond with workout plan
-        res.json({ 
-            workoutPlanId: planId, 
-            workouts,
-            planName: finalPlanName,
-            planNotes
+
+        console.log('Successfully fetched plan:', {
+            planId,
+            userId: req.user.user_id
         });
-        
+
+        res.json(result.rows[0]);
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Full Error Details:', {
-            message: error.message,
-            stack: error.stack,
-            query: req.query
-        });
-    
-        res.status(500).json({ 
-            message: 'Error generating workout plan',
+        console.error('Error fetching workout plan details:', {
             error: error.message,
-            details: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+            stack: error.stack,
+            planId: req.params.planId,
+            userId: req.user.user_id
+        });
+        res.status(500).json({ 
+            message: 'Error fetching workout plan details', 
+            error: error.message 
         });
     } finally {
         client.release();
     }
-    
+});
+
+
+router.put('/plans/:planId', authorization, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const planId = parseInt(req.params.planId);
+        console.log('Updating plan:', {
+            planId,
+            userId: req.user.user_id,
+            body: req.body
+        });
+        
+        if (isNaN(planId)) {
+            return res.status(400).json({ 
+                message: 'Invalid plan ID format',
+                receivedId: req.params.planId
+            });
+        }
+
+        const { 
+            plan_name,
+            workouts,
+            fitness_goal,
+            activity_level
+        } = req.body;
+
+        // Begin transaction
+        await client.query('BEGIN');
+
+        // Update plan metadata
+        const updatePlanQuery = `
+            UPDATE user_workout_plans
+            SET 
+                plan_name = $1,
+                fitness_goal = $2,
+                activity_level = $3,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE 
+                plan_id = $4 AND 
+                user_id = $5
+            RETURNING plan_id
+        `;
+
+        const updateResult = await client.query(updatePlanQuery, [
+            plan_name.trim(), 
+            fitness_goal, 
+            activity_level, 
+            planId, 
+            req.user.user_id
+        ]);
+
+        if (updateResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ 
+                message: 'Workout plan not found or unauthorized' 
+            });
+        }
+
+        // Update exercises - first delete existing ones
+        await client.query(`
+            DELETE FROM workout_plan_exercises 
+            WHERE plan_day_id IN (
+                SELECT plan_day_id 
+                FROM workout_plan_days 
+                WHERE plan_id = $1
+            )
+        `, [planId]);
+
+        // Delete existing plan days
+        await client.query(`
+            DELETE FROM workout_plan_days 
+            WHERE plan_id = $1
+        `, [planId]);
+
+        // Re-insert plan days and exercises
+        for (const [day, exercises] of Object.entries(workouts)) {
+            // Insert plan day
+            const dayResult = await client.query(`
+                INSERT INTO workout_plan_days 
+                (plan_id, day_of_week, focus) 
+                VALUES ($1, $2, $3) 
+                RETURNING plan_day_id
+            `, [planId, day, 'Updated']);
+
+            const planDayId = dayResult.rows[0].plan_day_id;
+
+            // Insert exercises for this day
+            for (const [index, exercise] of exercises.entries()) {
+                await client.query(`
+                    INSERT INTO workout_plan_exercises 
+                    (plan_day_id, exercise_id, sets, reps, order_index) 
+                    VALUES ($1, $2, $3, $4, $5)
+                `, [
+                    planDayId, 
+                    exercise.exercise_id, 
+                    exercise.sets || 3, 
+                    exercise.reps || 10, 
+                    index + 1
+                ]);
+            }
+        }
+
+        await client.query('COMMIT');
+
+        res.json({
+            message: 'Workout plan updated successfully',
+            planId: planId
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error updating workout plan:', error);
+        res.status(500).json({
+            message: 'Failed to update workout plan',
+            error: error.message
+        });
+    } finally {
+        client.release();
+    }
 });
 
 
@@ -1456,6 +957,85 @@ router.post('/plans/create-custom', authorization, async (req, res) => {
       client.release();
     }
 });
+  
+
+router.put('/profile', authorization, async (req, res) => {
+    const client = await pool.connect();
+  
+    try {
+      const userId = req.user.user_id;
+      const {
+        first_name,
+        last_name,
+        email,
+        date_of_birth,
+        gender,
+        height,
+        current_weight,
+        target_weight,
+        fitness_goal,
+        activity_level,
+        primary_focus,
+        weight_unit = 'kg',
+        height_unit = 'cm'
+      } = req.body;
+  
+      // Update only the fields that are provided
+      const updateFields = [];
+      const updateValues = [];
+      let paramCount = 1;
+  
+      const addFieldIfProvided = (fieldName, value) => {
+        if (value !== undefined && value !== null) {
+          updateFields.push(`${fieldName} = $${paramCount}`);
+          updateValues.push(value);
+          paramCount++;
+        }
+      };
+  
+      addFieldIfProvided('first_name', first_name);
+      addFieldIfProvided('last_name', last_name);
+      addFieldIfProvided('email', email);
+      addFieldIfProvided('date_of_birth', date_of_birth);
+      addFieldIfProvided('gender', gender);
+      addFieldIfProvided('height', height);
+      addFieldIfProvided('current_weight', current_weight);
+      addFieldIfProvided('target_weight', target_weight);
+      addFieldIfProvided('fitness_goal', fitness_goal);
+      addFieldIfProvided('activity_level', activity_level);
+      addFieldIfProvided('primary_focus', primary_focus);
+      addFieldIfProvided('weight_unit', weight_unit);
+      addFieldIfProvided('height_unit', height_unit);
+  
+      // If no fields to update, return existing profile
+      if (updateFields.length === 0) {
+        const existingProfile = await client.query(
+          'SELECT * FROM user_profiles WHERE user_id = $1',
+          [userId]
+        );
+        return res.json(existingProfile.rows[0]);
+      }
+  
+      // Construct the update query dynamically
+      const query = `
+        UPDATE user_profiles
+        SET ${updateFields.join(', ')}
+        WHERE user_id = $${paramCount}
+        RETURNING *
+      `;
+  
+      updateValues.push(userId);
+  
+      const result = await client.query(query, updateValues);
+  
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ message: 'Error updating profile' });
+    } finally {
+      client.release();
+    }
+  });
   
 
 router.delete('/plans/:planId', authorization, async (req, res) => {
