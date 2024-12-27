@@ -137,22 +137,31 @@ class WorkoutPlanService {
   // Update existing plan
   async updateWorkoutPlan(planDetails) {
     try {
-      if (!planDetails.plan_id) {
-        throw new Error('Plan ID is required for update');
-      }
+        if (!planDetails.plan_id) {
+            throw new Error('Plan ID is required for update');
+        }
 
-      console.log('Updating Plan:', planDetails);
-      const response = await this.api.put(`/${planDetails.plan_id}`, planDetails);
-      console.log('Update Response:', response.data);
-      return response.data;
+        // Ensure data matches backend expectations
+        const updateData = {
+            plan_name: planDetails.plan_name,
+            fitness_goal: planDetails.fitness_goal,
+            activity_level: planDetails.activity_level,
+            workouts: planDetails.workouts
+        };
+
+        console.log('Updating Plan:', updateData);
+        const response = await this.api.put(`/${planDetails.plan_id}`, updateData);
+        console.log('Update Response:', response.data);
+        return response.data;
     } catch (error) {
-      console.error('Error updating workout plan:', error);
-      throw {
-        message: error.response?.data?.message || 'Failed to update workout plan',
-        originalError: error
-      };
+        console.error('Error updating workout plan:', error);
+        throw {
+            message: error.response?.data?.message || 'Failed to update workout plan',
+            originalError: error
+        };
     }
   }
+
 
   // Get user's workout plans
   async getUserWorkoutPlans() {

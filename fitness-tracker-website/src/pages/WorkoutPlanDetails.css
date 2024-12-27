@@ -356,3 +356,17 @@ body.modal-open {
     display: none;
 }
 
+.edit-plan-btn {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: 500;
+}
+
+.edit-plan-btn:hover {
+    background-color: var(--primary-dark);
+}

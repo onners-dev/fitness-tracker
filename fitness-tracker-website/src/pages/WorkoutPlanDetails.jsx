@@ -216,6 +216,16 @@ const WorkoutPlanDetails = () => {
                     Start Workout
                 </button>
                 <button 
+                    onClick={() => navigate('/workout-plans/edit', {
+                        state: {
+                            planId: plan.plan_id
+                        }
+                    })}
+                    className="edit-plan-btn"
+                >
+                    Edit Plan
+                </button>
+                <button 
                     onClick={() => navigate('/workout-plans/existing')}
                     className="back-btn"
                 >

@@ -32,6 +32,7 @@ import WorkoutPlanGenerate from './pages/WorkoutPlanGenerate';
 import WorkoutPlanOnboarding from './pages/WorkoutPlanOnboarding';
 import WorkoutPlanDetails from './pages/WorkoutPlanDetails';
 import FitnessProfileOnboarding from './pages/FitnessProfileOnboarding';
+import WorkoutPlanEdit from './pages/WorkoutPlanEdit'
 
 
 function App() {
@@ -165,6 +166,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/workout-plans/edit"
+              element={
+                <ProtectedRoute>
+                  <WorkoutPlanEdit />
+                </ProtectedRoute>
+              }
+            /> 
             <Route
               path="/fitness-profile-onboarding"
               element={
