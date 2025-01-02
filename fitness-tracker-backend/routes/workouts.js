@@ -40,65 +40,197 @@ router.get('/exercises', authorization, async (req, res) => {
     const client = await pool.connect();
   
     try {
-      const { muscleGroup, difficulty, equipment } = req.query;
+        const { muscleGroup, difficulty, equipment } = req.query;
   
-      let query = `
-        SELECT DISTINCT 
-          e.exercise_id, 
-          e.name, 
-          e.description,
-          e.difficulty,
-          e.equipment,
-          array_agg(DISTINCT m.name) AS muscles
-        FROM exercises e
-        JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-        JOIN muscles m ON em.muscle_id = m.muscle_id
-        WHERE 1=1
-      `;
+        console.log('Received filters:', { muscleGroup, difficulty, equipment });
   
-      const queryParams = [];
-      let paramCount = 1;
+        let query = `
+            WITH muscle_filter AS (
+                SELECT DISTINCT e.exercise_id
+                FROM exercises e
+                LEFT JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+                LEFT JOIN muscles m ON em.muscle_id = m.muscle_id
+                LEFT JOIN muscle_groups mg ON m.group_id = mg.group_id
+                WHERE 1=1
+        `;
   
-      // Muscle Filter
-      if (muscleGroup) {
-        query += ` AND LOWER(m.name) = LOWER($${paramCount})`;
-        queryParams.push(muscleGroup);
-        paramCount++;
-      }
+        const queryParams = [];
+        let paramCount = 1;
   
-      // Difficulty Filter
-      if (difficulty) {
-        query += ` AND LOWER(e.difficulty) = LOWER($${paramCount})`;
-        queryParams.push(difficulty);
-        paramCount++;
-      }
+        // Muscle Filter with flexible matching
+        if (muscleGroup) {
+            query += ` AND (
+                LOWER(m.name) = LOWER($${paramCount}) OR 
+                LOWER(mg.name) = LOWER($${paramCount})
+            )`;
+            queryParams.push(muscleGroup);
+            paramCount++;
+        }
   
-      // Equipment Filter
-      if (equipment) {
-        query += ` AND LOWER(e.equipment) = LOWER($${paramCount})`;
-        queryParams.push(equipment);
-        paramCount++;
-      }
+        query += `),
+        exercise_equipment_details AS (
+            SELECT 
+                e.exercise_id, 
+                e.name, 
+                e.description,
+                e.difficulty,
+                e.instructions,
+                e.image_url,
+                e.video_url,
+                COALESCE(
+                    (SELECT array_agg(DISTINCT eq.name) 
+                     FROM exercise_equipment ee2 
+                     JOIN equipment eq ON ee2.equipment_id = eq.equipment_id 
+                     WHERE ee2.exercise_id = e.exercise_id),
+                    ARRAY['Bodyweight']::text[]
+                ) AS equipment_options,
+                COALESCE(
+                    (SELECT array_agg(DISTINCT m.name)
+                     FROM exercise_muscles em
+                     JOIN muscles m ON em.muscle_id = m.muscle_id
+                     WHERE em.exercise_id = e.exercise_id),
+                    ARRAY[]::text[]
+                ) AS muscle_groups
+            FROM exercises e
+            JOIN muscle_filter mf ON e.exercise_id = mf.exercise_id
+            WHERE 1=1
+        `;
   
-      query += ` GROUP BY 
-        e.exercise_id, 
-        e.name, 
-        e.description, 
-        e.difficulty, 
-        e.equipment
-      `;
+        // Difficulty Filter
+        if (difficulty && difficulty !== 'all') {
+            query += ` AND LOWER(e.difficulty) = LOWER($${paramCount})`;
+            queryParams.push(difficulty);
+            paramCount++;
+        }
   
-      const result = await client.query(query, queryParams);
+        // Equipment Filter
+        if (equipment && equipment !== 'all') {
+            query += ` AND EXISTS (
+                SELECT 1 FROM exercise_equipment ee2 
+                JOIN equipment eq2 ON ee2.equipment_id = eq2.equipment_id 
+                WHERE ee2.exercise_id = e.exercise_id 
+                AND LOWER(eq2.name) = LOWER($${paramCount})
+            )`;
+            queryParams.push(equipment);
+            paramCount++;
+        }
   
-      res.json(result.rows);
+        query += `
+            GROUP BY 
+                e.exercise_id, 
+                e.name, 
+                e.description, 
+                e.difficulty,
+                e.instructions,
+                e.image_url,
+                e.video_url
+        )
+        SELECT 
+            exercise_id, 
+            name, 
+            description,
+            difficulty,
+            instructions,
+            image_url,
+            video_url,
+            equipment_options,
+            muscle_groups
+        FROM exercise_equipment_details
+        `;
+  
+        console.log('Executing query:', query);
+        console.log('Query parameters:', queryParams);
+
+        const result = await client.query(query, queryParams);
+  
+        console.log('Raw query results:', result.rows);
+
+        // Log equipment details for each exercise
+        result.rows.forEach(exercise => {
+            console.log(`Exercise: ${exercise.name}`);
+            console.log('Equipment Options:', exercise.equipment_options);
+            console.log('Muscle Groups:', exercise.muscle_groups);
+        });
+
+        // If no results, return an empty array instead of throwing an error
+        res.json(result.rows.length > 0 ? result.rows : []);
+
     } catch (error) {
-      console.error('Error fetching exercises:', error);
-      res.status(500).json({ 
-        message: 'Error fetching exercises',
-        error: error.message 
-      });
+        console.error('Detailed error fetching exercises:', {
+            message: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ 
+            message: 'Error fetching exercises',
+            error: error.message 
+        });
     } finally {
-      client.release();
+        client.release();
+    }
+});
+
+router.get('/exercise-equipment-check', authorization, async (req, res) => {
+    const client = await pool.connect();
+  
+    try {
+        const query = `
+            SELECT 
+                e.exercise_id,
+                e.name AS exercise_name,
+                array_agg(DISTINCT eq.name) AS equipment_names
+            FROM exercises e
+            LEFT JOIN exercise_equipment ee ON e.exercise_id = ee.exercise_id
+            LEFT JOIN equipment eq ON ee.equipment_id = eq.equipment_id
+            GROUP BY e.exercise_id, e.name
+            LIMIT 50
+        `;
+
+        const result = await client.query(query);
+  
+        console.log('Exercise-Equipment Diagnostic Results:');
+        result.rows.forEach(row => {
+            console.log(`Exercise: ${row.exercise_name}, Equipment: ${row.equipment_names}`);
+        });
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error checking exercise-equipment relationships:', error);
+        res.status(500).json({ 
+            message: 'Error checking relationships',
+            error: error.message 
+        });
+    } finally {
+        client.release();
+    }
+});
+
+router.get('/muscle-filter-diagnostic', authorization, async (req, res) => {
+    const client = await pool.connect();
+  
+    try {
+        const query = `
+            SELECT 
+                m.name AS muscle_name,
+                mg.name AS muscle_group_name,
+                json_agg(DISTINCT e.name) AS exercise_names
+            FROM muscles m
+            JOIN muscle_groups mg ON m.group_id = mg.group_id
+            JOIN exercise_muscles em ON m.muscle_id = em.muscle_id
+            JOIN exercises e ON em.exercise_id = e.exercise_id
+            GROUP BY m.name, mg.name
+            ORDER BY muscle_group_name, muscle_name
+        `;
+
+        const result = await client.query(query);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error in muscle filter diagnostic:', error);
+        res.status(500).json({ 
+            message: 'Error in muscle filter diagnostic',
+            error: error.message 
+        });
+    } finally {
+        client.release();
     }
 });
 
@@ -106,14 +238,46 @@ router.get('/muscles', authorization, async (req, res) => {
     const client = await pool.connect();
   
     try {
-      const query = `
-        SELECT DISTINCT name 
-        FROM muscles 
-        ORDER BY name
-      `;
+      const { groupName } = req.query;
+
+      console.log('Received group name:', groupName);
+
+      // Find the group_id for the given group name with more flexible matching
+      const groupResult = await client.query(
+        `SELECT group_id 
+         FROM muscle_groups 
+         WHERE LOWER(TRIM(name)) = LOWER(TRIM($1))
+         OR LOWER(TRIM(name)) LIKE LOWER(TRIM($2))`,
+        [groupName, `%${groupName}%`]
+      );
+
+      if (groupResult.rows.length === 0) {
+        console.log('No muscle group found for name:', groupName);
+        return res.status(404).json({ 
+          message: 'Muscle group not found',
+          groupName: groupName,
+          availableGroups: (await client.query('SELECT name FROM muscle_groups')).rows.map(row => row.name)
+        });
+      }
+
+      const groupId = groupResult.rows[0].group_id;
+      console.log('Found group ID:', groupId);
+
+      // Fetch muscles for that group
+      const musclesResult = await client.query(
+        `SELECT 
+            muscle_id, 
+            name, 
+            description 
+         FROM muscles 
+         WHERE group_id = $1 
+         ORDER BY name`,
+        [groupId]
+      );
+
+      console.log('Fetched muscles:', musclesResult.rows);
   
-      const result = await client.query(query);
-      res.json(result.rows.map(row => row.name));
+      res.json(musclesResult.rows);
     } catch (error) {
       console.error('Error fetching muscles:', error);
       res.status(500).json({ 
@@ -125,76 +289,75 @@ router.get('/muscles', authorization, async (req, res) => {
     }
 });
 
-// New route to fetch muscle groups
+// Get all muscle groups
 router.get('/muscle-groups', authorization, async (req, res) => {
-    const client = await pool.connect();
-  
     try {
-      // Query to fetch distinct muscle groups
-      const query = `
-        SELECT DISTINCT name 
-        FROM muscle_groups 
-        ORDER BY name
-      `;
-  
-      const result = await client.query(query);
-      res.json(result.rows.map(row => row.name));
-    } catch (error) {
-      console.error('Error fetching muscle groups:', error);
-      res.status(500).json({ 
-        message: 'Error fetching muscle groups',
-        error: error.message 
-      });
-    } finally {
-      client.release();
+        const muscleGroups = await pool.query(`
+            SELECT 
+                group_id, 
+                name, 
+                description 
+            FROM muscle_groups 
+            ORDER BY name
+        `);
+        res.json(muscleGroups.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
     }
 });
+
   
 
 router.get('/exercises/details', authorization, async (req, res) => {
     const client = await pool.connect();
 
     try {
-        // Parse exercise IDs from query string
         const exerciseIds = req.query.exerciseIds.split(',').map(id => parseInt(id));
 
-        console.log('Received Exercise IDs:', exerciseIds);  // Add this line
-
-        // Fetch detailed exercise information
         const query = `
+            WITH exercise_equipment AS (
+                SELECT 
+                    exercise_id, 
+                    array_agg(DISTINCT eq.name) AS equipment_options
+                FROM exercise_equipment ee
+                JOIN equipment eq ON ee.equipment_id = eq.equipment_id
+                WHERE exercise_id = ANY($1)
+                GROUP BY exercise_id
+            ),
+            exercise_muscles AS (
+                SELECT 
+                    exercise_id, 
+                    array_agg(DISTINCT mg.name) AS muscle_groups
+                FROM exercise_muscles em
+                JOIN muscles m ON em.muscle_id = m.muscle_id
+                JOIN muscle_groups mg ON m.group_id = mg.group_id
+                WHERE exercise_id = ANY($1)
+                GROUP BY exercise_id
+            )
             SELECT 
                 e.exercise_id,
                 e.name,
                 e.description,
-                e.equipment,
+                COALESCE(ee.equipment_options, ARRAY[]::text[]) AS equipment_options,
                 e.difficulty,
                 e.video_url,
                 e.image_url,
                 e.instructions,
-                array_agg(DISTINCT mg.name) AS muscle_groups
+                COALESCE(em.muscle_groups, ARRAY[]::text[]) AS muscle_groups
             FROM exercises e
-            JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-            JOIN muscles m ON em.muscle_id = m.muscle_id
-            JOIN muscle_groups mg ON m.group_id = mg.group_id
+            LEFT JOIN exercise_equipment ee ON e.exercise_id = ee.exercise_id
+            LEFT JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
             WHERE e.exercise_id = ANY($1)
-            GROUP BY 
-                e.exercise_id, 
-                e.name, 
-                e.description, 
-                e.equipment, 
-                e.difficulty, 
-                e.video_url, 
-                e.image_url,
-                e.instructions
         `;
+
+        console.log('Exercise Details Query Params:', exerciseIds);
 
         const result = await client.query(query, [exerciseIds]);
 
-        console.log('Query Result:', JSON.stringify(result.rows, null, 2));  // Add this line
+        console.log('Exercise Details Result:', result.rows);
 
-        // If no exercises found, return appropriate response
         if (result.rows.length === 0) {
-            console.log('No exercises found for IDs:', exerciseIds);  // Add this line
             return res.status(404).json({ 
                 message: 'No exercises found',
                 exerciseIds: exerciseIds
@@ -203,7 +366,7 @@ router.get('/exercises/details', authorization, async (req, res) => {
 
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching exercise details:', {
+        console.error('Detailed error fetching exercise details:', {
             message: error.message,
             exerciseIds: req.query.exerciseIds,
             stack: error.stack
@@ -328,24 +491,25 @@ router.get('/plans', authorization, async (req, res) => {
                     e.exercise_id,
                     e.name,
                     e.description,
-                    e.equipment,
                     e.difficulty,
                     e.instructions,
                     e.video_url,
                     wpe.sets,
                     wpe.reps,
+                    array_agg(DISTINCT eq.name) AS equipment_options,
                     array_agg(DISTINCT mg.name) AS muscle_groups
                 FROM workout_plan_exercises wpe
                 JOIN exercises e ON wpe.exercise_id = e.exercise_id
-                JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
-                JOIN muscles m ON em.muscle_id = m.muscle_id
-                JOIN muscle_groups mg ON m.group_id = mg.group_id
+                LEFT JOIN exercise_muscles em ON e.exercise_id = em.exercise_id
+                LEFT JOIN muscles m ON em.muscle_id = m.muscle_id
+                LEFT JOIN muscle_groups mg ON m.group_id = mg.group_id
+                LEFT JOIN exercise_equipment ee ON e.exercise_id = ee.exercise_id
+                LEFT JOIN equipment eq ON ee.equipment_id = eq.equipment_id
                 GROUP BY 
                     wpe.plan_day_id, 
                     e.exercise_id, 
                     e.name, 
                     e.description,
-                    e.equipment,
                     e.difficulty,
                     e.instructions,
                     e.video_url,
@@ -390,10 +554,10 @@ router.get('/plans', authorization, async (req, res) => {
                             'sets', sets,
                             'reps', reps,
                             'description', description,
-                            'equipment', equipment,
                             'difficulty', difficulty,
                             'instructions', instructions,
                             'video_url', video_url,
+                            'equipment_options', equipment_options,
                             'muscle_groups', muscle_groups
                         )
                     ) AS exercises
@@ -432,6 +596,7 @@ router.get('/plans', authorization, async (req, res) => {
         client.release();
     }
 });
+
 
 router.post('/plans/generate', authorization, async (req, res) => {
     const client = await pool.connect();

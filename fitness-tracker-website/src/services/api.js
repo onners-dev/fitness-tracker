@@ -295,36 +295,76 @@ export const userService = {
 
 // Exercise services
 export const exerciseService = {
-    getMuscleGroups: async () => {
-        try {
-            const response = await api.get('/exercises/muscle-groups');
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching muscle groups', error);
-            return [];
-        }
-    },
-
-    getMuscles: async (groupId) => {
-        try {
-            const response = await api.get(`/exercises/muscles/${groupId}`);
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching muscles', error);
-            return [];
-        }
-    },
-
-    getExercises: async (muscleId) => {
-        try {
-            const response = await api.get(`/exercises/by-muscle/${muscleId}`);
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching exercises', error);
-            return [];
-        }
+  getMuscleGroups: async () => {
+    try {
+        const response = await api.get('/workouts/muscle-groups');
+        console.log('Fetched Muscle Groups:', response.data);
+        
+        // Ensure we return an array of objects with name and optional description
+        return response.data.map(group => ({
+            name: group.name,
+            description: group.description || null
+        }));
+    } catch (error) {
+        console.error('Error fetching muscle groups', error);
+        console.error('Detailed error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+        });
+        return [];
     }
+  },
+
+  getMuscles: async (groupName) => {
+    try {
+        console.log('Requesting muscles for group:', groupName);
+        
+        const response = await api.get('/workouts/muscles', {
+            params: { groupName },
+        });
+        
+        console.log('Muscles response:', response.data);
+        
+        return response.data;
+    } catch (error) {
+        console.error('Detailed Error fetching muscles:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            groupName: groupName
+        });
+        
+        // If error is due to no muscles found, return empty array
+        if (error.response && error.response.status === 404) {
+            console.warn(`No muscles found for group: ${groupName}`);
+            return [];
+        }
+        
+        return [];
+    }
+  },
+
+
+  getExercises: async (muscleOrGroupName) => {
+      try {
+          console.log('Fetching exercises for:', muscleOrGroupName);
+          const response = await api.get('/workouts/exercises', {
+              params: { muscleGroup: muscleOrGroupName }
+          });
+          return response.data;
+      } catch (error) {
+          console.error('Error fetching exercises', error);
+          console.error('Detailed error:', {
+              message: error.message,
+              response: error.response?.data,
+              status: error.response?.status
+          });
+          return [];
+      }
+  }
 };
+
 
 // Favorite services
 export const favoriteService = {

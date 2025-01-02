@@ -27,6 +27,8 @@ import ContentModeration from './admin/pages/ContentModeration';
 import WorkoutModeration from './admin/pages/WorkoutModeration';
 import NutritionModeration from './admin/pages/NutritionModeration';
 import SystemAnalytics from './admin/pages/SystemAnalytics';
+import WorkoutExerciseEdit from './admin/pages/WorkoutExerciseEdit'
+import WorkoutExerciseLibrary from './admin/pages/WorkoutExerciseLibrary'
 import WorkoutPlanBuilder from './pages/WorkoutPlanBuilder';
 import WorkoutPlanGenerate from './pages/WorkoutPlanGenerate';
 import WorkoutPlanOnboarding from './pages/WorkoutPlanOnboarding';
@@ -230,6 +232,30 @@ function App() {
                 </ProtectedRoute>
               }
             />  
+            <Route 
+              path="/admin/workouts/exercises" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <WorkoutExerciseLibrary />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/workouts/exercises/new" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <WorkoutExerciseEdit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/workouts/exercises/:exerciseId" 
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <WorkoutExerciseEdit />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

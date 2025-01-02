@@ -149,6 +149,7 @@ const Header = () => {
                       <Link to="/admin/users" className="dropdown-item">User Management</Link>
                       <Link to="/admin/content" className="dropdown-item">Content Moderation</Link>
                       <Link to="/admin/workouts" className="dropdown-item">Workout Moderation</Link>
+                      <Link to="/admin/workouts/exercises" className="dropdown-item">Edit Exercises</Link> {/* New Link */}
                       <Link to="/admin/nutrition" className="dropdown-item">Nutrition Moderation</Link>
                       <Link to="/admin/analytics" className="dropdown-item">System Analytics</Link>
                     </div>
@@ -257,6 +258,7 @@ const Header = () => {
                         <Link to="/admin/users" onClick={toggleMobileMenu}>User Management</Link>
                         <Link to="/admin/content" onClick={toggleMobileMenu}>Content Moderation</Link>
                         <Link to="/admin/workouts" onClick={toggleMobileMenu}>Workout Moderation</Link>
+                        <Link to="/admin/workouts/exercises" onClick={toggleMobileMenu}>Edit Exercises</Link> {/* New Link */}
                         <Link to="/admin/nutrition" onClick={toggleMobileMenu}>Nutrition Moderation</Link>
                         <Link to="/admin/analytics" onClick={toggleMobileMenu}>System Analytics</Link>
                       </div>

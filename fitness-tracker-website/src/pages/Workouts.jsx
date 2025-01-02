@@ -8,47 +8,76 @@ const ExerciseDetailModal = ({ exercise, onClose }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Diagnostic logging
+    console.log('Exercise Detail Modal - Exercise:', exercise);
+
     // Add class to body to prevent scrolling
     document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
     
     // Cleanup function to remove class when modal is closed
     return () => {
       document.body.classList.remove('modal-open');
+      document.body.style.overflow = 'unset';
     };
-  }, []);
+  }, [exercise]);
 
   const handleLogExercise = () => {
     navigate('/workout-logging', { 
       state: { 
         source: 'workouts',
         exercises: [{
-          exercise_id: exercise.exercise_id,
-          exercise_name: exercise.name,
+          exercise_id: exercise?.exercise_id,
+          exercise_name: exercise?.name,
           sets: '', // No sets or reps pre-filled
           reps: '',
-          muscle_groups: exercise.muscle_groups
+          muscle_groups: exercise?.muscle_groups || []
         }]
       } 
     });
   };
 
-  if (!exercise) return null;
+  // Add more defensive checks
+  if (!exercise) {
+    console.warn('No exercise data provided to modal');
+    return null;
+  }
 
   return (
-    <div className="exercise-modal-overlay" onClick={onClose}>
+    <div 
+      className="exercise-modal-overlay" 
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div 
         className="exercise-modal-content" 
         onClick={(e) => e.stopPropagation()}
+        aria-label={`Details for ${exercise?.name || 'Exercise'}`}
       >
-        <button className="modal-close-btn" onClick={onClose}>×</button>
-        <h2>{exercise.name}</h2>
+        <button 
+          className="modal-close-btn" 
+          onClick={onClose}
+          aria-label="Close modal"
+        >
+          ×
+        </button>
+        <h2>{exercise.name || 'Exercise Details'}</h2>
         
         <div className="exercise-modal-details">
           <div className="detail-section">
             <h3>Exercise Information</h3>
-            <p><strong>Equipment:</strong> {exercise.equipment}</p>
-            <p><strong>Difficulty:</strong> {exercise.difficulty}</p>
-            <p><strong>Muscle Groups:</strong> {exercise.muscle_groups?.join(', ')}</p>
+            <p>
+              <strong>Equipment:</strong> {exercise.equipment_options?.length 
+                ? exercise.equipment_options.join(', ') 
+                : 'N/A'}
+            </p>
+            <p><strong>Difficulty:</strong> {exercise.difficulty || 'N/A'}</p>
+            <p>
+              <strong>Muscle Groups:</strong> {exercise.muscle_groups?.length 
+                ? exercise.muscle_groups.join(', ') 
+                : 'N/A'}
+            </p>
           </div>
 
           {exercise.description && (
@@ -93,11 +122,44 @@ const Workouts = () => {
   const [selectedExerciseForModal, setSelectedExerciseForModal] = useState(null);
   const navigate = useNavigate();
 
+  // Diagnostic useEffect for warnings
+  useEffect(() => {
+    const logWarning = (warning) => {
+      console.log('React Warning:', warning);
+    };
+
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+      logWarning(args);
+      originalWarn.apply(console, args);
+    };
+
+    return () => {
+      console.warn = originalWarn;
+    };
+  }, []);
+
+  // Diagnostic logging for modal
+  useEffect(() => {
+    console.log('Selected Exercise for Modal:', selectedExerciseForModal);
+  }, [selectedExerciseForModal]);
+
   useEffect(() => {
     const fetchMuscleGroups = async () => {
       try {
         const data = await exerciseService.getMuscleGroups();
-        setMuscleGroups(data);
+        console.log('Fetched Muscle Groups:', data);
+        
+        // Transform array of objects to include description
+        const processedData = data.map((group, index) => ({
+          group_id: `group-${index}`,  // Generate a unique ID
+          name: group.name,
+          description: group.description || null  // Use description if available
+        }));
+    
+        console.log('Processed Muscle Groups:', processedData);
+        
+        setMuscleGroups(processedData);
         setLoading(false);
       } catch (err) {
         console.error('Error:', err);
@@ -105,42 +167,78 @@ const Workouts = () => {
         setLoading(false);
       }
     };
-
+  
     fetchMuscleGroups();
   }, []);
+  
 
   useEffect(() => {
     if (selectedGroup) {
       const fetchMuscles = async () => {
         try {
-          const data = await exerciseService.getMuscles(selectedGroup.group_id);
-          setSelectedGroup(prev => ({ ...prev, muscles: data }));
+          console.log('Attempting to fetch muscles for group:', selectedGroup.name);
+          
+          // Trim and normalize the group name
+          const normalizedGroupName = selectedGroup.name.trim();
+          
+          const data = await exerciseService.getMuscles(normalizedGroupName);
+          
+          console.log('Fetched Muscles:', data);
+          
+          if (!data || data.length === 0) {
+            console.warn(`No muscles found for group: ${normalizedGroupName}`);
+            console.log('Available muscle groups:', 
+              (await exerciseService.getMuscleGroups()).join(', ')
+            );
+            // Optionally show a user-friendly message
+            setError(`No muscles found for ${normalizedGroupName}`);
+            return;
+          }
+          
+          setSelectedGroup(prev => ({ 
+            ...prev, 
+            muscles: data.map(muscle => ({
+              ...muscle,
+              name: muscle.name || 'Unknown Muscle'
+            }))
+          }));
         } catch (err) {
-          console.error('Error:', err);
-          setError('Failed to load muscles');
+          console.error('Detailed Error fetching muscles:', {
+            message: err.message,
+            group: selectedGroup,
+            error: err
+          });
+          
+          setError(`Failed to load muscles for ${selectedGroup.name}. ${err.message}`);
         }
       };
-
+  
       fetchMuscles();
     }
-  }, [selectedGroup?.group_id]);
+  }, [selectedGroup?.name]);
+
 
   useEffect(() => {
     if (selectedMuscle) {
       const fetchExercises = async () => {
         try {
-          const data = await exerciseService.getExercises(selectedMuscle.muscle_id);
+          console.log('Fetching exercises for muscle:', selectedMuscle);
+          
+          const data = await exerciseService.getExercises(selectedMuscle.name);
+          
+          console.log('Fetched Exercises:', data);
+
           setExercises(data);
         } catch (err) {
-          console.error('Error:', err);
+          console.error('Detailed Error:', err);
           setError('Failed to load exercises');
         }
       };
 
       fetchExercises();
     }
-  }, [selectedMuscle?.muscle_id]);
-  
+  }, [selectedMuscle?.name]);
+
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
@@ -154,20 +252,25 @@ const Workouts = () => {
     fetchFavorites();
   }, []);
 
-  const uniqueEquipment = [...new Set(exercises.map(ex => ex.equipment))].filter(Boolean);
+  const uniqueEquipment = [...new Set(
+      exercises.flatMap(ex => ex.equipment_options || [])
+  )].filter(Boolean);
 
   const filteredAndSortedExercises = exercises
-    .filter(exercise => {
+  .filter(exercise => {
       const difficultyMatch = filters.difficulty === 'all' || exercise.difficulty === filters.difficulty;
-      const equipmentMatch = filters.equipment === 'all' || exercise.equipment === filters.equipment;
+      const equipmentMatch = filters.equipment === 'all' || 
+          (exercise.equipment_options || []).some(eq => 
+              eq.toLowerCase() === filters.equipment.toLowerCase()
+          );
       return difficultyMatch && equipmentMatch;
-    })
-    .sort((a, b) => {
+  })
+  .sort((a, b) => {
       if (sortOrder === 'asc') {
-        return a.name.localeCompare(b.name);
+          return a.name.localeCompare(b.name);
       }
       return b.name.localeCompare(a.name);
-    });
+  });
 
   const handleFilterChange = (filterType, value) => {
     setFilters(prev => ({
@@ -241,8 +344,8 @@ const Workouts = () => {
             onChange={(e) => handleFilterChange('equipment', e.target.value)}
           >
             <option value="all">All Equipment</option>
-            {uniqueEquipment.map(equip => (
-              <option key={equip} value={equip}>{equip}</option>
+            {uniqueEquipment.map((equip, index) => (
+              <option key={`equip-${index}`} value={equip}>{equip}</option>
             ))}
           </select>
         </div>
@@ -302,32 +405,42 @@ const Workouts = () => {
           {exercises.length > 0 && renderFiltersAndSort()}
 
           <div className="exercises-grid">
-          {filteredAndSortedExercises.length > 0 ? (
-            filteredAndSortedExercises.map((exercise) => (
-              <div 
-                key={exercise.exercise_id} 
-                className="exercise-card"
-                onClick={() => setSelectedExerciseForModal(exercise)}
-              >
-                <div className="exercise-header">
-                  <h3>{exercise.name}</h3>
-                  <FaStar
-                    className={`favorite-icon ${favorites.includes(exercise.exercise_id) ? 'favorited' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent opening modal when clicking star
-                      toggleFavorite(exercise.exercise_id);
+            {filteredAndSortedExercises.length > 0 ? (
+              filteredAndSortedExercises.map((exercise, index) => {
+                // Ensure a truly unique key
+                const uniqueKey = exercise.exercise_id 
+                  ? `exercise-${exercise.exercise_id}` 
+                  : `exercise-${exercise.name}-${index}`;
+                
+                return (
+                  <div
+                    key={uniqueKey}
+                    className="exercise-card"
+                    onClick={() => {
+                      console.log('Selected Exercise:', exercise);
+                      setSelectedExerciseForModal(exercise);
                     }}
-                  />
-                </div>
-                <p><strong>Equipment:</strong> {exercise.equipment}</p>
-                <p><strong>Difficulty:</strong> {exercise.difficulty}</p>
+                  >
+                    <div className="exercise-header">
+                      <h3>{exercise.name}</h3>
+                      <FaStar
+                        className={`favorite-icon ${favorites.includes(exercise.exercise_id) ? 'favorited' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(exercise.exercise_id);
+                        }}
+                      />
+                    </div>
+                    <p><strong>Equipment:</strong> {exercise.equipment_options?.join(', ') || 'N/A'}</p>
+                    <p><strong>Difficulty:</strong> {exercise.difficulty}</p>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="no-exercises">
+                No exercises found with current filters
               </div>
-            ))
-          ) : (
-            <div className="no-exercises">
-              No exercises found with current filters
-            </div>
-          )}
+            )}
           </div>
         </div>
       )}
@@ -339,9 +452,9 @@ const Workouts = () => {
           </button>
           <h2>{selectedGroup.name}</h2>
           <div className="muscles-grid">
-            {selectedGroup.muscles?.map((muscle) => (
+            {selectedGroup.muscles?.map((muscle, index) => (
               <div
-                key={muscle.muscle_id}
+                key={muscle.muscle_id || `muscle-${index}`}
                 className="muscle-card"
                 onClick={() => handleMuscleClick(muscle)}
               >
@@ -356,9 +469,9 @@ const Workouts = () => {
       {!selectedGroup && (
         <div className="muscle-groups-section">
           <div className="muscle-groups-grid">
-            {muscleGroups.map((group) => (
+            {muscleGroups.map((group, index) => (
               <div
-                key={group.group_id}
+                key={group.group_id || `group-${index}`}
                 className="muscle-group-card"
                 onClick={() => handleMuscleGroupClick(group)}
               >
@@ -373,7 +486,10 @@ const Workouts = () => {
       {selectedExerciseForModal && (
         <ExerciseDetailModal 
           exercise={selectedExerciseForModal} 
-          onClose={() => setSelectedExerciseForModal(null)}
+          onClose={() => {
+            console.log('Closing modal');
+            setSelectedExerciseForModal(null);
+          }}
         />
       )}
     </div>
@@ -381,3 +497,4 @@ const Workouts = () => {
 };
 
 export default Workouts;
+
