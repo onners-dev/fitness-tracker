@@ -104,7 +104,14 @@ class WorkoutPlanGenerator {
                     e.name, 
                     e.description,
                     e.difficulty,
-                    e.equipment,
+                    COALESCE(
+                        (
+                            SELECT array_agg(eq.name)
+                            FROM exercise_equipment ee
+                            JOIN equipment eq ON ee.equipment_id = eq.equipment_id
+                            WHERE ee.exercise_id = e.exercise_id
+                        ), ARRAY[]::text[]
+                    ) AS equipment_options,
                     e.video_url,
                     array_agg(DISTINCT mg.name) AS muscle_groups,
                     array_agg(DISTINCT m.name) AS muscles
@@ -118,7 +125,6 @@ class WorkoutPlanGenerator {
                     e.name, 
                     e.description, 
                     e.difficulty,
-                    e.equipment,
                     e.video_url
                 ORDER BY RANDOM()
                 LIMIT 4`
@@ -165,7 +171,14 @@ class WorkoutPlanGenerator {
                     e.name,
                     e.description,
                     e.difficulty,
-                    e.equipment,
+                    COALESCE(
+                        (
+                            SELECT array_agg(eq.name)
+                            FROM exercise_equipment ee
+                            JOIN equipment eq ON ee.equipment_id = eq.equipment_id
+                            WHERE ee.exercise_id = e.exercise_id
+                        ), ARRAY[]::text[]
+                    ) AS equipment_options,
                     e.video_url,
                     array_agg(DISTINCT mg.name) AS muscle_groups,
                     array_agg(DISTINCT m.name) AS muscles
@@ -178,14 +191,13 @@ class WorkoutPlanGenerator {
                     e.name,
                     e.description,
                     e.difficulty,
-                    e.equipment,
                     e.video_url
             )
             SELECT DISTINCT 
                 ea.exercise_id, 
                 ea.name, 
                 ea.difficulty,
-                ea.equipment,
+                ea.equipment_options,
                 ea.video_url,
                 ea.muscle_groups,
                 ea.muscles
@@ -375,7 +387,7 @@ class WorkoutPlanGenerator {
                     sets: ex.sets,
                     reps: ex.reps,
                     difficulty: ex.difficulty,
-                    equipment: ex.equipment,
+                    equipment_options: ex.equipment_options || [],
                     muscle_groups: ex.muscle_groups
                 }));
             return acc;

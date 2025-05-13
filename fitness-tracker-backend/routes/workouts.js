@@ -236,11 +236,17 @@ router.get('/muscle-filter-diagnostic', authorization, async (req, res) => {
 
 router.get('/muscles', authorization, async (req, res) => {
     const client = await pool.connect();
-  
+
     try {
       const { groupName } = req.query;
 
-      console.log('Received group name:', groupName);
+      if (!groupName) {
+        // No group specified, return all muscles
+        const allMuscles = await client.query(`
+          SELECT muscle_id, name, description FROM muscles ORDER BY name
+        `);
+        return res.json(allMuscles.rows);
+      }
 
       // Find the group_id for the given group name with more flexible matching
       const groupResult = await client.query(
@@ -252,7 +258,6 @@ router.get('/muscles', authorization, async (req, res) => {
       );
 
       if (groupResult.rows.length === 0) {
-        console.log('No muscle group found for name:', groupName);
         return res.status(404).json({ 
           message: 'Muscle group not found',
           groupName: groupName,
@@ -261,7 +266,6 @@ router.get('/muscles', authorization, async (req, res) => {
       }
 
       const groupId = groupResult.rows[0].group_id;
-      console.log('Found group ID:', groupId);
 
       // Fetch muscles for that group
       const musclesResult = await client.query(
@@ -275,8 +279,6 @@ router.get('/muscles', authorization, async (req, res) => {
         [groupId]
       );
 
-      console.log('Fetched muscles:', musclesResult.rows);
-  
       res.json(musclesResult.rows);
     } catch (error) {
       console.error('Error fetching muscles:', error);
@@ -288,6 +290,7 @@ router.get('/muscles', authorization, async (req, res) => {
       client.release();
     }
 });
+
 
 // Get all muscle groups
 router.get('/muscle-groups', authorization, async (req, res) => {
@@ -830,7 +833,15 @@ router.get('/plans/:planId', authorization, async (req, res) => {
                     e.exercise_id,
                     e.name,
                     e.description,
-                    e.equipment,
+                    -- AGGREGATE EQUIPMENT NAMES INSTEAD OF e.equipment
+                    COALESCE(
+                        (
+                            SELECT array_agg(eq.name)
+                            FROM exercise_equipment ee
+                            JOIN equipment eq ON ee.equipment_id = eq.equipment_id
+                            WHERE ee.exercise_id = e.exercise_id
+                        ), ARRAY[]::text[]
+                    ) AS equipment_options,
                     e.difficulty,
                     e.instructions,
                     e.video_url,
@@ -847,7 +858,6 @@ router.get('/plans/:planId', authorization, async (req, res) => {
                     e.exercise_id, 
                     e.name, 
                     e.description,
-                    e.equipment,
                     e.difficulty,
                     e.instructions,
                     e.video_url,
@@ -875,8 +885,10 @@ router.get('/plans/:planId', authorization, async (req, res) => {
                             'sets', sets,
                             'reps', reps,
                             'description', description,
-                            'equipment', equipment,
+                            'equipment_options', equipment_options,
                             'difficulty', difficulty,
+                            'instructions', instructions,
+                            'video_url', video_url,
                             'muscle_groups', muscle_groups
                         )
                     ) AS exercises

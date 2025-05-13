@@ -87,8 +87,7 @@ const WorkoutPlanEdit = () => {
     }, [location.state]);
     
 
-    // Rest of the useEffects (fetch muscles, exercises, etc.) and helper functions
-    // These are identical to WorkoutPlanBuilder's functions
+    
 
     useEffect(() => {
         const fetchMuscles = async () => {
@@ -111,18 +110,20 @@ const WorkoutPlanEdit = () => {
     useEffect(() => {
         const fetchExercises = async () => {
             try {
-                const exercises = await exerciseLibraryService.getExercises(filters);
+                const muscle = filters.muscleGroup || null;
+                const exercises = await exerciseLibraryService.getExercises(muscle, filters);
                 setExerciseLibrary(exercises);
                 setFilteredExercises(exercises);
             } catch (error) {
                 console.error('Failed to fetch exercises', error);
             }
         };
-
+    
         if (selectedDay) {
             fetchExercises();
         }
     }, [filters, selectedDay]);
+    
 
     // Pagination functions
     const getPaginatedExercises = () => {
@@ -418,15 +419,19 @@ const WorkoutPlanEdit = () => {
 
                     <div className="exercise-filters">
                         <select 
-                            name="muscleGroup"
-                            value={filters.muscleGroup}
-                            onChange={handleFilterChange}
+                        name="muscleGroup"
+                        value={filters.muscleGroup}
+                        onChange={handleFilterChange}
                         >
-                            <option value="">All Muscles</option>
-                            {muscles.map(muscle => (
-                                <option key={muscle} value={muscle}>{muscle}</option>
-                            ))}
+                        <option value="">All Muscles</option>
+                        {muscles.map(muscle =>
+                            typeof muscle === "string"
+                            ? <option key={muscle} value={muscle}>{muscle}</option>
+                            : <option key={muscle.muscle_id} value={muscle.name}>{muscle.name}</option>
+                        )}
                         </select>
+
+
 
                         <select 
                             name="difficulty"

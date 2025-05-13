@@ -109,7 +109,8 @@ const WorkoutPlanGenerate = () => {
         const fetchExercises = async () => {
             try {
                 console.log('Fetching exercises with filters:', filters);
-                const exercises = await exerciseLibraryService.getExercises(filters);
+                const muscle = filters.muscleGroup || null;
+                const exercises = await exerciseLibraryService.getExercises(muscle, filters);
                 console.log('Fetched exercises:', exercises);
                 setExerciseLibrary(exercises);
                 setFilteredExercises(exercises);
@@ -420,7 +421,7 @@ const WorkoutPlanGenerate = () => {
                         >
                             <option value="">All Muscles</option>
                             {muscles.map(muscle => (
-                                <option key={muscle} value={muscle}>{muscle}</option>
+                                <option key={muscle.muscle_id} value={muscle.name}>{muscle.name}</option>
                             ))}
                         </select>
 
