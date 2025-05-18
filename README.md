@@ -2,6 +2,8 @@
 
 Arcus Fitness Tracker is a modern, full-stack fitness web app designed to help users track calories, log workouts, manage nutrition, and visualize progress. This was a learning project for me, so the frontend is a bit rough around the edges. I heavily focues on the backend on this project.
 
+You can visit the website at https://arcus.fit/home
+
 ---
 
 ## Features
