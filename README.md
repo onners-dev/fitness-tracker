@@ -29,7 +29,7 @@ Arcus Fitness Tracker is a modern, full-stack fitness web app designed to help u
 
 **Backend:**
 - Node.js & Express.js
-- PostgreSQL ([Schema here!](./fitness-tracker.sql))
+- PostgreSQL ([Schema here!](./fitness_tracker.sql))
 - JWT Authentication
 - Nodemailer (email support)
 - RESTful API
