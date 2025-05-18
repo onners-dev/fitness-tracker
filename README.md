@@ -48,6 +48,7 @@ Arcus Fitness Tracker is a modern, full-stack fitness web app designed to help u
 ```bash
 git clone https://github.com/yourusername/fitness-tracker.git
 cd fitness-tracker
+```
 
 ### 2. Set up the PostgreSQL Database
 
@@ -57,8 +58,9 @@ cd fitness-tracker
 
 ### 3. Configure the Environment Variables
 
-Create a `.env` file in the backend directory and add the following variables:
 
+Create a `.env` file in the backend directory and add the following variables:
+```bash
 DB_USER=(your database username)
 DB_HOST=(your database host)
 DB_NAME=(your database name)
@@ -66,9 +68,10 @@ DB_PASSWORD=(your database password)
 DB_PORT=(your database port)
 JWT_SECRET=(a random string of characters)
 PORT=(the port number you want to run the backend on)
-
+```
 Create a `.env` file in the frontend directory and add the following variables:
 
+```bash
 REACT_APP_API_URL=(the URL of your backend)
 
 ```
