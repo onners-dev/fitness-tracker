@@ -46,10 +46,10 @@ You can visit the website at https://arcus.fit/home
 
 - Clear Separation of Concerns:
 
-    routes/ directory contains RESTful API endpoints, with each file handling a particular domain (e.g., users, workouts, nutrition).
-    services/ encapsulates business logic, making it reusable and testable across routes.
-    middleware/ for cross-cutting concerns like authentication and authorization.
-    db.js centralizes database connectivity.
+    - routes/ directory contains RESTful API endpoints, with each file handling a particular domain (e.g., users, workouts, nutrition).
+    - services/ encapsulates business logic, making it reusable and testable across routes.
+    - middleware/ for cross-cutting concerns like authentication and authorization.
+    - db.js centralizes database connectivity.
 
 ---
 
