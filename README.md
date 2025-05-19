@@ -41,6 +41,16 @@ You can visit the website at https://arcus.fit/home
 - Environment variables support
 - Modular, maintainable codebase
 
+**Backend Structure:**
+- The website is built with a modular monolithic architecture. All backend logic runs within a single Node.js process, but feature areas are split across focused modules, making it easy to maintain or scale individual features without the operational overhead of microservices.
+
+- Clear Separation of Concerns:
+
+    routes/ directory contains RESTful API endpoints, with each file handling a particular domain (e.g., users, workouts, nutrition).
+    services/ encapsulates business logic, making it reusable and testable across routes.
+    middleware/ for cross-cutting concerns like authentication and authorization.
+    db.js centralizes database connectivity.
+
 ---
 
 ## Getting Started
