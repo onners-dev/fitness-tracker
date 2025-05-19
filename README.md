@@ -36,10 +36,6 @@ You can visit the website at https://arcus.fit/home
 - Nodemailer (email support)
 - RESTful API
 
-**Other:**
-- ESLint & Prettier
-- Environment variables support
-- Modular, maintainable codebase
 
 **Backend Structure:**
 - The website is built with a modular monolithic architecture. All backend logic runs within a single Node.js process, but feature areas are split across focused modules, making it easy to maintain or scale individual features without the operational overhead of microservices.
