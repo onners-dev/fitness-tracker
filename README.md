@@ -108,3 +108,7 @@ cd fitness-tracker-website
 npm start
 ```
 
+### TODO:
+
+- Fix forgot password email configuration on arcus.fit
+- Change to website frontend to use tailwind

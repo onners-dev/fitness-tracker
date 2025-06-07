@@ -313,7 +313,7 @@ router.put('/profile', authorization, async (req, res) => {
 });
 
 
-// Add this route to users.js if not already present
+
 router.put('/password', authorization, async (req, res) => {
   try {
     const userId = req.user.user_id;

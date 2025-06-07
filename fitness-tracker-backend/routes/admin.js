@@ -85,7 +85,6 @@ router.post('/users/:userId/ban', adminRoute, async (req, res) => {
 // Content Moderation
 router.get('/flagged-content', adminRoute, async (req, res) => {
   try {
-    // Note: Adjust these queries based on your actual table structure for flagging
     const workoutFlags = await pool.query(`
       SELECT 
         w.workout_id as id, 
@@ -151,8 +150,6 @@ router.post('/workouts/:workoutId/review', adminRoute, async (req, res) => {
   const { status } = req.body;  // 'approved' or 'rejected'
 
   try {
-    // Note: Your current table might not have a status column
-    // You may need to add this column or handle differently
     await pool.query('UPDATE user_workouts SET status = $1 WHERE workout_id = $2', [status, workoutId]);
     res.json({ message: `Workout ${status} successfully` });
   } catch (error) {
@@ -186,8 +183,8 @@ router.get('/system-analytics', adminRoute, async (req, res) => {
       totalWorkouts: parseInt(workoutCountResult.rows[0].count),
       totalMeals: parseInt(mealCountResult.rows[0].count),
       serverPerformance: {
-        averageResponseTime: 250,  // Mock data, replace with actual monitoring
-        requestsPerMinute: 100     // Mock data, replace with actual monitoring
+        averageResponseTime: 250,
+        requestsPerMinute: 100   
       },
       userGrowth: userGrowthResult.rows.map(row => ({
         date: row.date,
@@ -267,7 +264,6 @@ router.post('/meals/:mealId/review', adminRoute, async (req, res) => {
   const { status } = req.body;  // 'approved' or 'rejected'
 
   try {
-    // Note: You might need to add a status column to your meals table
     await pool.query('UPDATE meals SET status = $1 WHERE meal_id = $2', [status, mealId]);
     res.json({ message: `Meal ${status} successfully` });
   } catch (error) {
@@ -276,7 +272,6 @@ router.post('/meals/:mealId/review', adminRoute, async (req, res) => {
   }
 });
 
-// Add this to your admin routes
 router.post('/flagged-content/:flagId/review', adminRoute, async (req, res) => {
   const { flagId } = req.params;
   const { contentType, action } = req.body;
