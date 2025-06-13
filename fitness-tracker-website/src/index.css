@@ -1,263 +1,138 @@
 /* Design Tokens */
 :root {
-  /* Pastel Primary Colors */
-  --primary-color: #6FA6D6;       /* Soft Blue */
-  --primary-light: #A5C4E3;       /* Lighter Blue */
-  --primary-dark: #4D8AB3;        /* Darker Blue */
+  /* Primary/Accent Colors */
+  --primary-color: #111214;       /* Deep Black */
+  --primary-dark: #0c0d0f;        /* Even Deeper Black */
+  --primary-light: #212226;       /* Charcoal Gray */
 
-  /* Pastel Secondary Colors */
-  --secondary-color: #8FBC8F;     /* Soft Green */
-  --secondary-light: #B5D6B2;     /* Lighter Green */
-  --secondary-dark: #6B9F6B;      /* Darker Green */
+  --secondary-color: #ececec;     /* Very Light Gray for backgrounds */
+  --secondary-dark: #cacaca;      /* Slightly darker gray */
 
-  /* Pastel Accent Colors */
-  --accent-color: #F0A0A0;        /* Soft Coral/Pink */
-  --accent-light: #F5C0C0;        /* Lighter Coral */
-  --accent-dark: #D68F8F;         /* Darker Coral */
+  --accent-color: #e0115f;        /* Vivid Magenta (energetic accent) */
+  --accent-light: #fa5cba;        /* Lighter Magenta for highlights */
 
-  /* Neutral Pastel Colors */
-  --neutral-100: #F7F7F7;         /* Lightest Gray */
-  --neutral-200: #E9E9E9;         /* Light Gray */
-  --neutral-300: #D1D1D1;         /* Medium Light Gray */
-  --neutral-400: #B0B0B0;         /* Medium Gray */
-  --neutral-500: #808080;         /* Dark Gray */
-  --neutral-600: #404040;         /* Darkest Gray */
+  /* Neutral Colors */
+  --neutral-100: #f7f7fa;
+  --neutral-200: #e5e5e7;
+  --neutral-300: #b3b4b8;
+  --neutral-400: #7e7f87;
+  --neutral-500: #535358;
+  --neutral-600: #2c2c2f;
 
-  /* Background Colors */
-  --background-light: #F0F4F8;    /* Soft Light Blue-Gray */
-  --background-dark: #E6EAF0;     /* Slightly Darker Blue-Gray */
+  /* Background & Text */
+  --background: #101113;
+  --background-secondary: #18191b;
+  --text-main: #fafafd;
+  --text-secondary: #b3b4b8;
+  --text-muted: #7e7f87;
+  --text-accent: var(--accent-color);
 
-  /* Text Colors */
-  --text-dark: #3D3D3D;           /* Soft Dark Text */
-  --text-muted: #6C7A89;          /* Muted Text */
-  --text-light: #FFFFFF;          /* Light Text */
+  /* Fitness-specific highlight */
+  --success: #19a979;
+  --danger: #e0115f;
 
-  /* Fitness-Specific Pastel Colors */
-  --calories-color: #F4A460;      /* Soft Orange */
-  --workout-color: #87CEFA;       /* Light Sky Blue */
-  --nutrition-color: #98FB98;     /* Pale Green */
-  --progress-color: #DDA0DD;      /* Plum */
-  
   /* Typography */
-  --font-family-base: 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  
-  /* Spacing */
+  --font-family-base: 'Inter', 'Montserrat', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+
+  /* Spacing & Radius */
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
   --spacing-md: 1.5rem;
   --spacing-lg: 2rem;
-  
-  /* Border Radius */
+
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
-  --border-radius-lg: 12px;
-  
-  /* Shadows */
-  --box-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --box-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --box-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+  --border-radius-lg: 16px;
+
+  /* Shadow */
+  --box-shadow-sm: 0 2px 6px rgba(0,0,0,0.27);
+  --box-shadow-lg: 0 6px 24px rgba(0,0,0,0.30);
 }
 
-/* CSS Reset and Normalize */
-*, 
-*::before, 
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* Normalize & Base */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
   width: 100%;
   min-height: 100vh;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
+  background: var(--background);
+  color: var(--text-main);
+  font-family: var(--font-family-base);
   font-size: 16px;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
 }
+a { color: var(--accent-color); text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--accent-light); }
 
-#root {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-body {
-  font-family: var(--font-family-base);
-  line-height: 1.6;
-  color: var(--text-dark);
-  background-color: var(--background-dark);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  display: flex; 
-  flex-direction: column; 
-}
-
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  margin-bottom: var(--spacing-sm);
-  line-height: 1.2;
-  font-weight: 600;
-}
-
-a {
-  color: var(--primary-color);
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-a:hover {
-  color: var(--accent-color);
-}
-
-/* Form Elements */
-input, 
-select, 
-textarea, 
-button {
-  font-family: var(--font-family-base);
-  transition: all 0.3s ease;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Existing Styles with Improved Consistency */
-.header {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background-color: #282c34;
-  color: white;
-}
-
-.logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.link {
-  color: white;
-  text-decoration: none;
-  margin-left: var(--spacing-sm);
-  transition: color 0.3s ease;
-}
-
-.link:hover {
-  color: var(--primary-color);
-}
-
-.hero {
-  text-align: center;
-  padding: var(--spacing-lg) var(--spacing-md);
-  background-color: var(--background-light);
-}
-
+button,
+.landing-cta,
 .cta-button {
-  margin-top: var(--spacing-sm);
+  background: rgba(224, 17, 95, 0.50); /* Much more transparent magenta */
+  color: #fff;
+  border: none;
   padding: var(--spacing-sm) var(--spacing-md);
-  font-size: 1rem;
-  color: white;
-  background-color: var(--primary-color);
-  border-radius: var(--border-radius-sm);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.cta-button:hover {
-  background-color: var(--accent-color);
-  transform: translateY(-2px);
-}
-
-.features {
-  padding: var(--spacing-lg);
-  background-color: white;
-}
-
-.features-grid {
-  display: flex;
-  gap: var(--spacing-sm);
-  justify-content: center;
-}
-
-.feature-card {
-  padding: var(--spacing-md);
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius-sm);
-  width: 300px;
-  text-align: center;
+  border-radius: var(--border-radius-md, 8px);
+  font-weight: 600;
   box-shadow: var(--box-shadow-sm);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  transition: background 0.25s, opacity 0.25s, transform 0.15s;
+  opacity: 0.85;
 }
 
-.feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--box-shadow-md);
+button:hover,
+.landing-cta:hover,
+.cta-button:hover {
+  background: rgba(224, 17, 95, 0.85);  /* Bolder on hover, but still partially see-through */
+  opacity: 1;
+  transform: translateY(-2px) scale(1.03);
 }
 
-.footer {
-  text-align: center;
-  padding: var(--spacing-sm);
-  background-color: #282c34;
-  color: white;
-  margin-top: auto;
+button, 
+.cta-button, 
+.landing-cta, 
+.signup-button {
+  background: rgba(224,17,95,0.44);
+  color: #fff;
+  padding: 0.95rem 2.4rem;        /* Big and chunky */
+  border-radius: 36px;            /* Extra pill shape */
+  font-size: 1.16rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  box-shadow: 0 6px 28px 0 rgba(224,17,95,0.17);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.22s, color 0.22s, transform 0.18s, box-shadow 0.22s;
+  margin: 0.15em 0.5em;
 }
 
-/* Responsive Typography */
-@media screen and (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
-
-  .features-grid {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .feature-card {
-    width: 90%;
-    max-width: 400px;
-  }
+button:hover, 
+.cta-button:hover, 
+.landing-cta:hover, 
+.signup-button:hover {
+  background: rgba(224,17,95,0.83);
+  transform: translateY(-3px) scale(1.08);
+  box-shadow: 0 12px 36px 0 rgba(224,17,95,0.20);
+  color: #fff;
 }
 
-/* Scroll Bar */
-::-webkit-scrollbar {
-  width: 8px;
+
+button.dark,
+.landing-cta.dark {
+  background: rgba(30,30,32,0.86);
+}
+button.dark:hover,
+.landing-cta.dark:hover {
+  background: rgba(30,30,32,1);
 }
 
-::-webkit-scrollbar-track {
-  background: var(--background-light);
-}
 
-::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: var(--border-radius-sm);
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-main);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--spacing-xs);
 }
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color);
-}
-
-/* Focus Styles */
-*:focus {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
-.no-scroll {
-  overflow: hidden;
-}
+p { color: var(--text-secondary); }
+/* ...You can keep the rest of your layout/grid/feature-card stuff, just adjust backgrounds and borders to gray/black palette... */
