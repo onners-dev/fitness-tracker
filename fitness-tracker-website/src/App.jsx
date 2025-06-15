@@ -35,6 +35,7 @@ import WorkoutPlanOnboarding from './pages/WorkoutPlanOnboarding';
 import WorkoutPlanDetails from './pages/WorkoutPlanDetails';
 import FitnessProfileOnboarding from './pages/FitnessProfileOnboarding';
 import WorkoutPlanEdit from './pages/WorkoutPlanEdit'
+import SiteDock from './components/SiteDock';
 
 
 function App() {
@@ -259,6 +260,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <SiteDock />
         <Footer />
       </div>
     </BrowserRouter>
