@@ -1,21 +1,5 @@
 :root {
-  /* Pastel Color Palette */
-  --pastel-blue: #6FA6D6;
-  --pastel-blue-light: #A5C4E3;
-  --pastel-blue-dark: #4D8AB3;
-  
-  --pastel-green: #8FBC8F;
-  --pastel-green-light: #B5D6B2;
-  --pastel-green-dark: #6B9F6B;
-  
-  --pastel-coral: #F0A0A0;
-  --pastel-gray-light: #F7F7F7;
-  --pastel-gray-medium: #E9E9E9;
-  
-  /* Soft Neutral Colors */
-  --soft-text-dark: #2C3E50;
-  --soft-text-medium: #4A5568;
-  --soft-background: #F0F4F8;
+  /* Using main palette from index.css */
 }
 
 .workouts-page {
@@ -23,15 +7,18 @@
   max-width: 1400px;
   margin: 0 auto;
   min-height: calc(100vh - 160px);
-  background-color: var(--soft-background);
+  background-color: var(--background);
+  color: var(--text-main);
 }
 
 .workouts-page h1 {
   text-align: center;
   margin-bottom: 2rem;
-  color: var(--pastel-blue-dark);
+  color: var(--accent-light);
   font-size: 2.5rem;
-  font-weight: 600;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 /* Loading and Error States */
@@ -39,37 +26,53 @@
 .error {
   text-align: center;
   padding: 2rem;
-  color: var(--soft-text-medium);
+  color: var(--text-secondary);
   font-size: 1.2rem;
 }
 
 .error {
-  color: var(--pastel-coral);
+  color: var(--danger);
 }
 
-.retry-button {
+/* Buttons (modern accent style) */
+.retry-button,
+.favorites-button,
+.log-exercise-btn {
   margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background-color: var(--pastel-blue);
-  color: white;
-  border: none;
-  border-radius: 6px;
+  padding: 0.95rem 2.2rem;
+  background: linear-gradient(
+      90deg,
+      rgba(224,17,95,0.11) 0%,
+      rgba(250,92,186,0.11) 100%,
+      var(--gray-mid) 90%
+    );
+  color: #fff;
+  border-radius: 36px;
+  border: 1.5px solid var(--accent-color);
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 0 8px 36px 0 rgba(224,17,95,0.13);
   cursor: pointer;
-  transition: 
-    background-color 0.3s ease,
-    transform 0.2s ease;
+  transition: background 0.2s, border-color 0.18s, color 0.17s, box-shadow 0.18s, transform 0.14s;
 }
 
-.retry-button:hover {
-  background-color: var(--pastel-blue-dark);
-  transform: translateY(-2px);
+.retry-button:hover,
+.favorites-button:hover,
+.log-exercise-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent-color);
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 12px 36px 0 rgba(224,17,95,0.19);
 }
 
 /* Back Button */
 .back-button {
   background: none;
   border: none;
-  color: var(--pastel-blue);
+  color: var(--accent-light);
   font-size: 1rem;
   cursor: pointer;
   padding: 0.5rem 0;
@@ -77,23 +80,22 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: 
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: color 0.2s, transform 0.2s;
 }
 
 .back-button:hover {
-  color: var(--pastel-blue-dark);
+  color: var(--accent-color);
   transform: translateX(-5px);
 }
 
 /* Filters Section */
 .filters-section {
-  background: var(--background-light);
+  background: var(--background-secondary);
   padding: 1.5rem;
   border-radius: var(--border-radius-lg);
-  border: 1px solid #e0e0e0;
+  border: 1.5px solid var(--primary-color);
   margin-bottom: 1.5rem;
+  box-shadow: var(--box-shadow-lg);
 }
 
 .filters-group {
@@ -111,45 +113,44 @@
 
 .filter label {
   font-weight: 500;
-  color: var(--text-dark);
+  color: var(--text-main);
 }
 
 .filter select {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--neutral-400);
   border-radius: var(--border-radius-md);
   font-size: 1rem;
   min-width: 200px;
-  background-color: white;
-  color: var(--text-dark);
-  transition: 
-    border-color 0.3s ease, 
-    box-shadow 0.3s ease;
+  background-color: var(--primary-light);
+  color: var(--text-main);
+  transition: border-color 0.3s, box-shadow 0.3s, background 0.2s;
 }
 
 .filter select:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-light);
 }
 
 .sort-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem;
-  background-color: var(--primary-color);
-  color: white;
+  padding: 0.75rem 1.7rem;
+  background-color: var(--accent-light);
+  color: #fff;
   border: none;
   border-radius: var(--border-radius-md);
   cursor: pointer;
-  transition: 
-    background-color 0.3s ease,
-    transform 0.2s ease;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: background 0.2s, transform 0.2s, color 0.12s;
 }
 
 .sort-button:hover {
-  background-color: #3a7bd5;
+  background-color: var(--accent-color);
+  color: #fff;
   transform: translateY(-2px);
 }
 
@@ -160,7 +161,6 @@
   text-align: right;
 }
 
-
 /* Muscle Groups Grid */
 .muscle-groups-grid {
   display: grid;
@@ -170,16 +170,13 @@
 }
 
 .muscle-group-card {
-  background: white;
+  background: var(--primary-light);
   padding: 2rem;
-  border-radius: 10px;
-  border: 1px solid var(--pastel-gray-medium);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: var(--border-radius-lg);
+  border: 1.5px solid var(--primary-color);
+  box-shadow: var(--box-shadow-lg);
   cursor: pointer;
-  transition: 
-    transform 0.3s ease, 
-    box-shadow 0.3s ease,
-    background-color 0.3s ease;
+  transition: transform 0.22s, box-shadow 0.15s, border 0.17s, background 0.18s;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -188,27 +185,32 @@
 }
 
 .muscle-group-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-  background-color: var(--pastel-blue-light);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 12px 42px 0 rgba(224,17,95,0.09);
+  border-color: var(--accent-color);
+  background-color: var(--background-secondary);
 }
 
 .muscle-group-card h2 {
-  color: var(--pastel-blue-dark);
+  color: var(--accent-light);
   margin-bottom: 1rem;
   font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .muscle-group-card p {
-  color: var(--soft-text-medium);
-  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-size: 0.96rem;
 }
 
 /* Muscles Grid */
 .muscles-section h2 {
-  color: var(--pastel-blue-dark);
+  color: var(--accent-light);
   margin: 1rem 0;
   font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
 }
 
 .muscles-grid {
@@ -219,16 +221,13 @@
 }
 
 .muscle-card {
-  background: white;
+  background: var(--primary-light);
   padding: 1.5rem;
-  border-radius: 10px;
-  border: 1px solid var(--pastel-gray-medium);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: var(--border-radius-md);
+  border: 1.5px solid var(--primary-color);
+  box-shadow: var(--box-shadow-lg);
   cursor: pointer;
-  transition: 
-    transform 0.3s ease, 
-    box-shadow 0.3s ease,
-    background-color 0.3s ease;
+  transition: transform 0.22s, box-shadow 0.15s, border 0.17s, background 0.18s;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -237,27 +236,30 @@
 }
 
 .muscle-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-  background-color: var(--pastel-green-light);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 12px 42px 0 rgba(224,17,95,0.09);
+  border-color: var(--accent-color);
+  background-color: var(--background-secondary);
 }
 
 .muscle-card h3 {
-  color: var(--pastel-blue-dark);
+  color: var(--accent-light);
   margin-bottom: 0.5rem;
   font-size: 1.2rem;
+  text-transform: uppercase;
 }
 
 .muscle-card p {
-  color: var(--soft-text-medium);
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 /* Exercises Grid */
 .exercises-section h2 {
-  color: var(--pastel-blue-dark);
+  color: var(--accent-light);
   margin: 1rem 0;
   font-size: 2rem;
+  text-transform: uppercase;
 }
 
 .exercises-grid {
@@ -267,16 +269,20 @@
   margin-top: 1rem;
 }
 
+/* -- The main fix: stronger and more explicit selectors for cards & modal -- */
+.exercise-card,
+.exercise-modal-content {
+  background: var(--primary-light);
+  /* If needed, uncomment for last resort: */
+  /* background: var(--primary-light) !important; */
+}
+
 .exercise-card {
-  background: white;
   padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid var(--pastel-gray-medium);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  transition: 
-    transform 0.3s ease, 
-    box-shadow 0.3s ease,
-    background-color 0.3s ease;
+  border-radius: var(--border-radius-lg);
+  border: 1.5px solid var(--primary-color);
+  box-shadow: var(--box-shadow-lg);
+  transition: transform 0.22s, box-shadow 0.15s, border 0.17s, background 0.18s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -286,9 +292,10 @@
 }
 
 .exercise-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-  background-color: var(--pastel-blue-light);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 12px 42px 0 rgba(224,17,95,0.11);
+  border-color: var(--accent-color);
+  background: var(--background-secondary);
 }
 
 .exercise-header {
@@ -299,68 +306,47 @@
   gap: 1rem;
 }
 
-
 .exercise-header h3 {
   margin-bottom: 0;
-  flex-grow: 1; 
+  flex-grow: 1;
   margin-right: 1rem;
-}
-
-.exercise-card h3 {
-  color: var(--pastel-blue-dark);
-  margin-bottom: 1rem;
+  color: var(--neutral-100);
+  font-weight: 700;
   font-size: 1.3rem;
 }
 
+/* Favorite icon uses accent color on hover/favorite! */
 .favorite-icon {
   flex-shrink: 0;
   font-size: 1.5rem;
-  color: var(--soft-text-medium); /* More visible */
+  color: var(--text-muted);
   cursor: pointer;
-  transition: 
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: color 0.2s, transform 0.2s;
 }
 
-.favorite-icon.favorited {
-  color: var(--pastel-coral);
-}
-
+.favorite-icon.favorited,
 .favorite-icon:hover {
-  color: var(--pastel-coral);
+  color: var(--accent-color);
   transform: scale(1.1);
 }
 
 .exercise-card p {
-  color: #7f8c8d;
+  color: var(--text-secondary);
   margin: 0.5rem 0;
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   line-height: 1.6;
 }
 
 .exercise-card strong {
-  color: #2c3e50;
+  color: var(--accent-light);
 }
 
-.exercise-description {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #ecf0f1;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
+.exercise-description,
 .exercise-instructions {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #ecf0f1;
-}
-
-.exercise-instructions p {
-  margin-top: 0.5rem;
-  white-space: pre-line;
-  line-height: 1.6;
-  color: #7f8c8d;
+  border-top: 1px solid var(--neutral-400);
+  color: var(--text-secondary);
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -368,92 +354,9 @@
 .no-exercises {
   text-align: center;
   padding: 2rem;
-  color: #7f8c8d;
+  color: var(--text-muted);
   grid-column: 1 / -1;
 }
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .workouts-page {
-      padding: 1rem;
-  }
-
-  .workouts-page h1 {
-      font-size: 2rem;
-  }
-
-  .filters-group {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 1rem;
-  }
-
-  .filter {
-      flex-direction: column;
-      align-items: stretch;
-  }
-
-  .sort-button {
-      width: 100%;
-      justify-content: center;
-  }
-
-  .muscle-groups-grid,
-  .muscles-grid,
-  .exercises-grid {
-      grid-template-columns: 1fr;
-  }
-
-  .muscle-group-card,
-  .muscle-card,
-  .exercise-card {
-      padding: 1.25rem;
-  }
-
-  .exercise-card h3 {
-      font-size: 1.2rem;
-  }
-}
-
-.favorites-link {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.favorites-button {
-  background-color: #3498db;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.favorites-button:hover {
-  background-color: #2980b9;
-}
-
-/* Additional text and overflow handling */
-.exercise-card {
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.exercise-description,
-.exercise-instructions p {
-  word-break: break-word;
-  overflow-wrap: break-word;
-  max-width: 100%;
-  hyphens: auto;
-}
-
-.exercise-card p {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 
 .exercise-modal-overlay {
   position: fixed;
@@ -461,7 +364,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(16, 17, 19, 0.87);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -469,8 +372,7 @@
 }
 
 .exercise-modal-content {
-  background-color: white;
-  border-radius: 10px;
+  border-radius: var(--border-radius-lg);
   padding: 30px;
   width: 90%;
   max-width: 600px;
@@ -478,6 +380,9 @@
   overflow-y: auto;
   position: relative;
   z-index: 1600;
+  color: var(--text-main);
+  box-shadow: var(--box-shadow-lg);
+  border: 1.5px solid var(--primary-color);
 }
 
 .modal-close-btn {
@@ -487,6 +392,7 @@
   background: none;
   border: none;
   font-size: 24px;
+  color: var(--accent-color);
   cursor: pointer;
 }
 
@@ -497,37 +403,74 @@
 }
 
 .detail-section {
-  background-color: #f9f9f9;
+  background-color: var(--background-secondary);
   padding: 15px;
-  border-radius: 8px;
-}
-
-.log-exercise-btn {
-  width: 100%;
-  padding: 12px;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
   border-radius: var(--border-radius-md);
-  cursor: pointer;
-  font-weight: 600;
-  transition: 
-    background-color 0.3s ease,
-    transform 0.2s ease;
-  margin-top: 1rem;
+  color: var(--text-main);
+  border: 1px solid var(--neutral-600);
 }
 
-.log-exercise-btn:hover {
-  background-color: #3a7bd5;
-  transform: translateY(-2px);
+@media (max-width: 768px) {
+  .workouts-page {
+      padding: 1rem;
+  }
+  .workouts-page h1 {
+      font-size: 2rem;
+  }
+  .filters-group {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+  }
+  .filter {
+      flex-direction: column;
+      align-items: stretch;
+  }
+  .sort-button {
+      width: 100%;
+      justify-content: center;
+  }
+  .muscle-groups-grid,
+  .muscles-grid,
+  .exercises-grid {
+      grid-template-columns: 1fr;
+  }
+  .muscle-group-card,
+  .muscle-card,
+  .exercise-card {
+      padding: 1.25rem;
+  }
+  .exercise-card h3 {
+      font-size: 1.2rem;
+  }
+}
+
+.favorites-link {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Quick "text and overflow" handling */
+.exercise-card {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+.exercise-description,
+.exercise-instructions p {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  hyphens: auto;
+}
+.exercise-card p {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
-.exercises-grid .exercise-card {
-  cursor: pointer;
-  transition: transform 0.2s;
+.exercise-card,
+.exercise-modal-content {
+  background: var(--primary-light) !important;
 }
 
-.exercises-grid .exercise-card:hover {
-  transform: scale(1.03);
-}

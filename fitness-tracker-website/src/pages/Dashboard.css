@@ -1,107 +1,77 @@
 :root {
-  /* Pastel Color Palette */
-  --pastel-blue: #6FA6D6;
-  --pastel-blue-light: #A5C4E3;
-  --pastel-blue-dark: #4D8AB3;
-  
-  --pastel-green: #8FBC8F;
-  --pastel-green-light: #B5D6B2;
-  --pastel-green-dark: #6B9F6B;
-  
-  --pastel-coral: #F0A0A0;
-  --pastel-gray-light: #F7F7F7;
-  --pastel-gray-medium: #E9E9E9;
-  
-  /* Soft Neutral Colors */
-  --soft-text-dark: #2C3E50;
-  --soft-text-medium: #4A5568;
-  --soft-background: #F0F4F8;
+  /* Uses your main palette from index.css */
 }
 
+/* Dashboard Base */
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem;
-  background-color: var(--soft-background);
+  padding: var(--spacing-lg);
+  background: var(--background);
+  min-height: 100vh;
+  color: var(--text-main);
 }
 
 .dashboard-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 .dashboard-header h1 {
-  color: var(--pastel-blue-dark);
+  color: var(--text-main);
   font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 800;
 }
 
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 1rem;
+  gap: var(--spacing-lg);
 }
 
 .dashboard-card {
-  background-color: white;
-  border-radius: 12px;
-  border: 1px solid var(--pastel-gray-medium);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  padding: 1.5rem;
-  transition: 
-    transform 0.3s ease, 
-    box-shadow 0.3s ease,
-    background-color 0.3s ease;
+  background: var(--primary-light);
+  border-radius: var(--border-radius-lg);
+  border: 1.5px solid var(--primary-color);
+  box-shadow: var(--box-shadow-lg);
+  padding: var(--spacing-lg);
+  transition:
+    transform 0.24s cubic-bezier(.4,2,.4,1),
+    box-shadow 0.22s,
+    border 0.18s,
+    background 0.22s;
 }
 
 .dashboard-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-  background-color: var(--pastel-blue-light);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 10px 38px 0 rgba(224,17,95,0.18);
+  border-color: var(--accent-color);
+  background: var(--background-secondary);
 }
 
 .dashboard-card h2 {
-  border-bottom: 2px solid var(--pastel-blue-light);
+  color: var(--text-main);
+  border-bottom: 2px solid var(--primary-color);
   padding-bottom: 0.5rem;
-  margin-bottom: 1rem;
-  color: var(--pastel-blue-dark);
+  margin-bottom: 1.1rem;
+  font-size: 1.15em;
+  letter-spacing: 0.02em;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 1rem;
+.dashboard-card:hover h2 {
+  border-bottom-color: var(--accent-color);
 }
-
-/* First row: 3 cards from GoalSummary */
-.goal-summary-first-row {
-  grid-column: span 4;
-}
-
-.goal-summary-full-width {
-  grid-column: span 12 !important;
-}
-
-/* Second row: 2 cards from Dashboard */
-.dashboard > .dashboard-grid .dashboard-card:nth-child(1),
-.dashboard > .dashboard-grid .dashboard-card:nth-child(2) {
-  grid-column: span 6;
-}
-
-/* Third row: 3 cards from Dashboard */
-.dashboard > .dashboard-grid .dashboard-card:nth-child(3),
-.dashboard > .dashboard-grid .dashboard-card:nth-child(4),
-.dashboard > .dashboard-grid .dashboard-card:nth-child(5) {
-  grid-column: span 4;
-}
-
-
 
 .profile-info p,
 .recent-workouts-list li,
 .nutrition-trends-list li {
-  color: var(--soft-text-medium);
-  margin-bottom: 0.5rem;
-  line-height: 1.5;
+  color: var(--text-secondary);        /* Soft gray for all info text */
+  margin-bottom: 0.55rem;
+  font-size: 1rem;
 }
 
 .stats .stat-item {
@@ -111,124 +81,114 @@
 }
 
 .stats .stat-label {
-  color: var(--soft-text-medium);
+  color: var(--text-muted);
 }
 
 .stats .stat-value {
   font-weight: bold;
-  color: var(--pastel-blue-dark);
+  color: var(--text-main);         /* changed ⬅️ Make stat value white */
+  font-size: 1.14em;
 }
 
-.recent-workouts-list {
-  list-style-type: none;
-  padding: 0;
+/* Grid Columns */
+.dashboard-grid > .dashboard-card {
+  grid-column: span 4;
+}
+.dashboard-grid > .dashboard-card:nth-child(4),
+.dashboard-grid > .dashboard-card:nth-child(5) {
+  grid-column: span 6;
+}
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  .dashboard-grid > .dashboard-card {
+    grid-column: span 1 !important;
+  }
 }
 
-.workout-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid var(--pastel-gray-medium);
-}
-
-.workout-type {
-  font-weight: bold;
-  flex: 1;
-  text-align: left;
-  color: var(--pastel-blue-dark);
-}
-
-
-.workout-date {
-  color: var(--soft-text-medium);
-  margin: 0 10px;
-}
-
-.workout-duration {
-  color: #888;
-  font-size: 0.9em;
-}
-
-.workout-insights-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-.workout-insight-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.insight-type {
-  font-weight: bold;
-}
-
-.insight-count {
-  color: #666;
-}
-
+/* Button styles: accent-light for CTAs */
 .log-workout-btn,
 .log-meal-btn,
 .view-progress-btn {
   width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  background-color: var(--pastel-blue);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  margin-top: var(--spacing-sm);
+  background: linear-gradient(90deg, rgba(224,17,95,0.08) 0%, rgba(250,92,186,0.08) 100%, var(--gray-mid) 90%);
+  color: #fff;
+  border-radius: 16px;
+  border: 1.5px solid var(--accent-color);
+  padding: 0.95rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 0 4px 20px 0 rgba(224,17,95,0.10);
   cursor: pointer;
   transition: 
-    background-color 0.3s ease,
-    transform 0.2s ease;
+    background 0.22s, 
+    color 0.18s, 
+    border-color 0.17s, 
+    box-shadow 0.18s, 
+    transform 0.14s;
 }
 
 .log-workout-btn:hover,
 .log-meal-btn:hover,
 .view-progress-btn:hover {
-  background-color: var(--pastel-blue-dark);
-  transform: translateY(-2px);
+  background: var(--accent-light);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.19);
+  transform: translateY(-2px) scale(1.05);
 }
 
 
+
+/* No Data States */
 .no-workouts,
 .no-meals,
 .no-insights {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  color: var(--text-muted);
+  padding: 1rem 0;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .dashboard-grid > div {
-    grid-column: span 1 !important;
-  }
+/* For lists/items */
+.recent-workouts-list,
+.workout-insights-list,
+.nutrition-trends-list {
+  list-style: none;
+  padding: 0;
+}
+.workout-item,
+.workout-insight-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--neutral-300);
+  padding: 0.4em 0.1em;
 }
 
-/* Error and Loading states */
+/* Use white for type labels, not accent */
+.workout-type,
+.insight-type,
+.nutrition-trends-list strong {
+  font-weight: bold;
+  color: var(--text-main);
+}
+.workout-date,
+.workout-duration,
+.insight-count {
+  color: var(--text-muted);
+}
+
 .error {
-  color: var(--pastel-coral);
+  color: var(--danger);
   text-align: center;
   margin-top: 2rem;
 }
 
-.portion-selector {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.portion-selector input {
-  width: 80px;
-  padding: 0.25rem;
-}

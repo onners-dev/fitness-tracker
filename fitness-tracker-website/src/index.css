@@ -1,15 +1,16 @@
 /* Design Tokens */
 :root {
   /* Primary/Accent Colors */
-  --primary-color: #111214;       /* Deep Black */
-  --primary-dark: #0c0d0f;        /* Even Deeper Black */
-  --primary-light: #212226;       /* Charcoal Gray */
+  --primary-color: #111214;
+  --primary-dark: #0c0d0f;
+  --primary-light: #18191b;
 
-  --secondary-color: #ececec;     /* Very Light Gray for backgrounds */
+  --secondary-color: #ececec;  
   --secondary-dark: #cacaca;      /* Slightly darker gray */
 
-  --accent-color: #e0115f;        /* Vivid Magenta (energetic accent) */
-  --accent-light: #fa5cba;        /* Lighter Magenta for highlights */
+  --accent-color: #e0115f;
+  --accent-light: #fa5cba;
+
 
   /* Neutral Colors */
   --neutral-100: #f7f7fa;
@@ -21,7 +22,7 @@
 
   /* Background & Text */
   --background: #101113;
-  --background-secondary: #18191b;
+  --background-secondary: #18191b; 
   --text-main: #fafafd;
   --text-secondary: #b3b4b8;
   --text-muted: #7e7f87;

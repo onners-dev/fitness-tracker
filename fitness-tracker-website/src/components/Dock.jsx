@@ -7,9 +7,9 @@ function DockLabel({ children, hovered }) {
     <AnimatePresence>
       {hovered && (
         <motion.div
-          initial={{ opacity: 0, y: 0 }}
-          animate={{ opacity: 1, y: -10 }}
-          exit={{ opacity: 0, y: 0 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.2 }}
           className="dock-label"
           role="tooltip"
@@ -37,8 +37,9 @@ function DockItem({
   const ref = useRef(null);
 
   return (
-    <motion.div
+    <div
       ref={ref}
+      className={`dock-item ${className}`}
       style={{
         width: baseItemSize,
         height: baseItemSize,
@@ -48,19 +49,23 @@ function DockItem({
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
       onClick={onClick}
-      className={`dock-item ${className}`}
       tabIndex={0}
       role="button"
       aria-haspopup="true"
-      animate={{
-        scale: hovered ? animationScale : 1,
-        zIndex: hovered ? 2 : 1,
-        transition: { type: "spring", stiffness: 250, damping: 15 },
-      }}
     >
-      <DockIcon>{icon}</DockIcon>
+      {/* Label positioned relative to dock-item, not dock-inner */}
       <DockLabel hovered={hovered}>{label}</DockLabel>
-    </motion.div>
+      
+      <motion.div
+        className="dock-inner"
+        animate={{
+          scale: hovered ? animationScale : 1,
+        }}
+        transition={{ type: "spring", stiffness: 250, damping: 15 }}
+      >
+        <DockIcon>{icon}</DockIcon>
+      </motion.div>
+    </div>
   );
 }
 

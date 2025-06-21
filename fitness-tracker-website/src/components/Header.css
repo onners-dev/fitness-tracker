@@ -1,5 +1,5 @@
 :root {
-  /* Core Palette for Gym Theme */
+  /* Core Palette */
   --black-main: #111214;
   --black-deep: #0c0d0f;
   --gray-dark: #222326;
@@ -51,14 +51,25 @@
   text-decoration: none;
   padding: 0.3rem 1rem;
   border-radius: 8px;
-  transition: color 0.2s, background 0.2s;
-  cursor: pointer;
+  border: 1.5px solid rgba(234,234,236,0.22);
+  background: none;
+  vertical-align: middle;
+  transition: color 0.2s, background 0.2s, border-color 0.18s, box-shadow 0.18s;
 }
 
 .link:hover,
-.header-dropdown:hover {
-  background: rgba(224,17,95,0.22);
+.header-dropdown:hover,
+.link:focus,
+.header-dropdown:focus {
+  background: rgba(224,17,95,0.09);
   color: var(--magenta);
+  border-color: var(--magenta);
+}
+
+.link:focus-visible,
+.header-dropdown:focus-visible {
+  box-shadow: 0 0 0 2px var(--magenta-light);
+  outline: none;
 }
 
 .header-dropdown {
@@ -139,14 +150,16 @@
   font-size: 1.09rem;
   text-decoration: none;
   letter-spacing: .04em;
-  margin-left: 1rem;
+
   transition: background 0.22s, color 0.22s, transform 0.15s;
   box-shadow: 0 2px 14px 0 rgba(224,17,95,0.11);
   text-transform: uppercase;
   border: none;
   outline: none;
+  vertical-align: middle;
+  display: flex;
+  align-items: center;
 }
-
 .signup-button:hover {
   background: rgba(224,17,95,0.83);
   color: #fff;
@@ -157,6 +170,7 @@
 .auth-buttons {
   display: flex;
   gap: 1.1rem;
+  align-items: center;
 }
 
 /* --- Mobile Menu --- */
@@ -267,8 +281,8 @@
   color: #fff;
 }
 
-
 .signup-button {
   background: rgba(224,17,95,0.44) !important;
   color: #fff !important;
+  /* margin-left: 0 !important; */
 }
