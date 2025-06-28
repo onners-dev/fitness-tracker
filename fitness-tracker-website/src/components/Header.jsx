@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api';
 import { workoutPlanService } from '../services/workoutPlanService';
+import LogoIcon from "./LogoIcon";
 import './Header.css';
 
 const WorkoutPlansLink = ({ onClick, className }) => {
@@ -15,7 +16,6 @@ const WorkoutPlansLink = ({ onClick, className }) => {
         setHasExistingPlans(plans.length > 0);
       } catch (error) {
         console.error('Error checking existing workout plans:', error);
-        // Fallback to onboarding if there's an error
         setHasExistingPlans(false);
       }
     };
@@ -29,8 +29,8 @@ const WorkoutPlansLink = ({ onClick, className }) => {
   };
 
   return (
-    <span 
-      onClick={handleClick} 
+    <span
+      onClick={handleClick}
       style={{ cursor: 'pointer' }}
       className={className}
     >
@@ -46,6 +46,14 @@ const Header = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+  // Theme detection (simple/localStorage, adjust to your setup as needed)
+  const [theme, setTheme] = useState('light');
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) setTheme(savedTheme);
+  }, []);
+  const logoColor = theme === 'dark' ? '#00D8FF' : '#E0115F';
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -65,7 +73,7 @@ const Header = () => {
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('isAdmin');  // Clear admin status
+    localStorage.removeItem('isAdmin');
     navigate('/home');
     setIsMobileMenuOpen(false);
   };
@@ -74,21 +82,21 @@ const Header = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const closeDropdowns = () => {
-    setActiveDropdown(null);
-  };
-
   return (
     <>
       <header className="header">
-        <Link to="/home" className="logo">Arcus</Link>
-        
+      <Link to="/home" className="logo" style={{display: "flex", alignItems: "center", gap: "0.7rem"}}>
+        <LogoIcon color={logoColor} width={44} height={44} />
+        <span style={{fontSize: "2rem"}}>Arcus</span>
+      </Link>
+
+
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
           {isLoggedIn ? (
             <>
               {/* Tracking Dropdown */}
-              <div 
+              <div
                 className="header-dropdown"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -112,7 +120,7 @@ const Header = () => {
               </div>
 
               {/* Fitness Dropdown */}
-              <div 
+              <div
                 className="header-dropdown"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -125,17 +133,17 @@ const Header = () => {
                     <Link to="/workouts" className="dropdown-item">
                       Workout Library
                     </Link>
-                    <WorkoutPlansLink 
-                      onClick={() => setActiveDropdown(null)} 
+                    <WorkoutPlansLink
+                      onClick={() => setActiveDropdown(null)}
                       className="dropdown-item"
                     />
                   </div>
                 )}
               </div>
 
-              {/* Admin Dropdown - Only visible to admin users */}
+              {/* Admin Dropdown */}
               {isAdmin && (
-                <div 
+                <div
                   className="header-dropdown"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -149,7 +157,7 @@ const Header = () => {
                       <Link to="/admin/users" className="dropdown-item">User Management</Link>
                       <Link to="/admin/content" className="dropdown-item">Content Moderation</Link>
                       <Link to="/admin/workouts" className="dropdown-item">Workout Moderation</Link>
-                      <Link to="/admin/workouts/exercises" className="dropdown-item">Edit Exercises</Link> {/* New Link */}
+                      <Link to="/admin/workouts/exercises" className="dropdown-item">Edit Exercises</Link>
                       <Link to="/admin/nutrition" className="dropdown-item">Nutrition Moderation</Link>
                       <Link to="/admin/analytics" className="dropdown-item">System Analytics</Link>
                     </div>
@@ -160,7 +168,7 @@ const Header = () => {
               <Link to="/dashboard" className="link">Dashboard</Link>
 
               {/* Profile Dropdown */}
-              <div 
+              <div
                 className="header-dropdown profile-dropdown"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -172,8 +180,8 @@ const Header = () => {
                   <div className="dropdown-menu">
                     <Link to="/dashboard" className="dropdown-item">Profile</Link>
                     <Link to="/settings" className="dropdown-item">Settings</Link>
-                    <button 
-                      onClick={handleSignOut} 
+                    <button
+                      onClick={handleSignOut}
                       className="dropdown-item sign-out-btn"
                     >
                       Sign Out
@@ -204,15 +212,18 @@ const Header = () => {
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
         <>
-          <div 
-            className="mobile-nav-overlay open" 
+          <div
+            className="mobile-nav-overlay open"
             onClick={toggleMobileMenu}
           ></div>
           <div className="mobile-nav open">
             <div className="mobile-nav-header">
-              <Link to="/home" className="logo">Arcus</Link>
-              <button 
-                className="mobile-nav-close" 
+              <Link to="/home" className="logo" style={{display: "flex", alignItems: "center", gap: "0.7rem"}}>
+                <LogoIcon color={logoColor} width={30} height={30} />
+                <span>Arcus</span>
+              </Link>
+              <button
+                className="mobile-nav-close"
                 onClick={toggleMobileMenu}
               >
                 ✕
@@ -242,7 +253,7 @@ const Header = () => {
                     <span>Fitness</span>
                     <div className="mobile-dropdown-content">
                       <Link to="/workouts" onClick={toggleMobileMenu}>Workout Library</Link>
-                      <WorkoutPlansLink 
+                      <WorkoutPlansLink
                         onClick={toggleMobileMenu}
                         className="mobile-dropdown-item"
                       />
@@ -258,7 +269,7 @@ const Header = () => {
                         <Link to="/admin/users" onClick={toggleMobileMenu}>User Management</Link>
                         <Link to="/admin/content" onClick={toggleMobileMenu}>Content Moderation</Link>
                         <Link to="/admin/workouts" onClick={toggleMobileMenu}>Workout Moderation</Link>
-                        <Link to="/admin/workouts/exercises" onClick={toggleMobileMenu}>Edit Exercises</Link> {/* New Link */}
+                        <Link to="/admin/workouts/exercises" onClick={toggleMobileMenu}>Edit Exercises</Link>
                         <Link to="/admin/nutrition" onClick={toggleMobileMenu}>Nutrition Moderation</Link>
                         <Link to="/admin/analytics" onClick={toggleMobileMenu}>System Analytics</Link>
                       </div>

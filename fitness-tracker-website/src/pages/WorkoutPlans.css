@@ -1,200 +1,229 @@
-/* WorkoutPlans.css */
 .workout-plans-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: var(--spacing-md);
+  padding: 2rem 1rem;
+  min-height: 70vh;
+  background: transparent;
 }
 
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.2rem;
 }
 
 .page-header h1 {
-  font-size: 2rem;
-  color: var(--text-dark);
+  font-size: 2.2rem;
+  color: var(--text-main);
+  font-weight: 900;
+  letter-spacing: 0.01em;
   margin: 0;
 }
 
-.create-plan-btn {
-  background-color: var(--primary-color);
-  color: var(--text-light);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius-md);
+/* ----- BUTTONS (Unified Blue default, Pink on Hover) ----- */
+.create-plan-btn,
+.get-started-btn,
+.plan-actions button,
+.retry-button {
+  margin-top: 0.15em;
+  padding: 0.95rem 2.4rem;
+  background: linear-gradient(90deg, rgba(30,90,250,0.79) 0%, rgba(80,150,255,0.87) 100%);
+  color: #fff;
+  border-radius: 36px;
+  font-size: 1.12rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 0 6px 28px 0 rgba(56,84,208,0.15);
+  border: 1.5px solid #3576d9;
+  opacity: 0.93;
+  outline: none;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.22s, color 0.18s, border-color 0.17s, box-shadow 0.18s, transform 0.14s;
+  margin-bottom: 0.15em;
 }
 
-.create-plan-btn:hover {
-  background-color: var(--primary-dark);
+.create-plan-btn:hover,
+.get-started-btn:hover,
+.plan-actions button:hover,
+.retry-button:hover {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.17);
+  transform: translateY(-2px) scale(1.07);
+  opacity: 1;
 }
 
+/* Buttons inside modal change on modal hover */
+.workout-plan-modal:hover .create-plan-btn,
+.workout-plan-modal:hover .get-started-btn,
+.workout-plan-modal:hover .plan-actions button,
+.workout-plan-modal:hover .retry-button {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 20px 0 rgba(224,17,95,0.12); 
+  transform: none;
+  opacity: 1;
+}
+
+/* Modal + button hovered: extra pop */
+.workout-plan-modal:hover .create-plan-btn:hover,
+.workout-plan-modal:hover .get-started-btn:hover,
+.workout-plan-modal:hover .plan-actions button:hover,
+.workout-plan-modal:hover .retry-button:hover {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.17);
+  transform: translateY(-2px) scale(1.07);
+  opacity: 1;
+}
+
+/* For delete button only - keeps a dangerous feel */
+.plan-actions .delete-plan-btn {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+.plan-actions .delete-plan-btn:hover,
+.workout-plan-modal:hover .plan-actions .delete-plan-btn,
+.workout-plan-modal:hover .plan-actions .delete-plan-btn:hover {
+  background: var(--danger-dark, #b80029);
+  border-color: var(--danger-dark, #b80029);
+  transform: scale(1.06);
+  color: #fff;
+}
+
+/* ---------- END BUTTONS ---------- */
+
+/* Empty state and cards */
 .no-plans {
-  text-align: center;
-  padding: var(--spacing-lg);
-  background-color: var(--neutral-100);
+  background: var(--background-secondary);
+  color: var(--text-muted);
   border-radius: var(--border-radius-lg);
-}
-
-.get-started-btn {
-  background-color: var(--secondary-color);
-  color: var(--text-light);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  margin-top: var(--spacing-md);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.get-started-btn:hover {
-  background-color: var(--secondary-dark);
+  text-align: center;
+  padding: 3.2rem 1.5rem;
+  box-shadow: var(--box-shadow-lg);
+  margin: 3rem auto 0 auto;
+  max-width: 500px;
 }
 
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(325px, 1fr));
+  gap: 2rem;
 }
 
 .plan-card {
-  background-color: white;
+  background: var(--primary-light);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-md);
-  padding: var(--spacing-md);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.plan-card:hover {
-  transform: translateY(-5px);
   box-shadow: var(--box-shadow-lg);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  transition: transform 0.20s, box-shadow 0.20s, border 0.18s, background 0.15s;
+  border: 1.5px solid var(--primary-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+.plan-card:hover {
+  transform: translateY(-7px) scale(1.025);
+  box-shadow: 0 14px 48px 0 rgba(224,17,95,0.09);
+  border-color: var(--accent-color);
+  background: var(--background-secondary);
 }
 
 .plan-card h2 {
-  margin-top: 0;
-  margin-bottom: var(--spacing-sm);
-  color: var(--text-dark);
-  font-size: 1.5rem;
+  margin: 0 0 1rem 0;
+  color: var(--text-main);
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .plan-details {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 1.7rem;
 }
-
 .plan-details p {
-  margin: var(--spacing-sm) 0;
-  color: var(--text-muted);
+  margin: 0.3rem 0;
+  color: var(--text-main);
+  font-size: 1.02rem;
 }
-
-.plan-details p strong {
-  color: var(--text-dark);
+.plan-details strong {
+  color: var(--text-main);
+  font-weight: 650;
 }
 
 .plan-actions {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: 1rem;
   justify-content: space-between;
+  margin-top: auto;
 }
 
-.plan-actions button {
-  flex: 1;
-  padding: var(--spacing-sm);
-  border: none;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.view-details-btn {
-  background-color: var(--primary-color);
-  color: var(--text-light);
-}
-
-.view-details-btn:hover {
-  background-color: var(--primary-dark);
-}
-
-.delete-plan-btn {
-  background-color: var(--accent-color);
-  color: var(--text-light);
-}
-
-.delete-plan-btn:hover {
-  background-color: var(--accent-dark);
-}
-
-.start-workout-btn {
-  background-color: var(--secondary-color);
-  color: var(--text-light);
-}
-
-.start-workout-btn:hover {
-  background-color: var(--secondary-dark);
-}
-
-.loading {
+/* Loading spinner */
+.loading,
+.loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  min-height: 240px;
 }
-
 .spinner {
   border: 4px solid var(--neutral-200);
-  border-top: 4px solid var(--primary-color);
+  border-top: 4px solid var(--accent-color);
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   animation: spin 1s linear infinite;
+  margin-bottom: 28px;
 }
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+@keyframes spin { 100% { transform: rotate(360deg); } }
 
 .error-message {
   text-align: center;
-  padding: var(--spacing-lg);
-  background-color: var(--neutral-100);
+  padding: 2rem;
+  background: var(--neutral-100);
   border-radius: var(--border-radius-lg);
+  margin: 1.5rem auto;
+  max-width: 500px;
+}
+.error-message p {
+  color: var(--danger);
+  font-weight: 700;
 }
 
-.error-message button {
-  background-color: var(--accent-color);
-  color: var(--text-light);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  margin-top: var(--spacing-md);
-}
-
-/* Responsive Design */
+/* Responsive: mobile */
 @media (max-width: 768px) {
   .plans-grid {
     grid-template-columns: 1fr;
+    gap: 1.4rem;
   }
-
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.7rem;
   }
-
-  .create-plan-btn {
+  .create-plan-btn,
+  .get-started-btn {
     width: 100%;
-    margin-top: var(--spacing-sm);
   }
-
   .plan-actions {
     flex-direction: column;
+    gap: 0.7rem;
   }
-
   .plan-actions button {
     width: 100%;
+  }
+  .plan-card {
+    padding: 1.2rem;
+  }
+  .no-plans {
+    padding: 2rem 0.7rem;
   }
 }

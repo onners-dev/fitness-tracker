@@ -1,28 +1,12 @@
 :root {
-  /* Pastel Color Palette */
-  --pastel-blue: #6FA6D6;
-  --pastel-blue-light: #A5C4E3;
-  --pastel-blue-dark: #4D8AB3;
-  
-  --pastel-green: #8FBC8F;
-  --pastel-green-light: #B5D6B2;
-  --pastel-green-dark: #6B9F6B;
-  
-  --pastel-coral: #F0A0A0;
-  --pastel-gray-light: #F7F7F7;
-  --pastel-gray-medium: #E9E9E9;
-  
-  /* Soft Neutral Colors */
-  --soft-text-dark: #2C3E50;
-  --soft-text-medium: #4A5568;
-  --soft-background: #F0F4F8;
+  /* Inherit design tokens from global (index.css)! */
 }
 
 .calorie-tracker {
   max-width: 800px;
   margin: 2rem auto;
-  padding: 2rem;
-  background: linear-gradient(to bottom, var(--background-light), white);
+  padding: var(--spacing-lg);
+  background: var(--background-secondary);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-lg);
 }
@@ -30,763 +14,457 @@
 .calorie-tracker h2 {
   text-align: center;
   margin-bottom: var(--spacing-lg);
-  color: var(--primary-dark);
+  color: var(--text-main);
   font-size: 2.5rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
+/* Date Selector */
 .date-selector {
   display: flex;
   justify-content: center;
   margin-bottom: var(--spacing-lg);
 }
-
 .date-input-wrapper {
   position: relative;
   width: 100%;
   max-width: 400px;
 }
-
 .date-input-with-text {
   appearance: none;
-  -webkit-appearance: none;
-  padding: var(--spacing-sm);
-  border: 2px solid var(--neutral-200);
+  background: var(--primary-light);
+  color: var(--text-main);
+  border: 2px solid var(--neutral-300);
   border-radius: var(--border-radius-md);
-  background-color: white;
+  padding: var(--spacing-sm);
   font-size: 1rem;
   width: 100%;
   text-align: center;
-  cursor: pointer;
-  padding-left: 120px; /* Make space for day text */
 }
-
 .date-day-display {
   position: absolute;
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--soft-text-medium);
+  color: var(--text-muted);
   pointer-events: none;
 }
 
-
+/* Food Actions */
 .food-actions {
   display: flex;
-  justify-content: center; /* Center the buttons */
-  align-items: center;
-  gap: var(--spacing-md); /* Increased gap between buttons */
+  justify-content: center;
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
 }
-
 .meal-form {
   flex-grow: 1;
   display: flex;
   gap: var(--spacing-sm);
 }
-
 .meal-form input {
   flex: 1;
   padding: var(--spacing-sm);
   border: 2px solid var(--neutral-200);
   border-radius: var(--border-radius-md);
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  background: var(--primary-light);
+  color: var(--text-main);
 }
-
 .meal-form input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(111, 166, 214, 0.2);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(224,17,95,0.13);
 }
-
-.meal-form button,
-.custom-food-button,
+/* Buttons */
+.meal-form button, 
+.custom-food-button, 
+.add-food-button, 
 .contributed-foods-button {
   padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--primary-color);
-  color: white;
+  background: var(--accent-color);
+  color: #fff;
   border: none;
   border-radius: var(--border-radius-md);
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: var(--box-shadow-sm);
 }
-
 .meal-form button:hover,
 .custom-food-button:hover,
+.add-food-button:hover,
 .contributed-foods-button:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-2px);
+  background: var(--accent-light);
+  transform: translateY(-2px) scale(1.04);
 }
 
-.search-results {
+/* Add food, custom food, and contributions buttons */
+.add-food-button {
+  background: var(--secondary-color);
+  color: var(--primary-color);
+  font-weight: 700;
+}
+.add-food-button:hover {
+  background: var(--secondary-dark);
+  color: var(--primary-dark);
+}
+
+.custom-food-button {
+  background: var(--accent-color);
+  color: #fff;
+}
+.custom-food-button:hover {
+  background: var(--accent-light);
+}
+
+.contributed-foods-button {
+  background: var(--neutral-300);
+  color: var(--primary-dark);
+}
+.contributed-foods-button:hover {
+  background: var(--neutral-400);
+}
+
+/* Food Modal Styles */
+.food-modal, .custom-food-modal, .report-modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(20, 20, 22, 0.92);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000;
+  overflow: auto;
+  padding: var(--spacing-lg);
+}
+
+.food-modal-content, .custom-food-content, .report-modal-content {
+  background: var(--background);
+  color: var(--text-main);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  width: 100%;
+  max-width: 600px;
+  box-shadow: var(--box-shadow-lg);
+  position: relative;
+  margin: auto;
+}
+.food-modal-close-btn,
+.report-modal-content .close-btn {
+  position: absolute;
+  top: 15px; right: 15px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+}
+.food-modal-close-btn:hover,
+.report-modal-content .close-btn:hover {
+  color: var(--accent-color);
+  transform: scale(1.18);
+}
+
+/* Food Search Results */
+.search-results, .api-foods-search-results, .contributed-foods-search-results {
   margin-top: var(--spacing-md);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
 
-.food-item {
+.food-item,
+.food-result-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-md);
-  background: white;
+  background: var(--primary-light);
   border-radius: var(--border-radius-md);
-  border: 1px solid var(--neutral-200);
-  transition: all 0.3s ease;
+  border: 1px solid var(--neutral-300);
+  transition: background 0.13s, box-shadow 0.19s;
 }
 
-.food-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--box-shadow-md);
-  background-color: var(--pastel-blue-light);
+.food-item:hover, .food-result-item:hover {
+  background: var(--background-secondary);
+  box-shadow: var(--box-shadow-lg);
 }
 
-.food-item button {
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--pastel-green);
-  color: white;
+/* Add button, Report button in food results */
+.food-item button, .food-result-item button, .report-button {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--accent-color);
+  color: #fff;
   border: none;
   border-radius: var(--border-radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.13s;
+}
+.food-item button:hover,
+.food-result-item button:hover {
+  background: var(--accent-light);
+}
+.report-button {
+  background: var(--danger);
+}
+.report-button:hover {
+  background: #af084d;
 }
 
-.food-item button:hover {
-  background: var(--pastel-green-dark);
-  transform: translateY(-1px);
-}
-
+/* Meals List */
 .meals-list {
   margin-top: var(--spacing-lg);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
-
 .meal-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-md);
-  background: white;
+  background: var(--primary-light);
   border-radius: var(--border-radius-md);
-  border: 1px solid var(--neutral-200);
-  transition: all 0.3s ease;
+  border: 1px solid var(--neutral-300);
+  transition: background 0.18s, box-shadow 0.15s;
 }
-
 .meal-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--box-shadow-md);
+  background: var(--primary-color);
+  box-shadow: var(--box-shadow-lg);
 }
-
 .meal-item button {
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--pastel-coral);
-  color: white;
+  background: var(--danger);
+  color: #fff;
   border: none;
   border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  transition: background 0.16s;
 }
-
 .meal-item button:hover {
-  background: #E57373;
-  transform: translateY(-1px);
+  background: #b20043;
 }
 
+/* Portion selector */
 .portion-selector {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
-
 .portion-selector input {
   width: 100px;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--neutral-200);
+  padding: var(--spacing-xs);
+  background: var(--background-secondary);
+  border: 1px solid var(--neutral-300);
   border-radius: var(--border-radius-sm);
+  color: var(--text-main);
 }
 
+
+
+/* Nutrition summary/goal section */
 .nutrition-goals-progress {
-  background-color: var(--background-light);
+  background: var(--background-secondary);
   padding: var(--spacing-md);
   border-radius: var(--border-radius-lg);
   margin-top: var(--spacing-lg);
+  box-shadow: var(--box-shadow-sm);
 }
-
 .nutrition-goals-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex; justify-content: space-between; align-items: center;
   margin-bottom: var(--spacing-sm);
 }
-
 .nutrient-progress-container {
-  margin-bottom: var(--spacing-sm);
-}
-
-.nutrient-progress-header {
-  display: flex;
-  justify-content: space-between;
   margin-bottom: var(--spacing-xs);
 }
-
+.nutrient-progress-header { display: flex; justify-content: space-between; margin-bottom: var(--spacing-xs); }
 .nutrient-progress-bar {
-  height: 20px;
-  background-color: var(--neutral-200);
+  height: 18px;
+  background: var(--primary-light);
   border-radius: var(--border-radius-sm);
   overflow: hidden;
 }
-
+.nutrient-progress-bar > div {
+  /* individual progress bars get color inline, but radius/height here */
+  height: 100%;
+  border-radius: 5px;
+}
 .nutrient-progress-percentage {
   text-align: right;
-  color: var(--soft-text-medium);
-  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-size: 0.96rem;
   margin-top: var(--spacing-xs);
 }
 
 .nutrition-summary {
   margin-top: var(--spacing-lg);
+  background: var(--background-secondary);
   padding: var(--spacing-md);
-  background: white;
-  border: 1px solid var(--neutral-200);
   border-radius: var(--border-radius-lg);
+  border: 1px solid var(--neutral-300);
 }
-
 .nutrition-totals {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: var(--spacing-sm);
   margin-top: var(--spacing-sm);
 }
-
 .total-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--spacing-sm);
-  background: var(--background-light);
+  padding: var(--spacing-xs);
+  background: var(--primary-light);
   border-radius: var(--border-radius-md);
 }
-
 .total-item span:first-child {
-  color: var(--soft-text-medium);
-  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
 }
-
 .total-item span:last-child {
-  color: var(--primary-dark);
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-top: var(--spacing-xs);
+  color: var(--accent-color);
+  font-size: 1.19rem;
+  font-weight: 700;
 }
 
-.recalculate-goals-btn {
-  background-color: var(--secondary-color);
-  color: white;
-  border: none;
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.recalculate-goals-btn:hover:not(:disabled) {
-  background-color: var(--secondary-dark);
-}
-
-.recalculate-goals-btn:disabled {
-  background-color: var(--neutral-300);
-  cursor: not-allowed;
-}
-
+/* Contributed Foods Section */
 .contributed-foods-section {
   margin-top: var(--spacing-lg);
-  background: white;
+  background: var(--background-secondary);
   border-radius: var(--border-radius-lg);
-  border: 1px solid var(--neutral-200);
+  border: 1px solid var(--neutral-300);
   box-shadow: var(--box-shadow-sm);
 }
-
 .contributed-foods-section h3 {
-  background-color: var(--pastel-blue-light);
-  color: var(--pastel-blue-dark);
+  background: var(--primary-light);
+  color: var(--accent-color);
   padding: var(--spacing-sm) var(--spacing-md);
   border-top-left-radius: var(--border-radius-lg);
   border-top-right-radius: var(--border-radius-lg);
-  margin: 0;
-  font-weight: 600;
+  font-weight: 700;
 }
-
 .contributed-foods-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(270px,1fr));
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
 }
-
 .contributed-food-item {
-  background: var(--background-light);
+  background: var(--primary-light);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  transition: all 0.3s ease;
-  border: 1px solid var(--neutral-200);
+  border: 1px solid var(--neutral-300);
+  transition: background 0.10s, box-shadow 0.18s;
 }
-
 .contributed-food-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--box-shadow-md);
+  background: var(--background-secondary);
+  box-shadow: var(--box-shadow-lg);
 }
-
 .contributed-food-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
-.contributed-food-header h4 {
-  margin: 0;
-  color: var(--pastel-blue-dark);
-}
-
+.contributed-food-header h4 { margin: 0; color: var(--accent-color); }
 .contribution-metadata {
-  display: flex;
-  gap: var(--spacing-sm);
-  align-items: center;
+  display: flex; gap: var(--spacing-xs); align-items: center;
 }
-
 .contribution-category {
-  background-color: var(--pastel-blue-light);
-  color: var(--pastel-blue-dark);
-  padding: 2px 6px;
+  background: var(--accent-light);
+  color: var(--primary-dark);
   border-radius: var(--border-radius-sm);
   font-size: 0.8rem;
+  padding: 2px 8px;
 }
-
 .contribution-status {
-  background-color: var(--pastel-green-light);
-  color: var(--pastel-green-dark);
-  padding: 2px 6px;
+  background: var(--neutral-200);
+  color: var(--primary-dark);
   border-radius: var(--border-radius-sm);
   font-size: 0.8rem;
+  padding: 2px 8px;
 }
-
 .contribution-approval {
-  background-color: var(--neutral-200);
-  color: var(--soft-text-medium);
-  padding: 2px 6px;
+  background: var(--primary-color);
+  color: #fff;
   border-radius: var(--border-radius-sm);
   font-size: 0.8rem;
+  padding: 2px 8px;
 }
-
 .contributed-food-nutrition {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
 }
-
-.custom-food-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999; /* Ensure it's above the header */
-  overflow: auto; /* Allow scrolling if content is too long */
-  padding: var(--spacing-lg);
-}
-
-.custom-food-content {
-  background: white;
-  padding: var(--spacing-lg);
-  border-radius: var(--border-radius-lg);
-  width: 100%;
-  max-width: 500px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: var(--box-shadow-lg);
-  position: relative; /* Ensure content can be positioned relative to modal */
-  margin: auto; /* Center the content */
-}
-
-@media (max-width: 768px) {
-  .calorie-tracker {
-    margin: var(--spacing-sm);
-    padding: var(--spacing-md);
-  }
-
-  .food-actions {
-    flex-direction: column;
-  }
-
-  .meal-form {
-    flex-direction: column;
-  }
-
-  .nutrition-totals {
-    grid-template-columns: 1fr;
-  }
-}
-
 .nutrition-badge {
-  background-color: white;
-  border: 1px solid var(--neutral-200);
+  background: var(--background-secondary);
+  border: 1px solid var(--neutral-300);
   border-radius: var(--border-radius-sm);
-  padding: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  display: flex; flex-direction: column;
   text-align: center;
-  display: flex;
-  flex-direction: column;
 }
-
 .nutrition-badge span:first-child {
   font-size: 0.8rem;
-  color: var(--soft-text-medium);
+  color: var(--text-muted);
 }
-
 .nutrition-badge span:last-child {
-  font-weight: 600;
-  color: var(--pastel-blue-dark);
+  font-weight: 700;
+  color: var(--text-main);
 }
 
-.custom-food-button,
-.contributed-foods-button {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  transition: all 0.3s ease;
-}
-
-.custom-food-button svg,
-.contributed-foods-button svg {
-  stroke: white;
-  stroke-width: 2;
-}
-
-/* Food Modal Styles */
-.food-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; /* Increase z-index */
-  overflow: auto;
-  padding: var(--spacing-lg);
-}
-
-.food-modal-content {
-  background: white;
-  padding: var(--spacing-lg);
-  border-radius: var(--border-radius-lg);
-  width: 100%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: var(--box-shadow-lg);
-  position: relative;
-  margin: auto;
-}
-
-.food-modal-close-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: transparent;
-  color: var(--soft-text-medium);
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 10;
-  padding: 0;
-  line-height: 1;
-}
-
-.food-modal-close-btn:hover {
-  color: var(--primary-dark);
-  transform: scale(1.2);
-}
-
-
-.food-search-form {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-}
-
-.food-search-form input {
-  flex: 1;
-  padding: var(--spacing-sm);
-  border: 2px solid var(--neutral-200);
-  border-radius: var(--border-radius-md);
-  font-size: 1rem;
-}
-
-.food-search-form button {
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.food-search-form button:hover {
-  background-color: var(--primary-dark);
-}
-
-.contributed-foods-search-results,
-.api-foods-search-results {
-  margin-bottom: var(--spacing-md);
-}
-
-.food-result-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm);
-  background: var(--background-light);
-  border-radius: var(--border-radius-md);
-  margin-bottom: var(--spacing-sm);
-  transition: all 0.3s ease;
-}
-
-.food-result-item:hover {
-  background: var(--pastel-blue-light);
-  transform: translateY(-2px);
-}
-
-.food-result-item div {
-  display: flex;
-  flex-direction: column;
-}
-
-.food-result-item strong {
-  color: var(--soft-text-dark);
-  margin-bottom: var(--spacing-xs);
-}
-
-.food-result-item span {
-  color: var(--soft-text-medium);
-  font-size: 0.9rem;
-}
-
-.food-result-item button {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--pastel-green);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.food-result-item button:hover {
-  background-color: var(--pastel-green-dark);
-}
-
-.food-modal-content > .close-button {
-  width: 100%;
-  padding: var(--spacing-sm);
-  background-color: var(--pastel-coral);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-md);
-  margin-top: var(--spacing-md);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.food-modal-content > .close-button:hover {
-  background-color: #E57373;
-}
-
-@media (max-width: 768px) {
-  .food-modal-content {
-    margin: var(--spacing-sm);
-    padding: var(--spacing-md);
-    width: calc(100% - var(--spacing-md) * 2);
-  }
-
-  .food-search-form {
-    flex-direction: column;
-  }
-}
-
-.add-food-button,
-.custom-food-button,
-.contributed-foods-button {
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Center content */
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  transition: all 0.3s ease;
-  min-width: 150px; /* Set a consistent minimum width */
-  text-align: center; /* Ensure text is centered */
-}
-
-.add-food-button {
-  background-color: var(--secondary-color); /* Different color */
-  color: white;
-  font-weight: 600; /* Make it slightly bolder */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Slight elevation */
-}
-
-.add-food-button:hover {
-  background-color: var(--secondary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-}
-
-.custom-food-button {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.custom-food-button:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-2px);
-}
-
-.contributed-foods-button {
-  background-color: var(--pastel-green);
-  color: white;
-}
-
-.contributed-foods-button:hover {
-  background-color: var(--pastel-green-dark);
-  transform: translateY(-2px);
-}
-
-/* Add SVG icon styling for consistency */
-.add-food-button svg,
-.custom-food-button svg,
-.contributed-foods-button svg {
-  stroke: white;
-  stroke-width: 2;
-  width: 20px;
-  height: 20px;
-}
-
-.food-result-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.report-button {
-  background-color: #ff4d4d;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 0.8em;
-}
-
-.report-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100; /* Ensure it's above other modals */
-  overflow: auto;
-  padding: var(--spacing-lg);
-}
-
+/* Modals */
 .report-modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
+  background: var(--primary-light);
+  color: var(--text-main);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-lg);
+  padding: var(--spacing-lg);
   max-width: 500px;
-  max-height: 80%;
-  overflow-y: auto;
+  width: 100%;
   position: relative;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.report-modal-content .close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--soft-text-medium);
-  transition: color 0.3s ease;
-}
-
-.report-modal-content .close-btn:hover {
-  color: var(--primary-dark);
-}
-
-.report-modal .form-group {
-  margin-bottom: var(--spacing-md);
-}
-
+/* Report form elements */
 .report-modal .form-group label {
-  display: block;
-  margin-bottom: var(--spacing-sm);
-  color: var(--soft-text-dark);
+  color: var(--text-main);
 }
-
 .report-modal .form-group select,
 .report-modal .form-group textarea {
-  width: 100%;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--neutral-200);
+  background: var(--background-secondary);
+  color: var(--text-main);
+  border: 1px solid var(--neutral-300);
   border-radius: var(--border-radius-md);
+  padding: var(--spacing-xs);
 }
-
-.report-modal .modal-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: var(--spacing-lg);
-}
-
 .report-modal .modal-actions button {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-md);
   border-radius: var(--border-radius-md);
+  border: none;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.18s;
 }
-
 .report-modal .modal-actions button:first-child {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
+  background: var(--danger); color: #fff;
 }
-
 .report-modal .modal-actions button:last-child {
-  background-color: var(--neutral-200);
-  color: var(--soft-text-medium);
-  border: none;
+  background: var(--neutral-300); color: var(--primary-dark);
+}
+.report-modal .modal-actions button:hover {
+  opacity: 1;
+  filter: brightness(1.1);
+  transform: translateY(-1.5px);
 }
 
-.report-modal .modal-actions button:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
+/* Responsive */
+@media (max-width: 768px) {
+  .calorie-tracker { margin: var(--spacing-xs); padding: var(--spacing-md); }
+  .food-actions { flex-direction: column; }
+  .meals-list { gap: var(--spacing-xs); }
+  .nutrition-totals { grid-template-columns: 1fr; }
+  .contributed-foods-list { grid-template-columns: 1fr; }
+  .food-modal-content, .custom-food-content, .report-modal-content {
+    margin: var(--spacing-xs);
+    padding: var(--spacing-md);
+    width: 100%;
+    max-width: 95vw;
+  }
 }

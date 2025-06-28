@@ -1,8 +1,8 @@
 :root {
-  /* Uses your main palette from index.css */
+  
 }
 
-/* Dashboard Base */
+
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
@@ -69,7 +69,7 @@
 .profile-info p,
 .recent-workouts-list li,
 .nutrition-trends-list li {
-  color: var(--text-secondary);        /* Soft gray for all info text */
+  color: var(--text-secondary);        
   margin-bottom: 0.55rem;
   font-size: 1rem;
 }
@@ -86,11 +86,11 @@
 
 .stats .stat-value {
   font-weight: bold;
-  color: var(--text-main);         /* changed ⬅️ Make stat value white */
+  color: var(--text-main);         
   font-size: 1.14em;
 }
 
-/* Grid Columns */
+
 .dashboard-grid > .dashboard-card {
   grid-column: span 4;
 }
@@ -108,22 +108,23 @@
   }
 }
 
-/* Button styles: accent-light for CTAs */
+
+
 .log-workout-btn,
 .log-meal-btn,
 .view-progress-btn {
   width: 100%;
   margin-top: var(--spacing-sm);
-  background: linear-gradient(90deg, rgba(224,17,95,0.08) 0%, rgba(250,92,186,0.08) 100%, var(--gray-mid) 90%);
+  background: linear-gradient(90deg, rgba(30,90,250,0.79) 0%, rgba(80,150,255,0.87) 100%);
   color: #fff;
   border-radius: 16px;
-  border: 1.5px solid var(--accent-color);
+  border: 1.5px solid #3576d9;
   padding: 0.95rem 2.2rem;
   font-size: 1.1rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  box-shadow: 0 4px 20px 0 rgba(224,17,95,0.10);
+  box-shadow: 0 4px 20px 0 rgba(56,84,208,0.10);
   cursor: pointer;
   transition: 
     background 0.22s, 
@@ -133,19 +134,46 @@
     transform 0.14s;
 }
 
+
+.dashboard-card:hover .log-workout-btn,
+.dashboard-card:hover .log-meal-btn,
+.dashboard-card:hover .view-progress-btn {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 20px 0 rgba(224,17,95,0.12); 
+  transform: none;
+  opacity: 1;
+}
+
+
+.dashboard-card:hover .log-workout-btn:hover,
+.dashboard-card:hover .log-meal-btn:hover,
+.dashboard-card:hover .view-progress-btn:hover {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.17);
+  transform: translateY(-2px) scale(1.07); 
+  opacity: 1;
+}
+
+
 .log-workout-btn:hover,
 .log-meal-btn:hover,
 .view-progress-btn:hover {
-  background: var(--accent-light);
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
   color: #fff;
   border-color: var(--accent-color);
-  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.19);
-  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.17);
+  transform: translateY(-2px) scale(1.07);
+  opacity: 1;
 }
 
 
 
-/* No Data States */
+
+
 .no-workouts,
 .no-meals,
 .no-insights {
@@ -157,7 +185,7 @@
   padding: 1rem 0;
 }
 
-/* For lists/items */
+
 .recent-workouts-list,
 .workout-insights-list,
 .nutrition-trends-list {
@@ -173,7 +201,6 @@
   padding: 0.4em 0.1em;
 }
 
-/* Use white for type labels, not accent */
 .workout-type,
 .insight-type,
 .nutrition-trends-list strong {

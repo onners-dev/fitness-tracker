@@ -91,16 +91,22 @@ const WorkoutPlanBuilder = () => {
     fetchMuscles();
   }, []);
 
+
   // Fetch exercises based on filters
   useEffect(() => {
     const fetchExercises = async () => {
       try {
         console.log('Fetching exercises with filters:', filters);
-        
-        const exercises = await exerciseLibraryService.getExercises(filters);
-        
+        // Extract muscle from filters for compatibility
+        const muscle = filters.muscleGroup || null;
+        // Remove muscleGroup from filters since it's passed separately
+        const restFilters = { ...filters };
+        delete restFilters.muscleGroup;
+
+        const exercises = await exerciseLibraryService.getExercises(muscle, restFilters);
+
         console.log('Fetched exercises:', exercises);
-        
+
         setExerciseLibrary(exercises);
         setFilteredExercises(exercises);
       } catch (error) {
@@ -108,11 +114,11 @@ const WorkoutPlanBuilder = () => {
       }
     };
 
-    // Only fetch if a day is selected
     if (selectedDay) {
       fetchExercises();
     }
   }, [filters, selectedDay]);
+
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -416,8 +422,11 @@ const WorkoutPlanBuilder = () => {
             >
               <option value="">All Muscles</option>
               {muscles.map(muscle => (
-                <option key={muscle} value={muscle}>{muscle}</option>
-              ))}
+              <option key={muscle.muscle_id ?? muscle} value={muscle.name ?? muscle}>
+                {muscle.name ?? muscle}
+              </option>
+            ))}
+
             </select>
 
             <select 

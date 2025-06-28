@@ -14,7 +14,7 @@
 .workouts-page h1 {
   text-align: center;
   margin-bottom: 2rem;
-  color: var(--accent-light);
+  color: var(--text-main);
   font-size: 2.5rem;
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -34,58 +34,44 @@
   color: var(--danger);
 }
 
-/* Buttons (modern accent style) */
+/* Buttons (match Dashboard - blue base, pink hover) */
 .retry-button,
 .favorites-button,
-.log-exercise-btn {
+.log-exercise-btn,
+.back-button {
   margin-top: 1rem;
   padding: 0.95rem 2.2rem;
-  background: linear-gradient(
-      90deg,
-      rgba(224,17,95,0.11) 0%,
-      rgba(250,92,186,0.11) 100%,
-      var(--gray-mid) 90%
-    );
+  background: linear-gradient(90deg, rgba(30,90,250,0.79) 0%, rgba(80,150,255,0.87) 100%);
   color: #fff;
   border-radius: 36px;
-  border: 1.5px solid var(--accent-color);
+  border: 1.5px solid #3576d9;
   font-size: 1.1rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  box-shadow: 0 8px 36px 0 rgba(224,17,95,0.13);
+  box-shadow: 0 8px 36px 0 rgba(56,84,208,0.13);
   cursor: pointer;
-  transition: background 0.2s, border-color 0.18s, color 0.17s, box-shadow 0.18s, transform 0.14s;
+  transition: background 0.22s, color 0.18s, border-color 0.17s, box-shadow 0.18s, transform 0.14s;
 }
 
 .retry-button:hover,
 .favorites-button:hover,
-.log-exercise-btn:hover {
-  background: var(--accent-light);
-  border-color: var(--accent-color);
+.log-exercise-btn:hover,
+.back-button:hover {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
   color: #fff;
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 12px 36px 0 rgba(224,17,95,0.19);
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.17);
+  transform: translateY(-2px) scale(1.07);
+  opacity: 1;
 }
 
-/* Back Button */
 .back-button {
-  background: none;
-  border: none;
-  color: var(--accent-light);
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.5rem 0;
-  margin-bottom: 1.5rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: color 0.2s, transform 0.2s;
-}
-
-.back-button:hover {
-  color: var(--accent-color);
-  transform: translateX(-5px);
+  margin-bottom: 1.5rem;
+  margin-top: 0.5rem;
 }
 
 /* Filters Section */
@@ -192,7 +178,7 @@
 }
 
 .muscle-group-card h2 {
-  color: var(--accent-light);
+  color: var(--text-main);
   margin-bottom: 1rem;
   font-size: 1.5rem;
   text-transform: uppercase;
@@ -206,7 +192,7 @@
 
 /* Muscles Grid */
 .muscles-section h2 {
-  color: var(--accent-light);
+  color: var(--text-main);
   margin: 1rem 0;
   font-size: 2rem;
   text-transform: uppercase;
@@ -243,7 +229,7 @@
 }
 
 .muscle-card h3 {
-  color: var(--accent-light);
+  color: var(--text-main);
   margin-bottom: 0.5rem;
   font-size: 1.2rem;
   text-transform: uppercase;
@@ -256,7 +242,7 @@
 
 /* Exercises Grid */
 .exercises-section h2 {
-  color: var(--accent-light);
+  color: var(--text-main);
   margin: 1rem 0;
   font-size: 2rem;
   text-transform: uppercase;
@@ -269,20 +255,15 @@
   margin-top: 1rem;
 }
 
-/* -- The main fix: stronger and more explicit selectors for cards & modal -- */
-.exercise-card,
-.exercise-modal-content {
-  background: var(--primary-light);
-  /* If needed, uncomment for last resort: */
-  /* background: var(--primary-light) !important; */
-}
-
+/* Modern Exercise Card */
 .exercise-card {
-  padding: 1.5rem;
-  border-radius: var(--border-radius-lg);
-  border: 1.5px solid var(--primary-color);
-  box-shadow: var(--box-shadow-lg);
-  transition: transform 0.22s, box-shadow 0.15s, border 0.17s, background 0.18s;
+  background: var(--primary-light) !important;
+  border: 1.5px solid var(--primary-color) !important; 
+  border-radius: var(--border-radius-lg) !important;
+  color: var(--text-main) !important;
+  padding: 1.5rem !important;
+  box-shadow: var(--box-shadow-lg) !important;
+  transition: transform 0.22s, box-shadow 0.15s, border-color 0.18s, background 0.18s;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -292,10 +273,10 @@
 }
 
 .exercise-card:hover {
+  border-color: var(--accent-color) !important;    
+  background: var(--background-secondary);
   transform: translateY(-5px) scale(1.02);
   box-shadow: 0 12px 42px 0 rgba(224,17,95,0.11);
-  border-color: var(--accent-color);
-  background: var(--background-secondary);
 }
 
 .exercise-header {
@@ -310,12 +291,11 @@
   margin-bottom: 0;
   flex-grow: 1;
   margin-right: 1rem;
-  color: var(--neutral-100);
+  color: var(--neutral-100) !important;
   font-weight: 700;
   font-size: 1.3rem;
 }
 
-/* Favorite icon uses accent color on hover/favorite! */
 .favorite-icon {
   flex-shrink: 0;
   font-size: 1.5rem;
@@ -337,27 +317,7 @@
   line-height: 1.6;
 }
 
-.exercise-card strong {
-  color: var(--accent-light);
-}
-
-.exercise-description,
-.exercise-instructions {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--neutral-400);
-  color: var(--text-secondary);
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.no-exercises {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-muted);
-  grid-column: 1 / -1;
-}
-
+/* Modal Styles */
 .exercise-modal-overlay {
   position: fixed;
   top: 0;
@@ -372,8 +332,7 @@
 }
 
 .exercise-modal-content {
-  border-radius: var(--border-radius-lg);
-  padding: 30px;
+  background: var(--background-secondary) !important;
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
@@ -382,18 +341,46 @@
   z-index: 1600;
   color: var(--text-main);
   box-shadow: var(--box-shadow-lg);
-  border: 1.5px solid var(--primary-color);
+  border: 1.5px solid var(--primary-color) !important;
+  border-radius: var(--border-radius-lg);
+  padding: 30px;
 }
+
+.exercise-modal-content:hover {
+  border-color: var(--accent-color) !important;
+}
+
 
 .modal-close-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
-  font-size: 24px;
+  border-radius: 50%;
+  font-size: 1.4rem;
   color: var(--accent-color);
   cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  z-index: 2;
+}
+
+.modal-close-btn:hover,
+.modal-close-btn:focus {
+  background: rgba(224, 17, 95, 0.11);
+  color: var(--accent-light);
+  outline: none;
+}
+
+.modal-close-btn:active {
+  background: rgba(224, 17, 95, 0.18);
+  color: var(--danger);
 }
 
 .exercise-modal-details {
@@ -450,11 +437,15 @@
   margin-bottom: 2rem;
 }
 
-/* Quick "text and overflow" handling */
-.exercise-card {
-  word-break: break-word;
-  overflow-wrap: break-word;
+.no-exercises {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  grid-column: 1 / -1;
 }
+
+/* Overflow/text handling */
+.exercise-card,
 .exercise-description,
 .exercise-instructions p {
   word-break: break-word;
@@ -467,10 +458,55 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.exercise-modal-content .log-exercise-btn {
+  background: linear-gradient(90deg, rgba(30,90,250,0.79) 0%, rgba(80,150,255,0.87) 100%);
+  color: #fff;
+  border-radius: 16px;
+  border: 1.5px solid #3576d9;
+  padding: 0.95rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 0 4px 20px 0 rgba(56,84,208,0.10);
+  cursor: pointer;
+  width: 100%;
+  margin-top: var(--spacing-sm, 1rem); /* fallback if not set */
+  transition: 
+    background 0.22s, 
+    color 0.18s, 
+    border-color 0.17s, 
+    box-shadow 0.18s, 
+    transform 0.14s;
+}
 
+/* Modal hover effect - like card hover */
+.exercise-modal-content:hover .log-exercise-btn {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 20px 0 rgba(224,17,95,0.12); 
+  transform: none;
+  opacity: 1;
+}
 
-.exercise-card,
-.exercise-modal-content {
-  background: var(--primary-light) !important;
+/* Button itself hovered inside a hovered modal - like button:hover in card:hover */
+.exercise-modal-content:hover .log-exercise-btn:hover {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.17);
+  transform: translateY(-2px) scale(1.07);
+  opacity: 1;
+}
+
+/* Button hovered even if the modal itself isn't hovered - for stand-alone accessibility */
+.exercise-modal-content .log-exercise-btn:hover {
+  background: linear-gradient(90deg, rgba(224,17,95,0.70) 0%, rgba(250,92,186,0.72) 100%);
+  color: #fff;
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px 0 rgba(224,17,95,0.17);
+  transform: translateY(-2px) scale(1.07);
+  opacity: 1;
 }
 
