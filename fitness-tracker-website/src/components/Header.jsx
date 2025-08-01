@@ -47,13 +47,12 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
-  // Theme detection (simple/localStorage, adjust to your setup as needed)
+  // Theme detection (for other usage—no longer needed for logo)
   const [theme, setTheme] = useState('light');
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) setTheme(savedTheme);
   }, []);
-  const logoColor = theme === 'dark' ? '#00D8FF' : '#E0115F';
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -82,14 +81,22 @@ const Header = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  // --- Logo hover logic ---
+  const [logoHovered, setLogoHovered] = useState(false);
+
   return (
     <>
       <header className="header">
-      <Link to="/home" className="logo" style={{display: "flex", alignItems: "center", gap: "0.7rem"}}>
-        <LogoIcon color={logoColor} width={44} height={44} />
-        <span style={{fontSize: "2rem"}}>Arcus</span>
-      </Link>
-
+        <Link
+          to="/home"
+          className="logo"
+          style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}
+          onMouseEnter={() => setLogoHovered(true)}
+          onMouseLeave={() => setLogoHovered(false)}
+        >
+          <LogoIcon width={80} height={80} hovered={logoHovered} />
+          <span style={{ fontSize: "2rem" }}>Arcus</span>
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
@@ -169,13 +176,21 @@ const Header = () => {
 
               {/* Profile Dropdown */}
               <div
-                className="header-dropdown profile-dropdown"
+                className={`header-dropdown profile-dropdown${activeDropdown === 'profile' ? ' active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setActiveDropdown(activeDropdown === 'profile' ? null : 'profile');
                 }}
               >
-                <div className="avatar">{userInitials}</div>
+                <div
+                  className="avatar"
+                  tabIndex={0}
+                  aria-label="Open Profile Menu"
+                  onFocus={() => setActiveDropdown('profile')}
+                  onBlur={() => setActiveDropdown(null)}
+                >
+                  {userInitials}
+                </div>
                 {activeDropdown === 'profile' && (
                   <div className="dropdown-menu">
                     <Link to="/dashboard" className="dropdown-item">Profile</Link>
@@ -218,8 +233,8 @@ const Header = () => {
           ></div>
           <div className="mobile-nav open">
             <div className="mobile-nav-header">
-              <Link to="/home" className="logo" style={{display: "flex", alignItems: "center", gap: "0.7rem"}}>
-                <LogoIcon color={logoColor} width={30} height={30} />
+              <Link to="/home" className="logo" style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}>
+                <LogoIcon width={30} height={30} hovered={true} /> {/* Always accent color for mobile */}
                 <span>Arcus</span>
               </Link>
               <button

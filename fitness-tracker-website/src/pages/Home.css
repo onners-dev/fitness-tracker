@@ -38,17 +38,21 @@
   display: inline-block;
   padding: 1rem 2.5rem;
   border-radius: var(--border-radius-lg, 16px);
-  background: var(--accent-color, #e0115f);
+  background: linear-gradient(90deg, rgba(30,90,250,0.79) 0%, rgba(80,150,255,0.87) 100%);
   color: #fff;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .07em;
   font-size: 1.2rem;
-  box-shadow: 0 4px 24px 0 rgba(224,17,95,0.22);
-  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 4px 24px 0 rgba(80,150,255,0.15);
+  transition: background 0.22s, transform 0.15s;
   text-decoration: none;
 }
-.landing-cta:hover {
-  background: var(--accent-light, #fa5cba);
+
+.landing-cta:hover,
+.landing-cta:focus {
+  background: var(--accent-color, #e0115f);
+  color: #fff;
   transform: translateY(-2px) scale(1.03);
+  outline: none;
 }

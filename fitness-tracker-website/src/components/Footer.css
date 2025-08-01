@@ -5,25 +5,26 @@
   --white: #fafafd;
   --magenta: #e0115f;
   --gray-mid: #2c2c2c;
+  --blue: #5096ff;
+  --blue-dark: #1e5afa;
 }
 
 .footer {
   background: var(--gray-dark);
   color: var(--white);
-  padding: 5rem 2.4rem 6.2rem 2.4rem; /* ↑ was 2.8rem, now 6.2rem */
+  padding: 5rem 2.4rem 6.2rem 2.4rem;
   width: 100%;
   box-sizing: border-box;
 }
-
 
 .footer-sections {
   max-width: 1440px;
   margin: 0 auto 4rem auto;
   display: flex;
   justify-content: space-between;
-  gap: 4.8rem;              /* big gap between main sections */
+  gap: 4.8rem;
   border-bottom: 1.5px solid var(--gray-light);
-  padding-bottom: 3.5rem;   /* more below sections */
+  padding-bottom: 3.5rem;
 }
 
 .footer-section {
@@ -31,10 +32,11 @@
   margin-right: 1.2rem;
 }
 
+/* Make only section headings blue */
 .footer-section h3 {
-  color: var(--magenta);
+  color: var(--blue);
   font-size: 1.21rem;
-  margin-bottom: 2rem;      /* more gap below headings */
+  margin-bottom: 2rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -47,7 +49,7 @@
 }
 
 .footer-section ul li {
-  margin-bottom: 1.18rem;   /* bigger line gap */
+  margin-bottom: 1.18rem;
 }
 
 .footer-section ul li a {
@@ -61,7 +63,7 @@
 }
 
 .footer-section ul li a:hover {
-  color: var(--magenta);
+  color: var(--white);
   opacity: 1;
   transform: translateX(10px);
 }
@@ -73,7 +75,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 2.8rem;   /* more above bottom bar */
+  padding-top: 2.8rem;
   min-height: 60px;
   gap: 2.4rem;
 }
@@ -88,7 +90,7 @@
 
 .footer-social {
   display: flex;
-  gap: 2.2rem;                 /* bigger gap between social icons */
+  gap: 2.2rem;
   align-items: center;
 }
 
@@ -101,7 +103,7 @@
 }
 
 .footer-social a:hover {
-  color: var(--magenta);
+  color: var(--white);
   opacity: 1;
   transform: translateY(-5px) scale(1.22);
 }
