@@ -39,7 +39,7 @@ const Footer = () => {
 
       {/* Bottom bar */}
       <div className="footer-bottom">
-        <p className="footer-copyright">&copy; 2024 Arcus. All rights reserved.</p>
+        <p className="footer-copyright">&copy; 2025 Arcus. All rights reserved.</p>
         <div className="footer-social">
           <a href="https://arcus.fit" target="_blank" rel="noopener noreferrer">
             <FaFacebook />

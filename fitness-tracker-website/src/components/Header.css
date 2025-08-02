@@ -1,5 +1,5 @@
 :root {
-  /* Core Palette */
+  
   --black-main: #111214;
   --black-deep: #0c0d0f;
   --gray-dark: #222326;
@@ -183,7 +183,7 @@
   align-items: center;
 }
 
-/* --- Mobile Menu --- */
+
 .mobile-menu-toggle {
   display: none;
   flex-direction: column;

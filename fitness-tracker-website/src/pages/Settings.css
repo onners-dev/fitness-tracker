@@ -1,21 +1,8 @@
 :root {
-  /* Pastel Color Palette */
-  --pastel-blue: #6FA6D6;
-  --pastel-blue-light: #A5C4E3;
-  --pastel-blue-dark: #4D8AB3;
-  
-  --pastel-green: #8FBC8F;
-  --pastel-green-light: #B5D6B2;
-  --pastel-green-dark: #6B9F6B;
-  
-  --pastel-coral: #F0A0A0;
-  --pastel-gray-light: #F7F7F7;
-  --pastel-gray-medium: #E9E9E9;
-  
-  /* Soft Neutral Colors */
-  --soft-text-dark: #2C3E50;
-  --soft-text-medium: #4A5568;
-  --soft-background: #F0F4F8;
+  --brand-blue: #5096ff;
+  --brand-blue-dark: #1e5afa;
+  --accent-color: #e0115f;
+  --accent-light: #fa5cba;
 }
 
 .settings-page {
@@ -23,76 +10,82 @@
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 100px);
-  background-color: var(--soft-background);
+  background: var(--background, #101113);
   padding: 2rem 0;
 }
 
 .settings-container {
   display: flex;
-  width: 90%;
-  max-width: 1200px;
-  background-color: white;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  border-radius: 12px;
-  border: 1px solid var(--pastel-gray-medium);
+  width: 95%;
+  max-width: 1100px;
+  background: var(--primary-light, #18191b);
+  box-shadow: var(--box-shadow-lg, 0 4px 16px rgba(21,19,30,0.21));
+  border-radius: var(--border-radius-lg, 16px);
+  border: 1.5px solid var(--primary-color, #111214);
   overflow: hidden;
+  color: var(--text-main, #fafafd);
 }
 
 .settings-sidebar {
   width: 250px;
-  background-color: var(--pastel-gray-light);
+  background: var(--background, #101113);
   padding: 2rem 1rem;
-  border-right: 1px solid var(--pastel-gray-medium);
+  border-right: 1.5px solid var(--primary-color, #111214);
 }
 
 .settings-sidebar h1 {
   margin-bottom: 2rem;
   text-align: center;
-  color: var(--pastel-blue-dark);
+  color: var(--brand-blue);
+  font-size: 2rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .settings-sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.1rem;
 }
 
 .settings-sidebar button {
-  background: transparent;
+  background: none;
   border: none;
   text-align: left;
-  padding: 0.75rem 1rem;
+  padding: 0.8rem 1.2rem;
   cursor: pointer;
-  transition: 
-      background-color 0.3s ease, 
-      color 0.3s ease,
-      transform 0.2s ease;
   border-radius: 8px;
-  color: var(--soft-text-medium);
+  color: var(--text-secondary, #b3b4b8);
   font-weight: 500;
+  font-size: 1.08rem;
+  transition: background 0.18s, color 0.18s, transform 0.17s;
 }
-
 .settings-sidebar button:hover {
-  background-color: var(--pastel-blue-light);
-  color: var(--pastel-blue-dark);
+  background: rgba(80, 150, 255, 0.07);
+  color: var(--brand-blue);
 }
-
-.settings-sidebar button.active {
-  background-color: var(--pastel-blue);
-  color: white;
+.settings-sidebar button.active,
+.settings-sidebar button:focus {
+  background: var(--brand-blue);
+  color: #fff;
   transform: translateX(5px);
 }
 
 .settings-content {
   flex-grow: 1;
-  padding: 2rem;
+  padding: 2.5rem 2.2rem 2.3rem 2.2rem;
 }
 
 .settings-section h2 {
-  border-bottom: 2px solid var(--pastel-blue-light);
+  border-bottom: 2px solid var(--brand-blue);
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
-  color: var(--pastel-blue-dark);
+  color: var(--brand-blue);
+  text-transform: uppercase;
+  font-size: 1.23rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .form-group {
@@ -102,91 +95,97 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: var(--soft-text-dark);
-  font-weight: 500;
+  color: var(--text-main, #fafafd);
+  font-weight: 600;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--pastel-gray-medium);
+  padding: 0.85rem;
+  border: 1.5px solid var(--primary-color, #282930);
   border-radius: 8px;
-  transition: 
-      border-color 0.3s ease, 
-      box-shadow 0.3s ease;
+  font-size: 1.08rem;
+  background: var(--primary-light, #18191b);
+  color: var(--text-main, #fafafd);
+  transition: border-color 0.25s, box-shadow 0.23s;
 }
-
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--pastel-blue);
-  box-shadow: 0 0 0 3px rgba(165, 196, 227, 0.3);
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 2.5px rgba(80,150,255,0.18);
 }
 
 .error {
-  color: var(--pastel-coral);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
+  color: var(--accent-color, #e0115f);
+  font-size: 0.97rem;
+  margin-top: 0.28rem;
 }
-
 .success-message {
-  background-color: var(--pastel-green-light);
-  color: var(--soft-text-dark);
+  background-color: rgba(80, 200, 120, 0.17);
+  color: var(--text-main, #fafafd);
   padding: 1rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
+  font-weight: 600;
 }
-
 .error-message {
-  background-color: var(--pastel-coral);
-  color: white;
+  background-color: var(--accent-color, #e0115f);
+  color: #fff;
   padding: 1rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
+  font-weight: 600;
 }
 
 .save-button {
   width: 100%;
   padding: 1rem;
-  background-color: var(--pastel-blue);
-  color: white;
+  background: var(--brand-blue);
+  color: #fff;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: 
-      background-color 0.3s ease,
-      transform 0.2s ease;
-  font-weight: 600;
+  transition: background 0.2s, transform 0.15s;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 0.6rem;
+  font-size: 1.11rem;
+  letter-spacing: 0.025em;
+}
+.save-button:hover,
+.save-button:focus {
+  background: var(--accent-color, #e0115f);
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+  outline: none;
 }
 
-.save-button:hover {
-  background-color: var(--pastel-blue-dark);
-  transform: translateY(-2px);
-}
-
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .settings-container {
-      flex-direction: column;
+    flex-direction: column;
+    min-width: unset;
+    padding: 0;
   }
-
   .settings-sidebar {
-      width: 100%;
-      border-right: none;
-      border-bottom: 1px solid var(--pastel-gray-medium);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1.5px solid var(--primary-color, #111214);
+    flex-direction: row;
+    align-items: center;
   }
-
   .settings-sidebar nav {
-      flex-direction: row;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
   }
-
   .settings-sidebar button {
-      text-align: center;
+    text-align: center;
+    width: auto;
+  }
+  .settings-content {
+    padding: 1.2rem 1rem 1.1rem 1rem;
   }
 }
