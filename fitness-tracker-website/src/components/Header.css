@@ -9,12 +9,12 @@
   --magenta: #e0115f;
   --magenta-light: #fa5cba;
 
-  --header-height: 64px; 
+  --header-height: 30px; 
 }
 
 .header {
   width: 100%;
-  padding: 1.2rem 6vw;
+  padding: 0.5rem 2vw; 
   display: flex;
   justify-content: space-between;
   align-items: center;
