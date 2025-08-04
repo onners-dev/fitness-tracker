@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api';
 import { workoutPlanService } from '../services/workoutPlanService';
+import { useRef } from "react";
 import LogoIcon from "./LogoIcon";
 import './Header.css';
 
@@ -46,6 +47,7 @@ const Header = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  const desktopNavRef = useRef(null);
 
   // Theme detection (for other usage—no longer needed for logo)
   const [theme, setTheme] = useState('light');
@@ -81,8 +83,24 @@ const Header = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // --- Logo hover logic ---
   const [logoHovered, setLogoHovered] = useState(false);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+  
+    function handleClickOutside(event) {
+      if (
+        desktopNavRef.current &&
+        !desktopNavRef.current.contains(event.target)
+      ) {
+        setActiveDropdown(null);
+      }
+    }
+  
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
+  
 
   return (
     <>
@@ -99,7 +117,7 @@ const Header = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="desktop-nav">
+        <nav className="desktop-nav" ref={desktopNavRef}>
           {isLoggedIn ? (
             <>
               {/* Tracking Dropdown */}

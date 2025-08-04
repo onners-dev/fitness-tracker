@@ -65,7 +65,7 @@
 .footer-section ul li a:hover {
   color: var(--white);
   opacity: 1;
-  transform: translateX(10px);
+  transform: scale(1.13);   
 }
 
 /* Bottom bar */
