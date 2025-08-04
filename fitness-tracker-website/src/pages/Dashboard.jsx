@@ -160,7 +160,7 @@ const Dashboard = () => {
 
       <div className="dashboard-grid">
         {/* Profile Summary Card */}
-        <div className="dashboard-card">
+        <div className="dashboard-card profile-summary-card">
           <h2>Profile Summary</h2>
           <div className="profile-info">
             <p><strong>Name:</strong> {userProfile.first_name} {userProfile.last_name}</p>
@@ -172,7 +172,7 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Stats Card */}
-        <div className="dashboard-card">
+        <div className="dashboard-card quick-stats-card">
           <h2>Quick Stats</h2>
           <div className="stats">
             <div className="stat-item">
@@ -185,7 +185,7 @@ const Dashboard = () => {
         </div>
 
         {/* Workout Insights Card */}
-        <div className="dashboard-card">
+        <div className="dashboard-card workout-insights-card">
           <h2>Workout Insights</h2>
           {workoutInsights.length > 0 ? (
             <>
@@ -218,7 +218,7 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Workouts Card */}
-        <div className="dashboard-card">
+        <div className="dashboard-card recent-workouts-card">
           <h2>Recent Workouts</h2>
           {recentWorkouts.length > 0 ? (
             <>
@@ -258,7 +258,7 @@ const Dashboard = () => {
         </div>
 
         {/* Nutrition Trends Card */}
-        <div className="dashboard-card">
+        <div className="dashboard-card nutrition-trends-card">
           <h2>Nutrition Trends</h2>
           {nutritionTrends.length > 0 ? (
             <>

@@ -94,10 +94,12 @@
 .dashboard-grid > .dashboard-card {
   grid-column: span 4;
 }
-.dashboard-grid > .dashboard-card:nth-child(4),
-.dashboard-grid > .dashboard-card:nth-child(5) {
+
+.dashboard-grid > .dashboard-card.profile-summary-card,
+.dashboard-grid > .dashboard-card.quick-stats-card {
   grid-column: span 6;
 }
+
 @media (max-width: 900px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
