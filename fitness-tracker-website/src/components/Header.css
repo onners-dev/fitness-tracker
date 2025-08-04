@@ -292,7 +292,12 @@
 }
 
 .signup-button {
-  background: rgba(224,17,95,0.44) !important;
+  background: linear-gradient(135deg, #1e5afa 0%, #5096ff 100%);
   color: #fff !important;
   /* margin-left: 0 !important; */
+}
+
+.signup-button:hover {
+  background: rgba(224,17,95,0.83) !important;
+  color: #fff !important;
 }
