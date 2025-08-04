@@ -14,7 +14,7 @@
 
 .header {
   width: 100%;
-  padding: 0.5rem 2vw; 
+  padding: 0.5rem 2.5vw 0.5rem 2vw; 
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -120,7 +120,6 @@
   color: var(--white) !important;
   padding: 16px 26px;
   border: none;
-  background: none;
   font-size: 1.06rem;
   font-family: inherit;
   cursor: pointer;
@@ -133,14 +132,37 @@
 }
 
 .sign-out-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90%;
+  margin: 12px auto 0 auto;
+  background: linear-gradient(135deg, var(--magenta), var(--magenta-light));
   color: #fff !important;
-  background: var(--magenta);
-  /* ... */
+  padding: 0.7rem 0;
+  border: none;
+  border-radius: 18px;
+  font-size: 1.12rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 2px 10px 0 rgba(224,17,95,0.13);
+  letter-spacing: 0.04em;
+  transition: background 0.18s, color 0.18s, transform 0.13s, box-shadow 0.16s;
 }
 
-.dropdown-item:last-child,
-.sign-out-btn:last-child {
-  border-bottom: none;
+.sign-out-btn:hover,
+.sign-out-btn:focus {
+  background: linear-gradient(135deg, var(--magenta-light), var(--magenta)) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px 0 rgba(224,17,95,0.23);
+  transform: translateY(-1px) scale(1.03);
+  outline: none;
+}
+
+.dropdown-item:hover {
+  background: rgba(224, 17, 95, 0.13);
+  color: var(--magenta);
 }
 
 .dropdown-item:hover,
