@@ -1,21 +1,4 @@
 :root {
-  /* Pastel Color Palette */
-  --pastel-blue: #6FA6D6;
-  --pastel-blue-light: #A5C4E3;
-  --pastel-blue-dark: #4D8AB3;
-  
-  --pastel-green: #8FBC8F;
-  --pastel-green-light: #B5D6B2;
-  --pastel-green-dark: #6B9F6B;
-  
-  --pastel-coral: #F0A0A0;
-  --pastel-gray-light: #F7F7F7;
-  --pastel-gray-medium: #E9E9E9;
-  
-  /* Soft Neutral Colors */
-  --soft-text-dark: #2C3E50;
-  --soft-text-medium: #4A5568;
-  --soft-background: #F0F4F8;
 }
 
 .signup-page {
@@ -23,85 +6,98 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--soft-background);
-  padding: 2rem;
+  background-color: var(--background);
+  padding: var(--spacing-lg);
+  color: var(--text-main);
 }
 
 .signup-container {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  border: 1px solid var(--pastel-gray-medium);
+  background: var(--background-secondary);
+  padding: 2.2rem 2rem;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-lg);
+  border: 1.5px solid var(--primary-light);
+  max-width: 420px;
   width: 100%;
-  max-width: 400px;
 }
 
 .signup-container h2 {
   text-align: center;
-  color: var(--pastel-blue-dark);
-  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1.7rem;
+  letter-spacing: 0.03em;
+  font-size: 1.55rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .steps-indicator {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.9rem;
 }
 
 .step {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: var(--pastel-gray-medium);
+  background: var(--primary-light);
+  color: var(--text-muted);
   display: flex;
   justify-content: center;
   align-items: center;
-  color: var(--soft-text-medium);
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 1.08em;
+  box-shadow: 0 2px 8px rgba(30,90,250,0.09);
+  transition: background 0.2s, color 0.18s, box-shadow 0.18s;
 }
 
 .step.active {
-  background-color: var(--pastel-blue);
-  color: white;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  color: #fff;
+  box-shadow: 0 4px 14px 0 rgba(224,17,95,0.12);
 }
 
 .step-line {
-  width: 60px;
-  height: 2px;
-  background-color: var(--pastel-gray-medium);
+  width: 54px;
+  height: 2.5px;
+  background: var(--primary-light);
   margin: 0 10px;
+  border-radius: 1px;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.4rem;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  color: var(--soft-text-dark);
-  font-weight: 500;
+  margin-bottom: 0.44rem;
+  color: var(--text-main);
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--pastel-gray-medium);
-  border-radius: 8px;
+  padding: 0.66rem 0.9rem;
+  border: 1.5px solid var(--primary-light);
+  border-radius: 10px;
   font-size: 1rem;
-  transition: 
-    border-color 0.3s ease,
-    box-shadow 0.3s ease;
+  background: #fff;
+  color: var(--text-main);
+  transition:
+    border-color 0.21s,
+    box-shadow 0.21s;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--pastel-blue);
-  box-shadow: 0 0 0 3px rgba(165, 196, 227, 0.3);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(30,90,250,0.13);
 }
 
 .button-group {
@@ -112,63 +108,79 @@
 
 .signup-button,
 .back-button {
-  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
+  font-weight: 700;
+  padding: 0.80rem 1.7rem;
   cursor: pointer;
-  transition: 
-    background-color 0.3s ease,
-    transform 0.2s ease;
+  transition:
+    background 0.19s,
+    color 0.18s,
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 
 .signup-button {
-  background-color: var(--pastel-blue);
-  color: white;
-  flex: 2;
-}
-
-.back-button {
-  background-color: var(--pastel-gray-medium);
-  color: var(--soft-text-dark);
-  flex: 1;
+  background: linear-gradient(90deg, #1e5afa 0%, #5096ff 100%);
+  color: #fff;
+  box-shadow: 0 2px 18px 0 rgba(30,90,250,0.12);
 }
 
 .signup-button:hover {
-  background-color: var(--pastel-blue-dark);
-  transform: translateY(-2px);
+  background: linear-gradient(90deg, #e0115f 0%, #fa5cba 100%);
+  color: #fff;
+  transform: translateY(-2px) scale(1.045);
+  box-shadow: 0 6px 26px 0 rgba(224,17,95,0.16);
 }
 
+.signup-button:disabled {
+  background: var(--primary-light);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.back-button {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  flex: 1;
+}
+
+
 .back-button:hover {
-  background-color: var(--pastel-gray-light);
+  background: var(--accent-light);
+  color: #fff;
   transform: translateY(-2px);
 }
 
 .signup-footer {
-  margin-top: 1.5rem;
+  margin-top: 1.6rem;
   text-align: center;
-  color: var(--soft-text-medium);
+  color: var(--text-secondary);
 }
 
 .login-link {
-  color: var(--pastel-blue);
+  color: var(--primary-color);
   text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
+  font-weight: 700;
+  transition: color 0.18s;
+  letter-spacing: 0.01em;
 }
 
 .login-link:hover {
-  color: var(--pastel-blue-dark);
+  color: var(--accent-color);
   text-decoration: underline;
 }
 
 .error-message {
-  background-color: var(--pastel-coral);
-  color: white;
-  padding: 0.75rem;
-  border-radius: 8px;
+  background: var(--danger);
+  color: #fff;
+  padding: 0.8rem;
+  border-radius: 10px;
   margin-bottom: 1rem;
   text-align: center;
+  font-weight: 600;
+  font-size: 0.98em;
 }
 
 .password-group {
@@ -182,24 +194,25 @@
 
 .password-input-wrapper input {
   flex-grow: 1;
-  padding-right: 40px;
+  padding-right: 44px;
 }
 
 .password-toggle {
   position: absolute;
-  right: 10px;
+  right: 12px;
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--soft-text-medium);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.3s ease;
+  font-size: 1.12em;
+  transition: color 0.18s;
 }
 
 .password-toggle:hover {
-  color: var(--pastel-blue-dark);
+  color: var(--primary-color);
 }
 
 .password-toggle:focus {
