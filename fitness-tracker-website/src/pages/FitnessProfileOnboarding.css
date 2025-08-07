@@ -1,81 +1,130 @@
 .fitness-profile-onboarding {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f4f4f4;
-    padding: 20px;
-  }
-  
-  .onboarding-container {
-    background-color: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 800px;
-    width: 100%;
-    padding: 40px;
-    text-align: center;
-  }
-  
-  .onboarding-section {
-    margin-bottom: 30px;
-  }
-  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--background, #181a21);
+  padding: var(--spacing-lg, 32px);
+}
+
+.onboarding-container {
+  background: var(--primary-light, #20232b);
+  border-radius: var(--border-radius-lg, 18px);
+  box-shadow: var(--box-shadow-lg, 0 8px 32px 0 rgba(30,90,250,0.13));
+  border: 1.5px solid var(--primary-color, #3576d9);
+  max-width: 800px;
+  width: 100%;
+  padding: var(--spacing-lg, 40px);
+  text-align: center;
+}
+
+.onboarding-section {
+  margin-bottom: var(--spacing-lg, 32px);
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md, 24px);
+}
+
+.option {
+  border: 2px solid var(--neutral-300, #2b3046);
+  border-radius: var(--border-radius-lg, 14px);
+  background: var(--background-secondary, #23273c);
+  padding: var(--spacing-md, 24px);
+  cursor: pointer;
+  transition: 
+      border-color 0.2s, 
+      background 0.22s, 
+      box-shadow 0.17s, 
+      transform 0.16s;
+  position: relative;
+  color: var(--text-main, #eaf1fb);
+  box-shadow: 0 2px 8px 0 rgba(30,90,250,0.08);
+}
+
+.option:hover {
+  border-color: var(--primary-color, #3576d9);
+  background: #222a38;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 22px 0 rgba(30,90,250,0.14);
+}
+
+.option.selected {
+  border-color: var(--primary-color, #3576d9);
+  background: linear-gradient(100deg, #252941 0%, #2a47a7 100%);
+  box-shadow: 0 10px 28px 0 rgba(30,90,250,0.16);
+}
+
+.option h3 {
+  margin-bottom: 10px;
+  color: var(--primary-color, #5daaff);
+  font-size: 1.14rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.option p {
+  color: var(--text-secondary, #bfcbe3);
+  font-size: 0.99em;
+}
+
+.checkmark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: var(--primary-color, #3576d9);
+  font-size: 22px;
+  background: #181a21;
+  border-radius: 50%;
+  padding: 3px 5px;
+}
+
+.continue-btn {
+  background: linear-gradient(90deg, #1e5afa 0%, #5096ff 100%);
+  color: #fff;
+  border: 1.5px solid #3576d9;
+  padding: 14px 30px;
+  border-radius: 14px;
+  font-size: 1.04em;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 18px 0 rgba(30,90,250,0.18);
+  margin-top: var(--spacing-lg, 32px);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  transition: background 0.23s, color 0.15s, border-color 0.15s, transform 0.13s, box-shadow 0.16s;
+}
+
+.continue-btn:hover,
+.continue-btn:focus {
+  background: linear-gradient(90deg, #3576d9 0%, #67aaff 100%);
+  color: #fff;
+  border-color: #1e5afa;
+  box-shadow: 0 8px 26px 0 rgba(30,90,250,0.21);
+  transform: translateY(-2px) scale(1.06);
+}
+
+.continue-btn:disabled {
+  background: #23263a;
+  color: #798cb1;
+  border: 1.5px solid #20232b;
+  cursor: not-allowed;
+}
+
+.onboarding-container, 
+.onboarding-container p, 
+.onboarding-section {
+  color: var(--text-main, #eaf1fb);
+}
+
+@media (max-width: 700px) {
   .options-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+      grid-template-columns: 1fr;
   }
-  
-  .option {
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+  .onboarding-container {
+      padding: var(--spacing-md, 20px);
   }
-  
-  .option:hover {
-    border-color: #007bff;
-  }
-  
-  .option.selected {
-    border-color: #007bff;
-    background-color: #e6f2ff;
-  }
-  
-  .option h3 {
-    margin-bottom: 10px;
-    color: #333;
-  }
-  
-  .option p {
-    color: #666;
-    font-size: 0.9em;
-  }
-  
-  .checkmark {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: #007bff;
-    font-size: 20px;
-  }
-  
-  .continue-btn {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 5px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .continue-btn:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-  
+}
