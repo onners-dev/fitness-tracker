@@ -44,10 +44,9 @@
     gap: 0.5rem;
   }
   
-  /* <--- LABELS: Always crisp and visible ---> */
   .form-group label {
     font-size: 1rem;
-    color: var(--text-main) !important; /* White! Always visible */
+    color: var(--text-main) !important;
     font-weight: 600;
     letter-spacing: 0.01em;
     margin-bottom: 0.2rem;
@@ -57,7 +56,7 @@
   .password-input-wrapper input {
     width: 100%;
     padding: 0.75rem;
-    padding-right: 2.5rem; /* for eye icon! */
+    padding-right: 2.5rem;
     background-color: var(--background-secondary) !important;
     color: var(--text-main) !important;
     border: 1.5px solid var(--neutral-300);
@@ -78,7 +77,7 @@
     box-shadow: 0 0 0 3px rgba(224,17,95, 0.10);
   }
   
-  /* Autofill color fix */
+
   input:-webkit-autofill,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:hover,
@@ -88,7 +87,6 @@
     background-color: var(--background-secondary) !important;
   }
   
-  /* Password field with eye icon: perfect overlay/fixed height */
   .password-input-wrapper {
     display: flex;
     align-items: center;
@@ -140,7 +138,7 @@
   
   
   .login-button {
-    background: var(--accent-color);
+    background: linear-gradient(135deg, #1e5afa 0%, #5096ff 100%);
     color: #fff;
     padding: 0.95rem 0;
     border: none;
@@ -157,7 +155,7 @@
   }
   
   .login-button:hover {
-    background: var(--accent-light);
+    background: rgba(224,17,95,0.83) !important;
     transform: translateY(-2px) scale(1.03);
     box-shadow: 0 12px 36px 0 rgba(224,17,95,0.20);
   }

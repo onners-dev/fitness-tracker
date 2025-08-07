@@ -1,124 +1,82 @@
 .about-page {
-  padding: var(--spacing-lg);
-  background-color: var(--background);
-  min-height: 100vh;
-}
-
-.about-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--spacing-lg);
-  background-color: var(--primary-light);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-lg);
-  border: 1.5px solid var(--primary-color);
-}
-
-.about-container h1 {
-  text-align: center;
-  color: var(--accent-color);
-  margin-bottom: 2rem;
-  font-size: 2.5rem;
-  text-transform: uppercase;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-}
-
-.about-section {
-  margin-bottom: 3rem;
-}
-
-.about-section h2 {
+  background: var(--background);
+  min-height: 100vh;
   color: var(--text-main);
-  margin-bottom: 1rem;
-  font-size: 1.7rem;
-  font-weight: 700;
-  letter-spacing: .02em;
+}
+
+
+.brand {
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
+  font-size: 2.1rem;
+  line-height: 1.15;
+  text-shadow: 0 2px 12px rgba(30, 90, 250, 0.18);
 }
 
-.about-section p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 1rem;
-  font-size: 1.08rem;
+.about-hero h1 {
+  font-size: 2.15rem;
+  margin-bottom: 1.1rem;
+  letter-spacing: 0.02em;
 }
 
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-md);
-  margin-top: 1.5rem;
+.hero-lead {
+  font-size: 1.21rem;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  color: #eaffff;
 }
-
-.feature-card {
-  padding: var(--spacing-md);
-  background-color: var(--background-secondary);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--box-shadow-sm);
-  border: 1.2px solid var(--primary-color);
-  transition: transform 0.2s, box-shadow 0.22s, border-color 0.18s;
-}
-
-.feature-card:hover {
-  transform: translateY(-5px) scale(1.03);
-  box-shadow: 0 10px 38px 0 rgba(224,17,95,0.12);
-  border-color: var(--accent-color);
-}
-
-.feature-card h3 {
-  color: var(--accent-color);
-  margin-bottom: 0.5rem;
-  font-size: 1.16rem;
+.hero-lead span {
+  color: #b3d0ff;
   font-weight: 700;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
+  text-shadow: 0 1px 5px rgba(30,90,250,0.11);
 }
 
-.feature-card p {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin: 0;
-}
-
-.benefits-list {
-  list-style: none;
-  padding: 0;
-}
-
-.benefits-list li {
-  padding: 0.48rem 0;
-  color: var(--text-secondary);
-  position: relative;
-  padding-left: 1.65rem;
-  font-size: 1.06rem;
-}
-
-.benefits-list li::before {
-  content: "✓";
-  color: var(--accent-color);
+.premium-badge {
   position: absolute;
-  left: 0;
+  left: 2rem;
+  top: 2rem;
+  background: #1e5afa;
+  color: #fff;
   font-weight: bold;
-  font-size: 1.06em;
-}
-
-.cta-buttons {
+  padding: 0.38rem 1.1rem;
+  border-radius: 24px;
+  box-shadow: 0 1px 8px 0 rgba(30,90,250,0.13);
+  letter-spacing: .08em;
+  font-size: 0.97rem;
   display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 2rem;
+  align-items: center;
+  gap: 0.35em;
+  z-index: 2;
 }
 
-.primary-button, .secondary-button {
-  padding: 0.95rem 2.4rem;
-  border-radius: 36px;
+.cta-group {
+  display: flex;
+  gap: 1.1rem;
+  justify-content: center;
+  margin-top: 1.3rem;
+}
+
+.primary-button,
+.secondary-button {
+  width: auto;
+  padding: 1rem 2.2rem;
+  border-radius: 16px;
   text-decoration: none;
   font-weight: 800;
-  font-size: 1.16rem;
+  font-size: 1.08rem;
   letter-spacing: .08em;
-  transition: background 0.22s, box-shadow 0.20s, color 0.18s, border 0.18s;
-  box-shadow: 0 6px 28px 0 rgba(224,17,95,0.08);
+  transition: 
+    background 0.22s,
+    box-shadow 0.18s,
+    color 0.2s,
+    border 0.19s,
+    transform 0.13s;
+  box-shadow: 0 4px 20px 0 rgba(30,90,250,0.15);
   border: none;
   outline: none;
   text-transform: uppercase;
@@ -127,57 +85,174 @@
 }
 
 .primary-button {
-  background: var(--accent-color);
+  background: linear-gradient(90deg, #1e5afa 0%, #5096ff 100%);
   color: #fff;
-  border: none;
+  border: 1.5px solid #3576d9;
 }
-
 .primary-button:hover,
 .primary-button:focus {
-  background: var(--accent-light);
+  background: linear-gradient(90deg, #336fff 0%, #57aaff 100%);
   color: #fff;
-  box-shadow: 0 12px 36px 0 rgba(224,17,95,0.13);
-  text-decoration: none;
+  border-color: #1e5afa;
+  box-shadow: 0 8px 24px 0 rgba(30,90,250,0.23);
+  transform: translateY(-2px) scale(1.07);
 }
 
 .secondary-button {
   background: transparent;
-  color: var(--accent-color);
-  border: 2px solid var(--accent-color);
+  color: #1e5afa;
+  border: 2px solid #1e5afa;
 }
-
 .secondary-button:hover,
 .secondary-button:focus {
-  background: rgba(224,17,95,0.08);
-  color: var(--accent-light);
-  border-color: var(--accent-light);
-  text-decoration: none;
+  background: #eaf1fb;
+  color: #3576d9;
+  border-color: #3576d9;
+  transform: translateY(-2px) scale(1.05);
 }
 
-@media (max-width: 768px) {
+.section-title {
+  font-size: 1.65rem;
+  color: #1e5afa;
+  font-weight: 800;
+  letter-spacing: .01em;
+  text-align: center;
+  margin-bottom: 2rem;
+  margin-top: 1.3rem;
+  text-transform: uppercase;
+}
+
+.features-flex {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: 3rem;
+  padding: 0.5rem 0;
+}
+
+.feature-box {
+  background: var(--primary-light);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md) var(--spacing-md);
+  box-shadow: var(--box-shadow-lg);
+  text-align: center;
+  border: 1.3px solid #3576d9;
+  transition:
+    transform 0.24s cubic-bezier(.4,2,.4,1),
+    box-shadow 0.22s,
+    border 0.14s,
+    background 0.21s;
+}
+
+.feature-box:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 10px 38px 0 rgba(30,90,250,0.18);
+  border-color: #1e5afa;
+  background: var(--background-secondary);
+}
+
+.feature-icon {
+  font-size: 2.15rem;
+  margin-bottom: 1rem;
+  color: #1e5afa;
+  filter: drop-shadow(0 1px 0 rgba(30,90,250,0.15));
+}
+
+.feature-box h3 {
+  font-size: 1.14rem;
+  font-weight: 700;
+  margin-bottom: 0.52rem;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  border-bottom: 2px solid #3576d9;
+  padding-bottom: 0.25rem;
+  transition: border-bottom-color 0.2s;
+}
+.feature-box:hover h3 {
+  border-bottom-color: #1e5afa;
+}
+.feature-box p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.section-why {
+  padding: 1rem 0 3rem 0;
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0 1.5rem;
+  margin: 0 auto;
+  max-width: 630px;
+}
+.benefits-list li {
+  position: relative;
+  font-size: 1.08rem;
+  padding-left: 2.1em;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0.5rem 0;
+}
+
+.benefits-list li::before {
+  content: "✓";
+  color: #1e5afa;
+  position: absolute;
+  left: 0;
+  font-size: 1.15rem;
+  font-weight: bold;
+  top: -0.08em;
+}
+
+.about-footer-invite {
+  text-align: center;
+  background: linear-gradient(90deg, #1e5afa 0%, #5096ff 100%);
+  padding: 2.2rem 1.5rem 3.5rem 1.5rem;
+  border-radius: var(--border-radius-lg);
+  margin: 2.1rem auto 0 auto;
+  max-width: 720px;
+  box-shadow: var(--box-shadow-lg);
+  border: 1.5px solid #3576d9;
+}
+
+.about-footer-invite h2 {
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.24rem;
+  margin: 0 0 0.5em 0;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+}
+.about-footer-invite p {
+  color: #eaffff;
+  font-size: 1.09rem;
+  margin-bottom: 1.7rem;
+}
+
+@media (max-width: 850px) {
   .about-page {
     padding: var(--spacing-md);
   }
-
-  .about-container {
-    padding: var(--spacing-md);
+  .about-hero {
+    padding: 1.5rem 1vw 1.85rem 1vw;
   }
-
-  .about-container h1 {
-    font-size: 2rem;
+  .features-flex {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    padding: 0;
   }
-
-  .about-section h2 {
-    font-size: 1.25rem;
-  }
-
-  .cta-buttons {
-    flex-direction: column;
-  }
-
-  .cta-buttons a {
-    width: 100%;
-    text-align: center;
-  }
+  .about-footer-invite { padding: 1.5rem 0.7rem 2.2rem 0.7rem; }
+  .section-title { font-size: 1.17rem; margin-bottom: 1.13rem; }
 }
-
+@media (max-width: 525px) {
+  .about-hero h1 { font-size: 1.09rem; }
+  .brand { font-size: 1rem; }
+  .about-footer-invite { padding-top: 1.1rem; }
+  .premium-badge { font-size: 0.85rem; left: 0.7rem; top: 0.7rem; }
+  .cta-group { flex-direction: column; gap: 0.55rem; }
+  .primary-button, .secondary-button { width: 100%; text-align: center; }
+}

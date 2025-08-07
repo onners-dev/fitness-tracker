@@ -1,68 +1,68 @@
 import './About.css';
+import { FaFire, FaCheckCircle, FaChartLine, FaUtensils, FaUserTie, FaCrown } from 'react-icons/fa';
 
-const About = () => {
+const FeatureBox = ({ icon, headline, desc }) => (
+  <div className="feature-box">
+    <div className="feature-icon">{icon}</div>
+    <h3>{headline}</h3>
+    <p>{desc}</p>
+  </div>
+);
+
+export default function About() {
   return (
     <div className="about-page">
-      <div className="about-container">
-        <h1>About Fitness App</h1>
-        
-        <section className="about-section">
-          <h2>Our Mission</h2>
-          <p>
-            At Fitness App, we're dedicated to making fitness tracking simple, 
-            intuitive, and effective. Our mission is to help every individual 
-            achieve their health and fitness goals through smart tracking and 
-            personalized insights.
-          </p>
-        </section>
 
-        <section className="about-section">
-          <h2>What We Offer</h2>
-          <div className="features-grid">
-            <div className="feature-card">
-              <h3>Workout Tracking</h3>
-              <p>Log and monitor your exercises, sets, and reps with ease.</p>
-            </div>
-            <div className="feature-card">
-              <h3>Calorie Counter</h3>
-              <p>Keep track of your daily caloric intake and nutritional goals.</p>
-            </div>
-            <div className="feature-card">
-              <h3>Progress Analytics</h3>
-              <p>Visualize your fitness journey with detailed progress charts.</p>
-            </div>
-            <div className="feature-card">
-              <h3>Custom Plans</h3>
-              <p>Get personalized workout and nutrition plans tailored to your goals.</p>
-            </div>
-          </div>
-        </section>
+      <section className="section-features">
+        <h2 className="section-title">Everything You Need. Nothing You Don’t.</h2>
+        <div className="features-flex">
+          <FeatureBox
+            icon={<FaFire />}
+            headline="Effortless Calorie Tracking"
+            desc="Log meals in seconds, track macros, and reach your goals with science-backed precision."
+          />
+          <FeatureBox
+            icon={<FaUtensils />}
+            headline="Curated Nutrition Guidance"
+            desc="Personalized meal plans and admin-reviewed food submissions—nutrition you can trust."
+          />
+          <FeatureBox
+            icon={<FaChartLine />}
+            headline="Progress Insights"
+            desc="Visualize your transformation—detailed charts & trends keep motivation high."
+          />
+          <FeatureBox
+            icon={<FaCheckCircle />}
+            headline="Workout Plan Builder"
+            desc="Generate, customize, and log training plans tailored to every skill level."
+          />
+          <FeatureBox
+            icon={<FaUserTie />}
+            headline="Seamless Onboarding"
+            desc="Smart, guided setup ensures your experience is uniquely yours from day one."
+          />
+        </div>
+      </section>
 
-        <section className="about-section">
-          <h2>Why Choose Us</h2>
-          <ul className="benefits-list">
-            <li>User-friendly interface designed for all fitness levels</li>
-            <li>Comprehensive tracking tools for both workouts and nutrition</li>
-            <li>Regular updates and new features based on user feedback</li>
-            <li>Supportive community of fitness enthusiasts</li>
-            <li>Data-driven insights to optimize your fitness journey</li>
-          </ul>
-        </section>
+      <section className="section-why">
+        <h2 className="section-title">Why Arcus?</h2>
+        <ul className="benefits-list">
+          <li>Modern, user-friendly interface—accessible on any device</li>
+          <li>Data privacy at the core: your journey stays yours</li>
+          <li>Regular feature upgrades—driven by our community</li>
+          <li>24/7 support & a passionate fitness community</li>
+          <li>Free to start—upgrade as you grow!</li>
+        </ul>
+      </section>
 
-        <section className="about-section">
-          <h2>Get Started</h2>
-          <p>
-            Ready to begin your fitness journey? Join thousands of users who have 
-            already transformed their lives with Fitness App.
-          </p>
-          <div className="cta-buttons">
-            <a href="/signup" className="primary-button">Sign Up Now</a>
-            <a href="/login" className="secondary-button">Login</a>
-          </div>
-        </section>
-      </div>
+      <section className="about-footer-invite">
+        <h2>Ready to Level Up?</h2>
+        <p>
+          Join users who trust Arcus with their progress.<br />
+          Every rep, every meal, every breakthrough—tracked and celebrated.
+        </p>
+        <a href="/signup" className="primary-button footer-cta">Create My Account</a>
+      </section>
     </div>
   );
-};
-
-export default About;
+}
