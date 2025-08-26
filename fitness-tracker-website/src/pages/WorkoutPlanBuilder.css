@@ -195,6 +195,24 @@
     border 0.18s,
     box-shadow 0.22s;
 }
+.exercise-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center; /* Center contents horizontally */
+  padding: var(--spacing-lg);
+  margin-bottom: 1.2em;
+  transition: transform 0.24s cubic-bezier(.4,2,.4,1), background 0.22s, border 0.18s, box-shadow 0.22s;
+}
+
+.exercise-item .add-to-day-btn {
+  margin-top: var(--spacing-md);
+}
+
+.exercise-item h4, .exercise-item p {
+  text-align: center; /* Make sure texts align center too */
+}
+
 .workout-plan-builder .selected-exercise .exercise-info .exercise-name {
   color: var(--text-main) !important;
   font-weight: 700;
@@ -255,7 +273,11 @@
 .workout-plan-builder .save-plan-btn:hover,
 .workout-plan-builder .copy-paste-btn:hover,
 .workout-plan-builder .pagination-btn:hover,
-/* .workout-plan-builder .exercise-item:hover .add-to-day-btn, */
+
+
+
+
+
 .workout-plan-builder .exercise-item:hover .remove-exercise-btn {
   background: linear-gradient(90deg, rgba(224,17,95,0.72) 0%, rgba(250,92,186,0.72) 100%);
   color: #fff;
