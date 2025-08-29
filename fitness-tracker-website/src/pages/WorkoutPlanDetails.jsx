@@ -101,18 +101,19 @@ const WorkoutPlanDetails = () => {
             <div className="workout-days-row">
                 {daysOrder.map((day) => {
                     const dayPlan = workoutsMap[day] || { day, exercises: [] };
-                    
+                    const isActiveDay = !!dayPlan.exercises.length;
+
                     return (
                         <div 
                             key={day} 
-                            className={`day-card ${dayPlan.exercises.length === 0 ? 'rest-day' : ''}`}
+                            className={`day-card ${isActiveDay ? 'active-day' : 'rest-day'}`}
                             onClick={() => handleDayClick(dayPlan)}
                         >
                             <h3>{day}</h3>
                             <p>
-                                {dayPlan.exercises.length === 0 
-                                    ? 'Rest' 
-                                    : `${dayPlan.exercises.length} Exercise${dayPlan.exercises.length > 1 ? 's' : ''}`}
+                                {isActiveDay 
+                                    ? `${dayPlan.exercises.length} Exercise${dayPlan.exercises.length > 1 ? 's' : ''}`
+                                    : 'Rest'}
                             </p>
                         </div>
                     );
