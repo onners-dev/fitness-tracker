@@ -108,6 +108,46 @@ cd fitness-tracker-website
 npm start
 ```
 
+### DOCKER SET UP
+
+Create a `.env` file in the PROJECT root and add the following variables:
+
+```bash
+DB_USER=youruser
+DB_PASSWORD=yourpassword
+DB_NAME=fitness-tracker
+DB_HOST=db
+DB_PORT=5432
+JWT_SECRET=your-random-secret
+```
+
+You only need this one .env file if you run everything with docker, no need to create anything else
+
+Build & Run Everything
+```bash
+docker-compose up --build
+```
+The first run may take a few minutes (installing dependencies and building the frontend).
+
+Access Your App
+Frontend: http://localhost:4000
+Backend API: http://localhost:7100
+Database: Connect to Postgres on port 5434 (localhost:5434) if you want to inspect with a DB client.
+
+
+Stopping the App
+```bash
+docker-compose down
+```
+
+If you want to use the demo data:
+
+Run the SQL scripts inside exercises_sample_data.sql and/or fitness_tracker.sql
+Example (from project root):
+
+docker exec -i <db_container_name> psql -U youruser -d fitness-tracker < exercises_sample_data.sql
+Find your db container name with docker ps.
+
 ### TODO:
 
 - Fix forgot password email configuration on arcus.fit
