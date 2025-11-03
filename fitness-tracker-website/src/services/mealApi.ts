@@ -1,9 +1,39 @@
-// src/services/mealApi.js
 import axios from 'axios';
 
-const BASE_URL = `${import.meta.env.VITE_API_URL}/meals`;
+const BASE_URL = `${import.meta.env.VITE_API_URL as string}/meals`;
 
-const getAuthHeader = () => {
+// Types
+export interface Meal {
+  meal_id: string;
+  user_id: string;
+  date: string; // YYYY-MM-DD
+  name: string;
+  calories?: number;
+  proteins?: number;
+  carbs?: number;
+  fats?: number;
+  [key: string]: any;
+}
+
+export interface AddMealResponse {
+  success: boolean;
+  meal: Meal;
+  [key: string]: any;
+}
+
+export interface GetMealsResponse {
+  success: boolean;
+  meals: Meal[];
+  [key: string]: any;
+}
+
+export interface RemoveMealResponse {
+  success: boolean;
+  removedMealId: string;
+  [key: string]: any;
+}
+
+const getAuthHeader = (): Record<string, string> => {
   const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('No authentication token found');
@@ -15,63 +45,38 @@ const getAuthHeader = () => {
 };
 
 export const mealService = {
-  getMealsByDate: async (date) => {
+  getMealsByDate: async (date: string): Promise<GetMealsResponse> => {
     try {
-      console.log('Fetching meals for date:', date);
-      console.log('Token:', localStorage.getItem('token'));
-
       const response = await axios.get(`${BASE_URL}/date/${date}`, {
         headers: getAuthHeader()
       });
-
-      console.log('Meals fetch response:', response.data);
       return response.data;
-    } catch (error) {
-      console.error('Detailed meal fetch error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.config?.headers
-      });
-
+    } catch (error: any) {
       throw error;
     }
   },
 
-  addMeal: async (mealData) => {
+  addMeal: async (mealData: Omit<Meal, 'meal_id' | 'user_id'>): Promise<AddMealResponse> => {
     try {
-      const headers = getAuthHeader();
-      console.log('Sending request with headers:', headers);
-      console.log('Sending meal data:', mealData);
-      
       const response = await axios.post(BASE_URL, mealData, {
-        headers: headers
+        headers: getAuthHeader()
       });
       return response.data;
-    } catch (error) {
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.config?.headers
-      });
+    } catch (error: any) {
       throw error;
     }
   },
 
-  removeMeal: async (mealId) => {
+  removeMeal: async (mealId: string): Promise<RemoveMealResponse> => {
     try {
       const response = await axios.delete(`${BASE_URL}/${mealId}`, {
         headers: getAuthHeader()
       });
       return response.data;
-    } catch (error) {
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
+    } catch (error: any) {
       throw error;
     }
   }
 };
+
+export default mealService;

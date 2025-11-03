@@ -1,50 +1,86 @@
 import React, { useState, useEffect } from 'react';
+import type { ChangeEvent} from 'react'
 import { useNavigate } from 'react-router-dom';
 import { exerciseLibraryService } from '../services/workoutApi.js';
 import { workoutPlanService } from '../services/workoutPlanService.js';
 import './WorkoutPlanBuilder.css';
 
-const WorkoutPlanBuilder = () => {
+// Type definitions
+type Muscle = {
+  muscle_id?: number | string;
+  name: string;
+};
+
+type Exercise = {
+  exercise_id: string;
+  name: string;
+  difficulty?: string;
+  equipment?: string;
+};
+
+type ExerciseWithSetsReps = Exercise & {
+  sets: number;
+  reps: number;
+};
+
+type SelectedExercises = {
+  [day: string]: ExerciseWithSetsReps[];
+};
+
+type PlanDetails = {
+  name: string;
+  fitnessGoal: string;
+  workoutDays: string[];
+  selectedExercises: SelectedExercises;
+};
+
+type Filters = {
+  muscleGroup: string;
+  difficulty: string;
+  equipment: string;
+};
+
+const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
+const equipmentOptions = [
+  'Bodyweight', 'Dumbbells', 'Barbell', 'Kettlebell', 
+  'Resistance Bands', 'Machine', 'Cable', 'No Equipment'
+];
+const fitnessGoals = [
+  { value: 'muscle_gain', label: 'Muscle Gain' },
+  { value: 'weight_loss', label: 'Weight Loss' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'endurance', label: 'Endurance' }
+];
+const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const EXERCISES_PER_PAGE = 8;
+
+const WorkoutPlanBuilder: React.FC = () => {
   const navigate = useNavigate();
-  const [planDetails, setPlanDetails] = useState({
+
+  const [planDetails, setPlanDetails] = useState<PlanDetails>({
     name: '',
     fitnessGoal: '',
     workoutDays: [],
-    selectedExercises: {}
+    selectedExercises: {},
   });
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [exerciseLibrary, setExerciseLibrary] = useState<Exercise[]>([]);
+  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
 
-  const [exerciseLibrary, setExerciseLibrary] = useState([]);
-  const [filteredExercises, setFilteredExercises] = useState([]);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     muscleGroup: '',
     difficulty: '',
     equipment: ''
   });
 
   // Pagination state
-  const [currentExercisePage, setCurrentExercisePage] = useState(1);
-  const EXERCISES_PER_PAGE = 8;
+  const [currentExercisePage, setCurrentExercisePage] = useState<number>(1);
 
-  // Replace muscleGroups with muscles
-  const [muscles, setMuscles] = useState([]);
-
-  // Predefined static lists
-  const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
-  const equipmentOptions = [
-    'Bodyweight', 'Dumbbells', 'Barbell', 'Kettlebell', 
-    'Resistance Bands', 'Machine', 'Cable', 'No Equipment'
-  ];
-  const fitnessGoals = [
-    { value: 'muscle_gain', label: 'Muscle Gain' },
-    { value: 'weight_loss', label: 'Weight Loss' },
-    { value: 'maintenance', label: 'Maintenance' },
-    { value: 'endurance', label: 'Endurance' }
-  ];
+  const [muscles, setMuscles] = useState<Muscle[]>([]);
 
   // Compute paginated exercises
-  const getPaginatedExercises = () => {
+  const getPaginatedExercises = (): Exercise[] => {
     const startIndex = (currentExercisePage - 1) * EXERCISES_PER_PAGE;
     const endIndex = startIndex + EXERCISES_PER_PAGE;
     return filteredExercises.slice(startIndex, endIndex);
@@ -66,82 +102,57 @@ const WorkoutPlanBuilder = () => {
     }
   };
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentExercisePage(1);
   }, [filters]);
 
-  // Fetch muscles when component mounts
   useEffect(() => {
     const fetchMuscles = async () => {
       try {
         const fetchedMuscles = await exerciseLibraryService.getMuscles();
         setMuscles(fetchedMuscles);
       } catch (error) {
-        console.error('Failed to fetch muscles', error);
-        // Fallback muscles
         setMuscles([
-          'Biceps', 'Triceps', 'Chest', 'Back', 
-          'Shoulders', 'Quadriceps', 'Hamstrings', 
-          'Calves', 'Abs'
+          { name: 'Biceps' }, { name: 'Triceps' }, { name: 'Chest' },
+          { name: 'Back' }, { name: 'Shoulders' }, { name: 'Quadriceps' },
+          { name: 'Hamstrings' }, { name: 'Calves' }, { name: 'Abs' }
         ]);
       }
     };
-
     fetchMuscles();
   }, []);
 
-
-  // Fetch exercises based on filters
   useEffect(() => {
     const fetchExercises = async () => {
       try {
-        console.log('Fetching exercises with filters:', filters);
-        // Extract muscle from filters for compatibility
         const muscle = filters.muscleGroup || null;
-        // Remove muscleGroup from filters since it's passed separately
         const restFilters = { ...filters };
         delete restFilters.muscleGroup;
-
-        const exercises = await exerciseLibraryService.getExercises(muscle, restFilters);
-
-        console.log('Fetched exercises:', exercises);
-
+        const exercises: Exercise[] = await exerciseLibraryService.getExercises(muscle, restFilters);
         setExerciseLibrary(exercises);
         setFilteredExercises(exercises);
-      } catch (error) {
-        console.error('Failed to fetch exercises', error);
+      } catch {
+        setExerciseLibrary([]);
+        setFilteredExercises([]);
       }
     };
-
     if (selectedDay) {
       fetchExercises();
     }
   }, [filters, selectedDay]);
 
-
-  const handleFilterChange = (e) => {
+  const handleFilterChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    console.log(`Updating filter: ${name} = ${value}`);
-    
-    setFilters(prev => {
-      const newFilters = { ...prev, [name]: value };
-      console.log('New filters:', newFilters);
-      return newFilters;
-    });
+    setFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleDaySelection = (day) => {
+  const handleDaySelection = (day: string) => {
     setPlanDetails(prev => {
-      // Ensure workoutDays is updated
       const updatedDays = prev.workoutDays.includes(day)
         ? prev.workoutDays.filter(d => d !== day)
         : [...prev.workoutDays, day];
-      
-      // Create a new selectedExercises object
-      const updatedSelectedExercises = {...prev.selectedExercises};
-      
-      // If the day is being added, initialize an empty array for it
+
+      const updatedSelectedExercises = { ...prev.selectedExercises };
       if (!prev.selectedExercises[day]) {
         updatedSelectedExercises[day] = [];
       }
@@ -153,46 +164,29 @@ const WorkoutPlanBuilder = () => {
       };
     });
 
-    // Reset filters when a new day is selected
     setFilters({
       muscleGroup: '',
       difficulty: '',
       equipment: ''
     });
 
-    // Set or unset the selected day
     setSelectedDay(prevDay => prevDay === day ? null : day);
   };
 
-  const addExerciseToDay = (exercise) => {
+  const addExerciseToDay = (exercise: Exercise) => {
     if (!selectedDay) return;
-
     setPlanDetails(prev => {
-      // Get current exercises for the selected day
       const currentDayExercises = prev.selectedExercises[selectedDay] || [];
-      
-      // Check if exercise already exists
-      const exerciseExists = currentDayExercises.some(
-        ex => ex.exercise_id === exercise.exercise_id
-      );
-
-      // If exercise doesn't exist, add it
+      const exerciseExists = currentDayExercises.some(ex => ex.exercise_id === exercise.exercise_id);
       if (!exerciseExists) {
         const updatedExercises = [
           ...currentDayExercises,
-          { 
-            ...exercise, 
-            sets: 3, 
-            reps: 10 
+          {
+            ...exercise,
+            sets: 3,
+            reps: 10,
           }
         ];
-
-        console.log(`Adding exercise to ${selectedDay}:`, {
-          exercise,
-          currentExercises: currentDayExercises,
-          updatedExercises
-        });
-
         return {
           ...prev,
           selectedExercises: {
@@ -201,14 +195,12 @@ const WorkoutPlanBuilder = () => {
           }
         };
       }
-
       return prev;
     });
   };
 
-  const removeExerciseFromDay = (exerciseId) => {
+  const removeExerciseFromDay = (exerciseId: string) => {
     if (!selectedDay) return;
-
     setPlanDetails(prev => ({
       ...prev,
       selectedExercises: {
@@ -220,16 +212,14 @@ const WorkoutPlanBuilder = () => {
     }));
   };
 
-  const updateExerciseDetail = (index, field, value) => {
+  const updateExerciseDetail = (index: number, field: keyof ExerciseWithSetsReps, value: string) => {
     if (!selectedDay) return;
-
     setPlanDetails(prev => {
       const newExercises = [...prev.selectedExercises[selectedDay]];
       newExercises[index] = {
         ...newExercises[index],
-        [field]: value
+        [field]: field === "sets" || field === "reps" ? Number(value) : value
       };
-
       return {
         ...prev,
         selectedExercises: {
@@ -245,94 +235,77 @@ const WorkoutPlanBuilder = () => {
       alert('No exercises to copy');
       return;
     }
-  
     const exercisesToCopy = planDetails.selectedExercises[selectedDay];
     localStorage.setItem('copiedExercises', JSON.stringify({
       sourceDay: selectedDay,
       exercises: exercisesToCopy
     }));
-    
     alert(`Copied ${exercisesToCopy.length} exercises from ${selectedDay}`);
   };
-  
+
   const pasteExercisesToDay = () => {
     if (!selectedDay) {
       alert('Select a target day to paste exercises');
       return;
     }
-  
-    const copiedData = JSON.parse(localStorage.getItem('copiedExercises') || '{}');
-    
+    const copiedDataRaw = localStorage.getItem('copiedExercises');
+    if (!copiedDataRaw) {
+      alert('No exercises to paste');
+      return;
+    }
+    const copiedData = JSON.parse(copiedDataRaw) as { sourceDay: string; exercises: ExerciseWithSetsReps[] };
     if (!copiedData.exercises || copiedData.exercises.length === 0) {
       alert('No exercises to paste');
       return;
     }
-  
     if (copiedData.sourceDay === selectedDay) {
       alert('Cannot paste to the same day');
       return;
     }
-  
     setPlanDetails(prev => {
-      const updatedSelectedExercises = {...prev.selectedExercises};
-      
-      // Filter out duplicates
-      const newExercises = copiedData.exercises.filter(copiedEx => 
-        !((updatedSelectedExercises[selectedDay] || []).some(
+      const updatedSelectedExercises = { ...prev.selectedExercises };
+      const newExercises = copiedData.exercises.filter(copiedEx =>
+        !(updatedSelectedExercises[selectedDay] || []).some(
           existingEx => existingEx.exercise_id === copiedEx.exercise_id
-        ))
+        )
       );
-  
       updatedSelectedExercises[selectedDay] = [
         ...(updatedSelectedExercises[selectedDay] || []),
         ...newExercises
       ];
-  
       return {
         ...prev,
-        workoutDays: prev.workoutDays.includes(selectedDay) 
-          ? prev.workoutDays 
+        workoutDays: prev.workoutDays.includes(selectedDay)
+          ? prev.workoutDays
           : [...prev.workoutDays, selectedDay],
         selectedExercises: updatedSelectedExercises
       };
     });
-  
-    alert(`Pasted ${newExercises.length} exercises to ${selectedDay}`);
+    alert(`Pasted ${copiedData.exercises.length} exercises to ${selectedDay}`);
   };
-  
 
   const handleSavePlan = async () => {
-    // Validate plan details
     if (!planDetails.name.trim()) {
       alert('Please enter a plan name');
       return;
     }
-  
     if (!planDetails.fitnessGoal) {
       alert('Please select a fitness goal');
       return;
     }
-  
-    // Ensure all days are accounted for
-    const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    
-    // Prepare plan details with rest days
-    const finalPlanDetails = {
+    const finalPlanDetails: PlanDetails = {
       ...planDetails,
       workoutDays: allDays,
-      selectedExercises: allDays.reduce((acc, day) => {
-        // If day was not previously selected, add it with an empty exercise array (rest day)
+      selectedExercises: allDays.reduce<SelectedExercises>((acc, day) => {
         acc[day] = planDetails.selectedExercises[day] || [];
         return acc;
       }, {})
     };
-  
     try {
-      const savedPlan = await workoutPlanService.createCustomWorkoutPlan(finalPlanDetails);
+      await workoutPlanService.createCustomWorkoutPlan(finalPlanDetails);
       alert('Workout plan saved successfully!');
       navigate('/workout-plans/existing');
-    } catch (error) {
-      console.error('Failed to save workout plan', error);
+    } catch (error: any) {
       alert(`Failed to save plan: ${error.message}`);
     }
   };
@@ -340,21 +313,21 @@ const WorkoutPlanBuilder = () => {
   return (
     <div className="workout-plan-builder">
       <div className="plan-details-section">
-        <input 
-          type="text" 
-          placeholder="Plan Name" 
+        <input
+          type="text"
+          placeholder="Plan Name"
           value={planDetails.name}
           onChange={(e) => setPlanDetails(prev => ({
-            ...prev, 
+            ...prev,
             name: e.target.value
           }))}
           className="plan-name-input"
         />
-        
-        <select 
+
+        <select
           value={planDetails.fitnessGoal}
           onChange={(e) => setPlanDetails(prev => ({
-            ...prev, 
+            ...prev,
             fitnessGoal: e.target.value
           }))}
           className="fitness-goal-select"
@@ -369,43 +342,42 @@ const WorkoutPlanBuilder = () => {
       </div>
 
       <div className="workout-days">
-        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-          .map(day => (
-            <button 
-              key={day}
-              className={`
-                ${planDetails.workoutDays.includes(day) ? 'active' : ''} 
-                ${selectedDay === day ? 'selected' : ''}
-                ${planDetails.selectedExercises[day] && 
-                  planDetails.selectedExercises[day].length > 0 ? 'has-exercises' : ''}
-              `}
-              onClick={() => handleDaySelection(day)}
-            >
-              {day}
-              {planDetails.selectedExercises[day] && 
+        {allDays.map(day => (
+          <button
+            key={day}
+            className={`
+              ${planDetails.workoutDays.includes(day) ? 'active' : ''}
+              ${selectedDay === day ? 'selected' : ''}
+              ${planDetails.selectedExercises[day] &&
+                planDetails.selectedExercises[day].length > 0 ? 'has-exercises' : ''}
+            `}
+            onClick={() => handleDaySelection(day)}
+          >
+            {day}
+            {planDetails.selectedExercises[day] &&
               planDetails.selectedExercises[day].length > 0 && (
-                <span 
+                <span
                   className="day-completed-checkmark"
                   title={`${planDetails.selectedExercises[day].length} exercises added`}
                 >
                   ✓
                 </span>
               )}
-            </button>
-          ))}
+          </button>
+        ))}
       </div>
 
       {selectedDay && (
         <>
           <div className="copy-paste-section">
             <div className="copy-paste-actions">
-              <button 
+              <button
                 onClick={copyExercisesFromDay}
                 className="copy-paste-btn"
               >
                 📋 Copy Exercises from {selectedDay}
               </button>
-              <button 
+              <button
                 onClick={pasteExercisesToDay}
                 className="copy-paste-btn"
               >
@@ -415,21 +387,20 @@ const WorkoutPlanBuilder = () => {
           </div>
 
           <div className="exercise-filters">
-            <select 
+            <select
               name="muscleGroup"
               value={filters.muscleGroup}
               onChange={handleFilterChange}
             >
               <option value="">All Muscles</option>
               {muscles.map(muscle => (
-              <option key={muscle.muscle_id ?? muscle} value={muscle.name ?? muscle}>
-                {muscle.name ?? muscle}
-              </option>
-            ))}
-
+                <option key={muscle.muscle_id ?? muscle.name} value={muscle.name}>
+                  {muscle.name}
+                </option>
+              ))}
             </select>
 
-            <select 
+            <select
               name="difficulty"
               value={filters.difficulty}
               onChange={handleFilterChange}
@@ -440,7 +411,7 @@ const WorkoutPlanBuilder = () => {
               ))}
             </select>
 
-            <select 
+            <select
               name="equipment"
               value={filters.equipment}
               onChange={handleFilterChange}
@@ -461,7 +432,7 @@ const WorkoutPlanBuilder = () => {
                     <h4>{exercise.name}</h4>
                     <p>Difficulty: {exercise.difficulty}</p>
                     <p>Equipment: {exercise.equipment}</p>
-                    <button 
+                    <button
                       onClick={() => addExerciseToDay(exercise)}
                       className="add-to-day-btn"
                     >
@@ -470,12 +441,10 @@ const WorkoutPlanBuilder = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Pagination Controls */}
               {filteredExercises.length > EXERCISES_PER_PAGE && (
                 <div className="exercise-pagination">
-                  <button 
-                    onClick={goToPreviousPage} 
+                  <button
+                    onClick={goToPreviousPage}
                     disabled={currentExercisePage === 1}
                     className="pagination-btn"
                   >
@@ -484,8 +453,8 @@ const WorkoutPlanBuilder = () => {
                   <span className="page-info">
                     Page {currentExercisePage} of {totalExercisePages}
                   </span>
-                  <button 
-                    onClick={goToNextPage} 
+                  <button
+                    onClick={goToNextPage}
                     disabled={currentExercisePage === totalExercisePages}
                     className="pagination-btn"
                   >
@@ -504,23 +473,24 @@ const WorkoutPlanBuilder = () => {
                     <div className="exercise-volume">
                       <div className="sets-input">
                         <span className="input-label">Sets</span>
-                        <input 
-                          type="number" 
-                          value={exercise.sets} 
+                        <input
+                          type="number"
+                          value={exercise.sets}
                           onChange={(e) => updateExerciseDetail(index, 'sets', e.target.value)}
                         />
                       </div>
                       <div className="reps-input">
                         <span className="input-label">Reps</span>
-                        <input 
-                          type="number" 
-                          value={exercise.reps} 
+                        <input
+                          type="number"
+                          value={exercise.reps}
                           onChange={(e) => updateExerciseDetail(index, 'reps', e.target.value)}
                         />
                       </div>
-                      <button 
+                      <button
                         onClick={() => removeExerciseFromDay(exercise.exercise_id)}
                         className="remove-exercise-btn"
+                        type="button"
                       >
                         Remove
                       </button>
@@ -528,17 +498,17 @@ const WorkoutPlanBuilder = () => {
                   </div>
                 </div>
               ))}
-            </div>  
+            </div>
           </div>
         </>
       )}
 
-
       <div className="plan-actions">
-        <button 
+        <button
           onClick={handleSavePlan}
           disabled={!planDetails.name || planDetails.workoutDays.length === 0}
           className="save-plan-btn"
+          type="button"
         >
           Save Workout Plan
         </button>

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import React, { useState, useEffect } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { useLocation } from "react-router-dom";
 import { workoutService, exerciseLibraryService } from "../services/workoutApi";
-import { workoutPlanService } from "../services/workoutPlanService.ts";
+import { workoutPlanService } from "../services/workoutPlanService";
 import "./WorkoutLogging.css";
 
 type Exercise = {
@@ -23,7 +24,7 @@ type WorkoutPlan = {
 };
 
 type LoggedExercise = {
-  exercise_id: string; // will store as string in state
+  exercise_id: string;
   exercise_name?: string;
   sets: string;
   reps: string;
@@ -70,15 +71,15 @@ const initialExercise: CurrentExercise = {
 };
 
 const initialWorkoutData: WorkoutData = {
-  workout_type: "",
-  workout_name: "",
-  date: new Date().toISOString().split("T")[0],
-  total_duration: "",
-  total_calories_burned: "",
-  notes: "",
-  exercises: [],
-};
-
+    workout_type: "",
+    workout_name: "",
+    date: new Date().toISOString().split("T")[0] || "",
+    total_duration: "",
+    total_calories_burned: "",
+    notes: "",
+    exercises: [],
+}
+  
 const WorkoutLogging: React.FC = () => {
   const location = useLocation() as { state?: any };
   const [isLoading, setIsLoading] = useState(false);
@@ -122,28 +123,28 @@ const WorkoutLogging: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const { state } = location;
+    const { state } = location as Location & { state?: any };
     if (state && state.exercises) {
       const isFromWorkoutPlans = state.source === "workoutPlans";
       if (isFromWorkoutPlans) {
         setWorkoutData((prev) => ({
           ...prev,
-          workout_type: state.day || "Full Body",
-          date: new Date().toISOString().split("T")[0],
-          exercises: state.exercises.map((exercise: any) => ({
-            exercise_id: String(exercise.exercise_id),
-            exercise_name: exercise.exercise_name,
-            sets: exercise.sets || "",
-            reps: exercise.reps || "",
-            muscle_groups: exercise.muscle_groups,
-            weight: exercise.weight || "",
-            notes: exercise.notes || "",
+          workout_type: typeof state.day === 'string' ? state.day : "Full Body",
+          date: new Date().toISOString().split("T")[0] || "",
+          exercises: (state.exercises as any[]).map((exercise) => ({
+            exercise_id: String(exercise.exercise_id ?? ""),
+            exercise_name: typeof exercise.exercise_name === 'string' ? exercise.exercise_name : "",
+            sets: exercise.sets ? String(exercise.sets) : "",
+            reps: exercise.reps ? String(exercise.reps) : "",
+            muscle_groups: Array.isArray(exercise.muscle_groups) ? exercise.muscle_groups : [],
+            weight: exercise.weight ? String(exercise.weight) : "",
+            notes: typeof exercise.notes === 'string' ? exercise.notes : "",
           })),
         }));
       } else {
         setCurrentExercise((prev) => ({
           ...prev,
-          exercise_id: String(state.exercises[0].exercise_id),
+          exercise_id: String(state.exercises[0]?.exercise_id ?? ""),
         }));
       }
     }
@@ -206,7 +207,7 @@ const WorkoutLogging: React.FC = () => {
         reps: exercise.reps?.toString() || "",
         weight: "",
         notes: `Imported from ${plan.planName || "Workout Plan"}`,
-        muscle_groups: exercise.muscle_groups,
+        muscle_groups: Array.isArray(exercise.muscle_groups) ? exercise.muscle_groups : [],
       }));
 
       setWorkoutData((prev) => ({
@@ -258,6 +259,17 @@ const WorkoutLogging: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const updateExerciseField = (index: number, field: keyof LoggedExercise, value: string) => {
+    setWorkoutData((prev) => ({
+      ...prev,
+      exercises: prev.exercises.map((ex, i) =>
+        i === index
+          ? { ...ex, [field]: value }
+          : ex
+      ),
+    }));
   };
 
   return (
@@ -387,17 +399,9 @@ const WorkoutLogging: React.FC = () => {
                     <input
                       type="number"
                       value={exercise.sets}
-                      onChange={(e) => {
-                        const newExercises = [...workoutData.exercises];
-                        newExercises[index] = {
-                          ...newExercises[index],
-                          sets: e.target.value,
-                        };
-                        setWorkoutData((prev) => ({
-                          ...prev,
-                          exercises: newExercises,
-                        }));
-                      }}
+                      onChange={(e) =>
+                        updateExerciseField(index, "sets", e.target.value)
+                      }
                       min="1"
                     />
                   </div>
@@ -406,17 +410,9 @@ const WorkoutLogging: React.FC = () => {
                     <input
                       type="number"
                       value={exercise.reps}
-                      onChange={(e) => {
-                        const newExercises = [...workoutData.exercises];
-                        newExercises[index] = {
-                          ...newExercises[index],
-                          reps: e.target.value,
-                        };
-                        setWorkoutData((prev) => ({
-                          ...prev,
-                          exercises: newExercises,
-                        }));
-                      }}
+                      onChange={(e) =>
+                        updateExerciseField(index, "reps", e.target.value)
+                      }
                       min="1"
                     />
                   </div>
@@ -425,17 +421,9 @@ const WorkoutLogging: React.FC = () => {
                     <input
                       type="number"
                       value={exercise.weight || ""}
-                      onChange={(e) => {
-                        const newExercises = [...workoutData.exercises];
-                        newExercises[index] = {
-                          ...newExercises[index],
-                          weight: e.target.value,
-                        };
-                        setWorkoutData((prev) => ({
-                          ...prev,
-                          exercises: newExercises,
-                        }));
-                      }}
+                      onChange={(e) =>
+                        updateExerciseField(index, "weight", e.target.value)
+                      }
                       min="0"
                     />
                   </div>

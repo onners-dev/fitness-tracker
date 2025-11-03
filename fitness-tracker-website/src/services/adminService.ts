@@ -1,19 +1,28 @@
-// adminService.js
-import api from './api.js';
+import api from './api';
 
+// --- Types (customize as needed) ---
+export type AdminAction = 'approve' | 'reject' | 'pending' | 'approved' | 'rejected' | string;
+
+export interface ExerciseData {
+  name?: string;
+  description?: string;
+  instructions?: string;
+  difficulty?: string;
+  video_url?: string;
+  equipment_options?: string[];
+  muscle_groups?: string[];
+  muscles?: string[];
+  [key: string]: any;
+}
+
+// Service
 export const adminService = {
   // Dashboard Statistics
-  getDashboardStats: async () => {
+  getDashboardStats: async (): Promise<any> => {
     try {
       const response = await api.get('/admin/dashboard-stats');
       return response.data;
-    } catch (error) {
-      console.error('Admin Dashboard Stats Error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
-  
+    } catch (error: any) {
       if (error.response) {
         switch (error.response.status) {
           case 401:
@@ -30,128 +39,117 @@ export const adminService = {
     }
   },
 
-  // User Management
-  getAllUsers: async () => {
+  getAllUsers: async (): Promise<any[]> => {
     try {
       const response = await api.get('/admin/users');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching users:', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  banUser: async (userId) => {
+  banUser: async (userId: string): Promise<any> => {
     try {
       const response = await api.post(`/admin/users/${userId}/ban`);
       return response.data;
-    } catch (error) {
-      console.error('Error banning user:', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  // Content Moderation
-  getFlaggedContent: async () => {
+  getFlaggedContent: async (): Promise<any[]> => {
     try {
       const response = await api.get('/report/flagged-content');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching flagged content:', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  // Workout and Nutrition Moderation
-  getWorkoutSubmissions: async () => {
+  getWorkoutSubmissions: async (): Promise<any[]> => {
     try {
       const response = await api.get('/admin/workout-submissions');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching workout submissions:', error);
+    } catch (error: any) {
       throw error;
     }
   },
   
-  getSystemAnalytics: async () => {
+  getSystemAnalytics: async (): Promise<any> => {
     try {
       const response = await api.get('/admin/system-analytics');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching system analytics:', error);
+    } catch (error: any) {
       throw error;
     }
   },
   
-  getNutritionSubmissions: async () => {
+  getNutritionSubmissions: async (): Promise<any[]> => {
     try {
       const response = await api.get('/admin/nutrition-submissions');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching nutrition submissions:', error);
+    } catch (error: any) {
       throw error;
     }
   },
   
-  reviewNutritionSubmission: async (foodId, action) => {
+  reviewNutritionSubmission: async (foodId: string, action: AdminAction): Promise<any> => {
     try {
       const response = await api.post(`/admin/nutrition-submissions/${foodId}/review`, { 
         status: action 
       });
       return response.data;
-    } catch (error) {
-      console.error('Error reviewing nutrition submission:', error);
+    } catch (error: any) {
       throw error;
     }
   },
   
-  reviewFlaggedContent: async (contentType, flagId, action) => {
+  reviewFlaggedContent: async (
+    contentType: string, 
+    flagId: string, 
+    action: AdminAction
+  ): Promise<any> => {
     try {
       const response = await api.post(`/report/flagged-content/${flagId}/review`, {
         contentType,
         action: action === 'approve' ? 'approved' : 'rejected'
       });
       return response.data;
-    } catch (error) {
-      console.error('Error reviewing flagged content:', error.response?.data || error);
+    } catch (error: any) {
       throw error.response?.data || error;
     }
   },
 
-  getExerciseDetails: async (exerciseId) => {
+  getExerciseDetails: async (exerciseId: string): Promise<any> => {
     try {
       const response = await api.get(`/admin/exercises/${exerciseId}`);
       return response.data;
-    } catch (error) {
-      console.error('Error fetching exercise details', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  getAvailableEquipment: async () => {
+  getAvailableEquipment: async (): Promise<any[]> => {
     try {
       const response = await api.get('/admin/equipment');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching available equipment', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  getAvailableMuscleGroups: async () => {
+  getAvailableMuscleGroups: async (): Promise<any[]> => {
     try {
       const response = await api.get('/admin/muscle-groups');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching available muscle groups', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  updateExercise: async (exerciseId, exerciseData) => {
+  updateExercise: async (exerciseId: string, exerciseData: ExerciseData): Promise<any> => {
     try {
-      // Sanitize data before sending
-      const sanitizedData = {
+      const sanitizedData: ExerciseData = {
         ...exerciseData,
         name: exerciseData.name || '',
         description: exerciseData.description || '',
@@ -162,40 +160,27 @@ export const adminService = {
         muscle_groups: exerciseData.muscle_groups || [],
         muscles: exerciseData.muscles || []
       };
-  
-      console.log('Updating Exercise:', {
-        exerciseId,
-        exerciseData: sanitizedData
-      });
-  
       const response = await api.put(`/admin/exercises/${exerciseId}`, sanitizedData);
       return response.data;
-    } catch (error) {
-      console.error('Error updating exercise', {
-        error: error,
-        response: error.response?.data,
-        status: error.response?.status
-      });
+    } catch (error: any) {
       throw error;
     }
   },
   
-  getMusclesInMuscleGroup: async (muscleGroupName) => {
+  getMusclesInMuscleGroup: async (muscleGroupName: string): Promise<any[]> => {
     try {
       const response = await api.get('/admin/muscles-in-group', {
         params: { muscleGroupName }
       });
       return response.data;
-    } catch (error) {
-      console.error('Error fetching muscles in muscle group:', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  createExercise: async (exerciseData) => {
+  createExercise: async (exerciseData: ExerciseData): Promise<any> => {
     try {
-      // Sanitize data before sending
-      const sanitizedData = {
+      const sanitizedData: ExerciseData = {
         ...exerciseData,
         name: exerciseData.name || '',
         description: exerciseData.description || '',
@@ -206,76 +191,65 @@ export const adminService = {
         muscle_groups: exerciseData.muscle_groups || [],
         muscles: exerciseData.muscles || []
       };
-  
       const response = await api.post('/admin/exercises', sanitizedData);
       return response.data;
-    } catch (error) {
-      console.error('Error creating exercise', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-    // Get all exercises
-  getAllExercises: async () => {
+  getAllExercises: async (): Promise<any[]> => {
     try {
       const response = await api.get('/admin/exercises');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching exercises:', error);
+    } catch (error: any) {
       throw error.response?.data || new Error('Failed to fetch exercises');
     }
   },
 
-  // Delete an exercise
-  deleteExercise: async (exerciseId) => {
+  deleteExercise: async (exerciseId: string): Promise<any> => {
     try {
       const response = await api.delete(`/admin/exercises/${exerciseId}`);
       return response.data;
-    } catch (error) {
-      console.error('Error deleting exercise:', error);
+    } catch (error: any) {
       throw error.response?.data || new Error('Failed to delete exercise');
     }
   },
 
-  // Get Muscle Groups
-  getMuscleGroups: async () => {
+  getMuscleGroups: async (): Promise<any[]> => {
     try {
       const response = await api.get('/admin/muscle-groups');
       return response.data;
-    } catch (error) {
-      console.error('Error fetching muscle groups:', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  // Get Muscles for a Group
-  getMuscles: async (groupName) => {
+  getMuscles: async (groupName: string): Promise<any[]> => {
     try {
       const response = await api.get('/admin/muscles', {
         params: { groupName }
       });
       return response.data;
-    } catch (error) {
-      console.error('Error fetching muscles:', error);
+    } catch (error: any) {
       throw error;
     }
   },
 
-  // Get Exercises (with optional filters)
-  getExercises: async (muscleName, filters = {}) => {
+  getExercises: async (muscleName: string, filters: {difficulty?: string; equipment?: string} = {}): Promise<any[]> => {
     try {
       const response = await api.get('/admin/exercises', {
         params: {
-          muscleName,  // Send the muscle name specifically
+          muscleName,
           difficulty: filters.difficulty,
           equipment: filters.equipment
         }
       });
       return response.data;
-    } catch (error) {
-      console.error('Error fetching exercises:', error);
+    } catch (error: any) {
       throw error;
     }
   }
-
 };
+
+export default adminService;

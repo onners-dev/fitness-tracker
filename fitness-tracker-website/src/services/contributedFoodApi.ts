@@ -1,8 +1,34 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL + '/foods';
+const BASE_URL = `${import.meta.env.VITE_API_URL as string}/foods`;
 
-const getAuthHeader = () => {
+// Types
+export interface FoodContribution {
+  name: string;
+  calories?: number;
+  proteins?: number;
+  carbs?: number;
+  fats?: number;
+  [key: string]: any;
+}
+
+export interface MyContribution extends FoodContribution {
+  food_id: string;
+  user_id: string;
+}
+
+export interface ContributeResponse {
+  success: boolean;
+  food?: FoodContribution;
+  [key: string]: any;
+}
+
+export interface MyContributionResponse {
+  foods: MyContribution[];
+  [key: string]: any;
+}
+
+const getAuthHeader = (): Record<string, string> => {
   const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('No authentication token found');
@@ -14,66 +40,40 @@ const getAuthHeader = () => {
 };
 
 export const contributedFoodService = {
-    // Get user's contributed foods
-    getMyContributions: async () => {
-        try {
-            console.log('Attempting to fetch contributions');
-            console.log('Full URL:', `${BASE_URL}/my-contributions`);
-
-            const response = await axios.get(`${BASE_URL}/my-contributions`, {
-                headers: getAuthHeader()
-            });
-
-            console.log('Contributions fetch response:', response.data);
-            return response.data;
-        } catch (error) {
-            console.error('Detailed contributions fetch error:', {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status,
-                config: error.config
-            });
-
-            throw error;
-        }
-    },
-
-    searchContributedFoods: async (query) => {
-        try {
-            const response = await axios.get(`${BASE_URL}/search`, {
-                params: { query },
-                headers: getAuthHeader()
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error searching contributed foods', error);
-            throw error;  // Changed from returning empty array to throwing error
-        }
-    },
-    
-
-    // Contribute a new food
-    contributeFood: async (foodData) => {
-        try {
-            console.log('Attempting to contribute food');
-            console.log('Full URL:', `${BASE_URL}/contribute`);
-            console.log('Food data:', foodData);
-
-            const response = await axios.post(`${BASE_URL}/contribute`, foodData, {
-                headers: getAuthHeader()
-            });
-
-            console.log('Food contribution response:', response.data);
-            return response.data;
-        } catch (error) {
-            console.error('Detailed food contribution error:', {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status,
-                config: error.config
-            });
-
-            throw error;
-        }
+  // Get user's contributed foods
+  getMyContributions: async (): Promise<MyContributionResponse> => {
+    try {
+      const response = await axios.get(`${BASE_URL}/my-contributions`, {
+        headers: getAuthHeader()
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error;
     }
+  },
+
+  searchContributedFoods: async (query: string): Promise<FoodContribution[]> => {
+    try {
+      const response = await axios.get(`${BASE_URL}/search`, {
+        params: { query },
+        headers: getAuthHeader()
+      });
+      return response.data.foods || [];
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  contributeFood: async (foodData: FoodContribution): Promise<ContributeResponse> => {
+    try {
+      const response = await axios.post(`${BASE_URL}/contribute`, foodData, {
+        headers: getAuthHeader()
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  }
 };
+
+export default contributedFoodService;
