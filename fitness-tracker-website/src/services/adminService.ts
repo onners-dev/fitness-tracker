@@ -1,6 +1,6 @@
-import api from './api';
+import api from './api.js';
 
-// --- Types (customize as needed) ---
+
 export type AdminAction = 'approve' | 'reject' | 'pending' | 'approved' | 'rejected' | string;
 
 export interface ExerciseData {

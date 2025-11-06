@@ -1,66 +1,88 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { userService } from '../services/api.js';
-import { workoutService } from '../services/workoutApi.ts';
-import { trendService } from '../services/trendApi.ts';
-import GoalSummary from '../components/GoalSummary.ts';
-import './Dashboard.css';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { userService } from '../services/api.js'
+import { workoutService } from '../services/workoutApi.js'
+import { trendService } from '../services/trendApi.js'
+import GoalSummary from '../components/GoalSummary.js'
+import './Dashboard.css'
 
-const Dashboard = () => {
-  const navigate = useNavigate();
-  const [userProfile, setUserProfile] = useState(null);
-  const [recentWorkouts, setRecentWorkouts] = useState([]);
-  const [nutritionTrends, setNutritionTrends] = useState([]);
-  const [workoutInsights, setWorkoutInsights] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface UserProfile {
+  first_name?: string
+  last_name?: string
+  height?: number
+  current_weight?: number
+  fitness_goal?: string
+  activity_level?: string
+}
 
-  // Existing formatting methods
-  const formatFitnessGoal = (goal) => {
-    const goalMap = {
-      'weight_loss': 'Weight Loss',
-      'muscle_gain': 'Build Muscle',
-      'maintenance': 'Maintain Weight',
-      'general_fitness': 'General Fitness'
-    };
-    return goalMap[goal] || goal;
-  };
+interface Workout {
+  date: string
+  workout_type: string
+  total_duration?: number
+  [key: string]: any
+}
 
-  const formatActivityLevel = (level) => {
-    const activityMap = {
-      'sedentary': 'Sedentary (little or no exercise)',
-      'lightly_active': 'Lightly Active (1-3 days/week)',
-      'moderately_active': 'Moderately Active (3-5 days/week)',
-      'very_active': 'Very Active (6-7 days/week)'
-    };
-    return activityMap[level] || level;
-  };
+interface WorkoutInsight {
+  type: string
+  count: number
+}
 
-  // Calculate workout insights
-  const calculateWorkoutFrequency = (workouts) => {
-    const workoutTypes = workouts.map(w => w.workout_type);
-    const typeCounts = workoutTypes.reduce((acc, type) => {
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {});
-    
+interface NutritionTrendSummary {
+  description: string
+  value: string
+}
+
+interface NutritionTrend {
+  total_calories: string
+  total_protein: string
+}
+
+const Dashboard: React.FC = () => {
+  const navigate = useNavigate()
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [recentWorkouts, setRecentWorkouts] = useState<Workout[]>([])
+  const [nutritionTrends, setNutritionTrends] = useState<NutritionTrendSummary[]>([])
+  const [workoutInsights, setWorkoutInsights] = useState<WorkoutInsight[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const formatFitnessGoal = (goal?: string): string => {
+    const goalMap: Record<string, string> = {
+      weight_loss: 'Weight Loss',
+      muscle_gain: 'Build Muscle',
+      maintenance: 'Maintain Weight',
+      general_fitness: 'General Fitness'
+    }
+    return goal ? goalMap[goal] || goal : ''
+  }
+
+  const formatActivityLevel = (level?: string): string => {
+    const activityMap: Record<string, string> = {
+      sedentary: 'Sedentary (little or no exercise)',
+      lightly_active: 'Lightly Active (1-3 days/week)',
+      moderately_active: 'Moderately Active (3-5 days/week)',
+      very_active: 'Very Active (6-7 days/week)'
+    }
+    return level ? activityMap[level] || level : ''
+  }
+
+  const calculateWorkoutFrequency = (workouts: Workout[]): WorkoutInsight[] => {
+    const workoutTypes = workouts.map((w) => w.workout_type)
+    const typeCounts: Record<string, number> = {}
+    for (const type of workoutTypes) {
+      typeCounts[type] = (typeCounts[type] || 0) + 1
+    }
     return Object.entries(typeCounts)
       .sort((a, b) => b[1] - a[1])
       .map(([type, count]) => ({ type, count }))
-      .slice(0, 3); // Top 3 workout types
-  };
+      .slice(0, 3)
+  }
 
-  // Summarize nutrition trends
-  const summarizeNutritionTrends = (trends) => {
-    if (trends.length === 0) return [];
-
-    // Calculate average calories
-    const averageCalories = trends.reduce((sum, trend) => 
-      sum + parseFloat(trend.total_calories), 0) / trends.length;
-
-    // Get the most recent trend
-    const latestTrend = trends[trends.length - 1];
-    
+  const summarizeNutritionTrends = (trends: NutritionTrend[]): NutritionTrendSummary[] => {
+    if (trends.length === 0) return []
+    const averageCalories =
+      trends.reduce((sum, trend) => sum + parseFloat(trend.total_calories), 0) / trends.length
+    const latestTrend = trends[trends.length - 1]
     return [
       {
         description: 'Average Daily Calories',
@@ -68,110 +90,92 @@ const Dashboard = () => {
       },
       {
         description: 'Latest Protein Intake',
-        value: `${latestTrend.total_protein}g`
+        value: `${latestTrend?.total_protein ?? 'N/A'}g`
       }
-    ];
-  };
+    ]
+  }
+  
+  
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const profileData = await userService.getProfile();
-        setUserProfile(profileData);
-  
-        // Fetch recent workouts (last 7 days)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const workouts = await workoutService.getWorkouts(sevenDaysAgo.toISOString());
-        setRecentWorkouts(workouts.slice(0, 3)); // Latest 3 workouts
-  
-        // Calculate workout insights
-        const insights = calculateWorkoutFrequency(workouts);
-        setWorkoutInsights(insights);
-  
-        // Fetch nutrition trends
-        const nutritionData = await trendService.getNutritionTrends(7);
-        const summarizedTrends = summarizeNutritionTrends(nutritionData);
-        setNutritionTrends(summarizedTrends);
-  
-      } catch (err) {
-        console.error('Dashboard Error - FULL ERROR:', {
-          name: err.name,
-          message: err.message,
-          response: err.response,
-          config: err.config,
-          stack: err.stack
-        });
-  
-        // More detailed error handling
+        const profileData: UserProfile = await userService.getProfile()
+        setUserProfile(profileData)
+        const sevenDaysAgo = new Date()
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+        const workouts: Workout[] = await workoutService.getWorkouts(sevenDaysAgo.toISOString())
+        setRecentWorkouts(workouts.slice(0, 3))
+        const insights = calculateWorkoutFrequency(workouts)
+        setWorkoutInsights(insights)
+        const nutritionData: NutritionTrend[] = await trendService.getNutritionTrends(7)
+        const summarizedTrends = summarizeNutritionTrends(nutritionData)
+        setNutritionTrends(summarizedTrends)
+      } catch (err: any) {
         if (err.response) {
-          // The request was made and the server responded with a status code
-          console.error('Error Response Data:', err.response.data);
-          console.error('Error Response Status:', err.response.status);
-          console.error('Error Response Headers:', err.response.headers);
-  
           switch (err.response.status) {
             case 401:
-              setError('Unauthorized. Please log in again.');
-              break;
+              setError('Unauthorized. Please log in again.')
+              break
             case 403:
-              setError('You do not have permission to access this data.');
-              break;
+              setError('You do not have permission to access this data.')
+              break
             case 404:
-              setError('Requested data not found.');
-              break;
+              setError('Requested data not found.')
+              break
             default:
-              setError('Failed to load dashboard data. Please try again.');
+              setError('Failed to load dashboard data. Please try again.')
           }
         } else if (err.request) {
-          // The request was made but no response was received
-          console.error('No response received:', err.request);
-          setError('No response from server. Please check your network connection.');
+          setError('No response from server. Please check your network connection.')
         } else {
-          // Something happened in setting up the request that triggered an Error
-          console.error('Error setting up request:', err.message);
-          setError('An unexpected error occurred. Please try again.');
+          setError('An unexpected error occurred. Please try again.')
         }
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-  
-    fetchDashboardData();
-  }, []);
-  
-  // Calculate BMI safely
-  const calculateBMI = (weight, height) => {
-    if (!weight || !height) return 'N/A';
-    return (weight / Math.pow(height/100, 2)).toFixed(1);
-  };
+    }
+    fetchDashboardData()
+  }, [])
 
-  if (loading) return <div>Loading dashboard...</div>;
-  if (error) return <div className="error">{error}</div>;
-  if (!userProfile) return <div>No profile data found</div>;
+  const calculateBMI = (weight?: number, height?: number): string => {
+    if (!weight || !height) return 'N/A'
+    return (weight / Math.pow(height / 100, 2)).toFixed(1)
+  }
+
+  if (loading) return <div>Loading dashboard...</div>
+  if (error) return <div className="error">{error}</div>
+  if (!userProfile) return <div>No profile data found</div>
 
   return (
     <div className="dashboard">
       <div className="dashboard-header">
         <h1>Welcome, {userProfile.first_name || 'User'}!</h1>
       </div>
-
       <GoalSummary userProfile={userProfile} />
-
       <div className="dashboard-grid">
-        {/* Profile Summary Card */}
         <div className="dashboard-card profile-summary-card">
           <h2>Profile Summary</h2>
           <div className="profile-info">
-            <p><strong>Name:</strong> {userProfile.first_name} {userProfile.last_name}</p>
-            <p><strong>Height:</strong> {userProfile.height} cm</p>
-            <p><strong>Weight:</strong> {userProfile.current_weight} kg</p>
-            <p><strong>Fitness Goal:</strong> {formatFitnessGoal(userProfile.fitness_goal)}</p>
-            <p><strong>Activity Level:</strong> {formatActivityLevel(userProfile.activity_level)}</p>
+            <p>
+              <strong>Name:</strong> {userProfile.first_name} {userProfile.last_name}
+            </p>
+            <p>
+              <strong>Height:</strong> {userProfile.height} cm
+            </p>
+            <p>
+              <strong>Weight:</strong> {userProfile.current_weight} kg
+            </p>
+            <p>
+              <strong>Fitness Goal:</strong>{' '}
+              {formatFitnessGoal(userProfile.fitness_goal)}
+            </p>
+            <p>
+              <strong>Activity Level:</strong>{' '}
+              {formatActivityLevel(userProfile.activity_level)}
+            </p>
           </div>
         </div>
-
-        {/* Quick Stats Card */}
         <div className="dashboard-card quick-stats-card">
           <h2>Quick Stats</h2>
           <div className="stats">
@@ -183,8 +187,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* Workout Insights Card */}
         <div className="dashboard-card workout-insights-card">
           <h2>Workout Insights</h2>
           {workoutInsights.length > 0 ? (
@@ -197,7 +199,7 @@ const Dashboard = () => {
                   </li>
                 ))}
               </ul>
-              <button 
+              <button
                 className="view-progress-btn"
                 onClick={() => navigate('/trends')}
               >
@@ -207,7 +209,7 @@ const Dashboard = () => {
           ) : (
             <div className="no-insights">
               <p>No workout insights available</p>
-              <button 
+              <button
                 className="view-progress-btn"
                 onClick={() => navigate('/trends')}
               >
@@ -216,8 +218,6 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-
-        {/* Recent Workouts Card */}
         <div className="dashboard-card recent-workouts-card">
           <h2>Recent Workouts</h2>
           {recentWorkouts.length > 0 ? (
@@ -230,14 +230,12 @@ const Dashboard = () => {
                       {new Date(workout.date).toLocaleDateString()}
                     </div>
                     {workout.total_duration && (
-                      <div className="workout-duration">
-                        {workout.total_duration} mins
-                      </div>
+                      <div className="workout-duration">{workout.total_duration} mins</div>
                     )}
                   </li>
                 ))}
               </ul>
-              <button 
+              <button
                 className="log-workout-btn"
                 onClick={() => navigate('/workout-logging')}
               >
@@ -247,7 +245,7 @@ const Dashboard = () => {
           ) : (
             <div className="no-workouts">
               <p>No recent workouts</p>
-              <button 
+              <button
                 className="log-workout-btn"
                 onClick={() => navigate('/workout-logging')}
               >
@@ -256,8 +254,6 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-
-        {/* Nutrition Trends Card */}
         <div className="dashboard-card nutrition-trends-card">
           <h2>Nutrition Trends</h2>
           {nutritionTrends.length > 0 ? (
@@ -269,7 +265,7 @@ const Dashboard = () => {
                   </li>
                 ))}
               </ul>
-              <button 
+              <button
                 className="log-meal-btn"
                 onClick={() => navigate('/calorietracker')}
               >
@@ -279,7 +275,7 @@ const Dashboard = () => {
           ) : (
             <div className="no-meals">
               <p>No nutrition data available</p>
-              <button 
+              <button
                 className="log-meal-btn"
                 onClick={() => navigate('/calorietracker')}
               >
@@ -290,7 +286,7 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard

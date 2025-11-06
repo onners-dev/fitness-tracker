@@ -1,11 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { userService } from '../services/api.js';
-import './ProfileSetup.css';
+import React, { useState, useEffect, useCallback } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { userService } from '../services/api.js'
+import './ProfileSetup.css'
 
-const ProfileSetup = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+interface ProfileSetupFormData {
+  height: string
+  currentWeight: string
+  targetWeight: string
+  fitnessGoal: string
+  activityLevel: string
+  primaryFocus: string
+  weightUnit: string
+  heightUnit: string
+}
+interface AuthState {
+  token: string
+  isVerified: boolean
+  firstTimeSetup: boolean
+}
+
+const ProfileSetup: React.FC = () => {
+  const navigate = useNavigate()
+  const [formData, setFormData] = useState<ProfileSetupFormData>({
     height: '',
     currentWeight: '',
     targetWeight: '',
@@ -14,198 +31,162 @@ const ProfileSetup = () => {
     primaryFocus: '',
     weightUnit: 'kg',
     heightUnit: 'cm'
-  });
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPageReady, setIsPageReady] = useState(false);
-  const [authenticationDetails, setAuthenticationDetails] = useState({
+  })
+  const [error, setError] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isPageReady, setIsPageReady] = useState<boolean>(false)
+  const [authenticationDetails, setAuthenticationDetails] = useState<AuthState>({
     token: '',
     isVerified: false,
     firstTimeSetup: false
-  });
+  })
 
-  // Debug function to log all important details
   const logAuthenticationDetails = useCallback(() => {
-    console.group('🔍 ProfileSetup Authentication Details');
-    console.log('Token:', localStorage.getItem('token'));
-    console.log('Is Verified:', localStorage.getItem('isVerified'));
-    console.log('First Time Setup:', localStorage.getItem('firstTimeSetup'));
-    console.log('Window Location:', window.location);
-    console.groupEnd();
-  }, []);
+    console.group('🔍 ProfileSetup Authentication Details')
+    console.log('Token:', localStorage.getItem('token'))
+    console.log('Is Verified:', localStorage.getItem('isVerified'))
+    console.log('First Time Setup:', localStorage.getItem('firstTimeSetup'))
+    console.log('Window Location:', window.location)
+    console.groupEnd()
+  }, [])
 
-  // Comprehensive authorization check
   const checkAuthorization = useCallback(() => {
     try {
-      const token = localStorage.getItem('token');
-      const isVerified = localStorage.getItem('isVerified') === 'true';
-      const firstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true';
+      const token = localStorage.getItem('token')
+      const isVerified = localStorage.getItem('isVerified') === 'true'
+      const firstTimeSetup = localStorage.getItem('firstTimeSetup') === 'true'
 
-      console.group('🛡️ Profile Setup Authorization Check');
-      console.log('Token:', token ? 'Present' : 'Missing');
-      console.log('Is Verified:', isVerified);
-      console.log('First Time Setup:', firstTimeSetup);
-      console.groupEnd();
+      console.group('🛡️ Profile Setup Authorization Check')
+      console.log('Token:', token ? 'Present' : 'Missing')
+      console.log('Is Verified:', isVerified)
+      console.log('First Time Setup:', firstTimeSetup)
+      console.groupEnd()
 
-      // Update authentication details state
       setAuthenticationDetails({
         token: token || '',
         isVerified,
         firstTimeSetup
-      });
+      })
 
-      // Strict authorization checks
       if (!token) {
-        console.warn('❌ No token - redirecting to login');
-        navigate('/login');
-        return false;
+        console.warn('❌ No token - redirecting to login')
+        navigate('/login')
+        return false
       }
-
       if (!isVerified) {
-        console.warn('🔒 Not verified - redirecting to email verification');
-        navigate('/verify-email');
-        return false;
+        console.warn('🔒 Not verified - redirecting to email verification')
+        navigate('/verify-email')
+        return false
       }
-
       if (firstTimeSetup !== true) {
-        console.warn('⚠️ Profile setup not required - redirecting to dashboard');
-        navigate('/dashboard');
-        return false;
+        console.warn('⚠️ Profile setup not required - redirecting to dashboard')
+        navigate('/dashboard')
+        return false
       }
-
-      return true;
+      return true
     } catch (err) {
-      console.error('🚨 Authorization Check Error:', err);
-      navigate('/login');
-      return false;
+      console.error('🚨 Authorization Check Error:', err)
+      navigate('/login')
+      return false
     }
-  }, [navigate]);
+  }, [navigate])
 
-  // Comprehensive page initialization
   useEffect(() => {
-    console.group('🚀 Profile Setup Page Initialization');
-    
-    // Log all authentication details
-    logAuthenticationDetails();
+    console.group('🚀 Profile Setup Page Initialization')
+    logAuthenticationDetails()
 
     try {
-      // Run authorization check
-      const isAuthorized = checkAuthorization();
-
-      console.log('Authorization Result:', isAuthorized);
-      console.groupEnd();
-
-      // If authorized, mark page as ready
-      if (isAuthorized) {
-        setIsPageReady(true);
-      }
+      const isAuthorized = checkAuthorization()
+      console.log('Authorization Result:', isAuthorized)
+      console.groupEnd()
+      if (isAuthorized) setIsPageReady(true)
     } catch (error) {
-      console.error('🚨 Initialization Error:', error);
-      navigate('/login');
+      console.error('🚨 Initialization Error:', error)
+      navigate('/login')
     }
-  }, [checkAuthorization, logAuthenticationDetails, navigate]);
+  }, [checkAuthorization, logAuthenticationDetails, navigate])
 
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }));
-    setError(''); // Clear error when user types
-  };
+    }))
+    setError('')
+  }
 
-  // Comprehensive form validation
-  const validateForm = () => {
-    const requiredFields = [
-      'height', 'currentWeight', 'fitnessGoal', 
-      'activityLevel', 'primaryFocus'
-    ];
-    
-    const missingFields = requiredFields.filter(field => !formData[field]);
-    
+  const validateForm = (): boolean => {
+    const requiredFields: Array<keyof ProfileSetupFormData> = [
+      'height',
+      'currentWeight',
+      'fitnessGoal',
+      'activityLevel',
+      'primaryFocus'
+    ]
+    const missingFields = requiredFields.filter(field => !formData[field])
     if (missingFields.length > 0) {
-      setError(`Please fill in the following fields: ${missingFields.join(', ')}`);
-      return false;
+      setError(
+        `Please fill in the following fields: ${missingFields.join(', ')}`
+      )
+      return false
     }
-
     // Additional validations
-    const height = parseFloat(formData.height);
-    const currentWeight = parseFloat(formData.currentWeight);
-    const targetWeight = parseFloat(formData.targetWeight) || null;
+    const height = parseFloat(formData.height)
+    const currentWeight = parseFloat(formData.currentWeight)
+    const targetWeight =
+      formData.targetWeight !== '' ? parseFloat(formData.targetWeight) : null
 
-    if (height < 50 || height > 250) {
-      setError('Please enter a valid height between 50 and 250 cm');
-      return false;
+    if (isNaN(height) || height < 50 || height > 250) {
+      setError('Please enter a valid height between 50 and 250 cm')
+      return false
     }
-
-    if (currentWeight < 20 || currentWeight > 300) {
-      setError('Please enter a valid current weight between 20 and 300 kg');
-      return false;
+    if (isNaN(currentWeight) || currentWeight < 20 || currentWeight > 300) {
+      setError('Please enter a valid current weight between 20 and 300 kg')
+      return false
     }
-
-    if (targetWeight !== null && (targetWeight < 20 || targetWeight > 300)) {
-      setError('Please enter a valid target weight between 20 and 300 kg');
-      return false;
+    if (
+      targetWeight !== null &&
+      (isNaN(targetWeight) || targetWeight < 20 || targetWeight > 300)
+    ) {
+      setError('Please enter a valid target weight between 20 and 300 kg')
+      return false
     }
+    return true
+  }
 
-    return true;
-  };
-
-  
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!validateForm()) return
+    setIsLoading(true)
     try {
-      // Prepare profile data for submission
       const profileData = {
         height: parseFloat(formData.height),
         current_weight: parseFloat(formData.currentWeight),
-        target_weight: formData.targetWeight ? parseFloat(formData.targetWeight) : null,
+        target_weight:
+          formData.targetWeight !== '' ? parseFloat(formData.targetWeight) : null,
         fitness_goal: formData.fitnessGoal,
         activity_level: formData.activityLevel,
         primary_focus: formData.primaryFocus,
-        // Add optional unit fields
         weight_unit: formData.weightUnit,
         height_unit: formData.heightUnit
-      };
+      }
 
-      console.log('📤 Submitting Profile Data:', profileData);
-
-      const updatedProfile = await userService.updateProfile(profileData);
-      
-      console.log('✅ Profile Updated:', updatedProfile);
-
-      // Clear first-time setup flag
-      localStorage.removeItem('firstTimeSetup');
-      
-      // Navigate to dashboard
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('❌ Profile Setup Error:', {
-        error: err,
-        response: err.response
-      });
-      
-      // More specific error handling
+      await userService.updateProfile(profileData)
+      localStorage.removeItem('firstTimeSetup')
+      navigate('/dashboard')
+    } catch (err: any) {
       setError(
-        err.response?.data?.message || 
-        err.message || 
-        'Failed to update profile. Please try again.'
-      );
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to update profile. Please try again.'
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  
-
-  // If page is not ready, show a loading state
   if (!isPageReady) {
     return (
       <div className="loading-container">
@@ -216,20 +197,15 @@ const ProfileSetup = () => {
           <pre>{JSON.stringify(authenticationDetails, null, 2)}</pre>
         </div>
       </div>
-    );
+    )
   }
 
   return (
     <div className="profile-setup-page">
       <div className="profile-setup-container">
         <h2>Complete Your Profile</h2>
-        
-        {/* Error Message Display */}
         {error && <div className="error-message">{error}</div>}
-        
-        {/* Profile Setup Form */}
         <form onSubmit={handleSubmit} className="profile-setup-form">
-          {/* Height Input */}
           <div className="form-group">
             <label htmlFor="height">Height</label>
             <div className="input-group">
@@ -245,7 +221,7 @@ const ProfileSetup = () => {
                 step="0.1"
                 placeholder="Enter height"
               />
-              <select 
+              <select
                 name="heightUnit"
                 value={formData.heightUnit}
                 onChange={handleChange}
@@ -255,8 +231,6 @@ const ProfileSetup = () => {
               </select>
             </div>
           </div>
-
-          {/* Current Weight Input */}
           <div className="form-group">
             <label htmlFor="currentWeight">Current Weight</label>
             <div className="input-group">
@@ -272,7 +246,7 @@ const ProfileSetup = () => {
                 step="0.1"
                 placeholder="Enter current weight"
               />
-              <select 
+              <select
                 name="weightUnit"
                 value={formData.weightUnit}
                 onChange={handleChange}
@@ -282,8 +256,6 @@ const ProfileSetup = () => {
               </select>
             </div>
           </div>
-
-          {/* Target Weight Input (Optional) */}
           <div className="form-group">
             <label htmlFor="targetWeight">Target Weight (Optional)</label>
             <div className="input-group">
@@ -298,7 +270,7 @@ const ProfileSetup = () => {
                 step="0.1"
                 placeholder="Enter target weight"
               />
-              <select 
+              <select
                 name="weightUnit"
                 value={formData.weightUnit}
                 onChange={handleChange}
@@ -308,8 +280,6 @@ const ProfileSetup = () => {
               </select>
             </div>
           </div>
-
-          {/* Fitness Goal Selection */}
           <div className="form-group">
             <label htmlFor="fitnessGoal">Primary Fitness Goal</label>
             <select
@@ -327,8 +297,6 @@ const ProfileSetup = () => {
               <option value="general_fitness">General Fitness</option>
             </select>
           </div>
-
-          {/* Activity Level Selection */}
           <div className="form-group">
             <label htmlFor="activityLevel">Activity Level</label>
             <select
@@ -341,12 +309,12 @@ const ProfileSetup = () => {
               <option value="">Select activity level</option>
               <option value="sedentary">Sedentary (little or no exercise)</option>
               <option value="lightly_active">Lightly Active (1-3 days/week)</option>
-              <option value="moderately_active">Moderately Active (3-5 days/week)</option>
+              <option value="moderately_active">
+                Moderately Active (3-5 days/week)
+              </option>
               <option value="very_active">Very Active (6-7 days/week)</option>
             </select>
           </div>
-
-          {/* Primary Focus Selection */}
           <div className="form-group">
             <label htmlFor="primaryFocus">Primary Focus</label>
             <select
@@ -364,10 +332,8 @@ const ProfileSetup = () => {
               <option value="overall_wellness">Overall Wellness</option>
             </select>
           </div>
-
-          {/* Submit Button */}
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="profile-setup-button"
             disabled={isLoading}
           >
@@ -376,7 +342,7 @@ const ProfileSetup = () => {
         </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ProfileSetup;
+export default ProfileSetup

@@ -1,314 +1,299 @@
-import React, { useState, useEffect } from 'react';
-import type { ChangeEvent} from 'react'
-import { useNavigate } from 'react-router-dom';
-import { exerciseLibraryService } from '../services/workoutApi.js';
-import { workoutPlanService } from '../services/workoutPlanService.js';
-import './WorkoutPlanBuilder.css';
+import React, { useState, useEffect } from 'react'
+import type { ChangeEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { exerciseLibraryService } from '../services/workoutApi.js'
+import { workoutPlanService } from '../services/workoutPlanService.js'
+import './WorkoutPlanBuilder.css'
 
-// Type definitions
 type Muscle = {
-  muscle_id?: number | string;
-  name: string;
-};
+  muscle_id?: number | string
+  name: string
+}
 
 type Exercise = {
-  exercise_id: string;
-  name: string;
-  difficulty?: string;
-  equipment?: string;
-};
+  exercise_id: string
+  name: string
+  difficulty?: string
+  equipment?: string
+}
 
 type ExerciseWithSetsReps = Exercise & {
-  sets: number;
-  reps: number;
-};
+  sets: number
+  reps: number
+}
 
 type SelectedExercises = {
-  [day: string]: ExerciseWithSetsReps[];
-};
+  [day: string]: ExerciseWithSetsReps[]
+}
 
 type PlanDetails = {
-  name: string;
-  fitnessGoal: string;
-  workoutDays: string[];
-  selectedExercises: SelectedExercises;
-};
+  name: string
+  fitnessGoal: string
+  workoutDays: string[]
+  selectedExercises: SelectedExercises
+}
 
 type Filters = {
-  muscleGroup: string;
-  difficulty: string;
-  equipment: string;
-};
+  muscleGroup: string
+  difficulty: string
+  equipment: string
+}
 
-const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced'];
+const difficultyLevels = ['Beginner', 'Intermediate', 'Advanced']
 const equipmentOptions = [
-  'Bodyweight', 'Dumbbells', 'Barbell', 'Kettlebell', 
+  'Bodyweight', 'Dumbbells', 'Barbell', 'Kettlebell',
   'Resistance Bands', 'Machine', 'Cable', 'No Equipment'
-];
+]
 const fitnessGoals = [
   { value: 'muscle_gain', label: 'Muscle Gain' },
   { value: 'weight_loss', label: 'Weight Loss' },
   { value: 'maintenance', label: 'Maintenance' },
   { value: 'endurance', label: 'Endurance' }
-];
-const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const EXERCISES_PER_PAGE = 8;
+]
+const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const EXERCISES_PER_PAGE = 8
 
 const WorkoutPlanBuilder: React.FC = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const [planDetails, setPlanDetails] = useState<PlanDetails>({
     name: '',
     fitnessGoal: '',
     workoutDays: [],
-    selectedExercises: {},
-  });
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
-
-  const [exerciseLibrary, setExerciseLibrary] = useState<Exercise[]>([]);
-  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
-
+    selectedExercises: {}
+  })
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [exerciseLibrary, setExerciseLibrary] = useState<Exercise[]>([])
+  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([])
   const [filters, setFilters] = useState<Filters>({
     muscleGroup: '',
     difficulty: '',
     equipment: ''
-  });
+  })
+  const [currentExercisePage, setCurrentExercisePage] = useState<number>(1)
+  const [muscles, setMuscles] = useState<Muscle[]>([])
 
-  // Pagination state
-  const [currentExercisePage, setCurrentExercisePage] = useState<number>(1);
-
-  const [muscles, setMuscles] = useState<Muscle[]>([]);
-
-  // Compute paginated exercises
   const getPaginatedExercises = (): Exercise[] => {
-    const startIndex = (currentExercisePage - 1) * EXERCISES_PER_PAGE;
-    const endIndex = startIndex + EXERCISES_PER_PAGE;
-    return filteredExercises.slice(startIndex, endIndex);
-  };
+    const startIndex = (currentExercisePage - 1) * EXERCISES_PER_PAGE
+    const endIndex = startIndex + EXERCISES_PER_PAGE
+    return filteredExercises.slice(startIndex, endIndex)
+  }
 
-  // Compute total pages
-  const totalExercisePages = Math.ceil(filteredExercises.length / EXERCISES_PER_PAGE);
-
-  // Page navigation handlers
+  const totalExercisePages = Math.ceil(filteredExercises.length / EXERCISES_PER_PAGE)
   const goToNextPage = () => {
-    if (currentExercisePage < totalExercisePages) {
-      setCurrentExercisePage(prev => prev + 1);
-    }
-  };
-
+    if (currentExercisePage < totalExercisePages) setCurrentExercisePage(prev => prev + 1)
+  }
   const goToPreviousPage = () => {
-    if (currentExercisePage > 1) {
-      setCurrentExercisePage(prev => prev - 1);
-    }
-  };
+    if (currentExercisePage > 1) setCurrentExercisePage(prev => prev - 1)
+  }
 
   useEffect(() => {
-    setCurrentExercisePage(1);
-  }, [filters]);
+    setCurrentExercisePage(1)
+  }, [filters])
 
   useEffect(() => {
     const fetchMuscles = async () => {
       try {
-        const fetchedMuscles = await exerciseLibraryService.getMuscles();
-        setMuscles(fetchedMuscles);
-      } catch (error) {
+        const fetchedMuscles = await exerciseLibraryService.getMuscles()
+        setMuscles(fetchedMuscles)
+      } catch {
         setMuscles([
           { name: 'Biceps' }, { name: 'Triceps' }, { name: 'Chest' },
           { name: 'Back' }, { name: 'Shoulders' }, { name: 'Quadriceps' },
           { name: 'Hamstrings' }, { name: 'Calves' }, { name: 'Abs' }
-        ]);
+        ])
       }
-    };
-    fetchMuscles();
-  }, []);
+    }
+    fetchMuscles()
+  }, [])
 
   useEffect(() => {
     const fetchExercises = async () => {
       try {
-        const muscle = filters.muscleGroup || null;
-        const restFilters = { ...filters };
-        delete restFilters.muscleGroup;
-        const exercises: Exercise[] = await exerciseLibraryService.getExercises(muscle, restFilters);
-        setExerciseLibrary(exercises);
-        setFilteredExercises(exercises);
+        const { muscleGroup, ...restFilters } = filters
+        const muscle = muscleGroup || null
+        const exercises: Exercise[] = await exerciseLibraryService.getExercises(muscle, restFilters)
+        setExerciseLibrary(exercises)
+        setFilteredExercises(exercises)
       } catch {
-        setExerciseLibrary([]);
-        setFilteredExercises([]);
+        setExerciseLibrary([])
+        setFilteredExercises([])
       }
-    };
-    if (selectedDay) {
-      fetchExercises();
     }
-  }, [filters, selectedDay]);
+    if (selectedDay) fetchExercises()
+  }, [filters, selectedDay])
 
   const handleFilterChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
+    const { name, value } = e.target
+    setFilters(prev => ({ ...prev, [name]: value }))
+  }
 
   const handleDaySelection = (day: string) => {
     setPlanDetails(prev => {
       const updatedDays = prev.workoutDays.includes(day)
         ? prev.workoutDays.filter(d => d !== day)
-        : [...prev.workoutDays, day];
-
-      const updatedSelectedExercises = { ...prev.selectedExercises };
-      if (!prev.selectedExercises[day]) {
-        updatedSelectedExercises[day] = [];
+        : [...prev.workoutDays, day]
+      const updatedSelectedExercises = { ...prev.selectedExercises }
+      if (!updatedSelectedExercises[day]) {
+        updatedSelectedExercises[day] = []
       }
-
       return {
         ...prev,
         workoutDays: updatedDays,
         selectedExercises: updatedSelectedExercises
-      };
-    });
+      }
+    })
 
     setFilters({
       muscleGroup: '',
       difficulty: '',
       equipment: ''
-    });
+    })
 
-    setSelectedDay(prevDay => prevDay === day ? null : day);
-  };
+    setSelectedDay(prevDay => prevDay === day ? null : day)
+  }
 
   const addExerciseToDay = (exercise: Exercise) => {
-    if (!selectedDay) return;
+    if (!selectedDay) return
     setPlanDetails(prev => {
-      const currentDayExercises = prev.selectedExercises[selectedDay] || [];
-      const exerciseExists = currentDayExercises.some(ex => ex.exercise_id === exercise.exercise_id);
+      const currentDayExercises = prev.selectedExercises[selectedDay] ?? []
+      const exerciseExists = currentDayExercises.some(ex => ex.exercise_id === exercise.exercise_id)
       if (!exerciseExists) {
         const updatedExercises = [
           ...currentDayExercises,
-          {
-            ...exercise,
-            sets: 3,
-            reps: 10,
-          }
-        ];
+          { ...exercise, sets: 3, reps: 10 }
+        ]
         return {
           ...prev,
           selectedExercises: {
             ...prev.selectedExercises,
             [selectedDay]: updatedExercises
           }
-        };
+        }
       }
-      return prev;
-    });
-  };
+      return prev
+    })
+  }
 
   const removeExerciseFromDay = (exerciseId: string) => {
-    if (!selectedDay) return;
+    if (!selectedDay) return
     setPlanDetails(prev => ({
       ...prev,
       selectedExercises: {
         ...prev.selectedExercises,
-        [selectedDay]: prev.selectedExercises[selectedDay].filter(
+        [selectedDay]: (prev.selectedExercises[selectedDay] ?? []).filter(
           ex => ex.exercise_id !== exerciseId
         )
       }
-    }));
-  };
+    }))
+  }
 
-  const updateExerciseDetail = (index: number, field: keyof ExerciseWithSetsReps, value: string) => {
-    if (!selectedDay) return;
+  const updateExerciseDetail = (
+    index: number,
+    field: keyof ExerciseWithSetsReps,
+    value: string
+  ) => {
+    if (!selectedDay) return
     setPlanDetails(prev => {
-      const newExercises = [...prev.selectedExercises[selectedDay]];
-      newExercises[index] = {
-        ...newExercises[index],
-        [field]: field === "sets" || field === "reps" ? Number(value) : value
-      };
+      const exercises = [...(prev.selectedExercises[selectedDay] ?? [])]
+      if (!exercises[index]) return prev
+      exercises[index] = {
+        ...exercises[index],
+        [field]: field === 'sets' || field === 'reps' ? Number(value) : value
+      }
       return {
         ...prev,
         selectedExercises: {
           ...prev.selectedExercises,
-          [selectedDay]: newExercises
+          [selectedDay]: exercises
         }
-      };
-    });
-  };
+      }
+    })
+  }
 
   const copyExercisesFromDay = () => {
-    if (!selectedDay || !planDetails.selectedExercises[selectedDay]) {
-      alert('No exercises to copy');
-      return;
+    if (!selectedDay) {
+      alert('No exercises to copy')
+      return
     }
-    const exercisesToCopy = planDetails.selectedExercises[selectedDay];
+    const exercisesToCopy = planDetails.selectedExercises[selectedDay] ?? []
+    if (exercisesToCopy.length === 0) {
+      alert('No exercises to copy')
+      return
+    }
     localStorage.setItem('copiedExercises', JSON.stringify({
       sourceDay: selectedDay,
       exercises: exercisesToCopy
-    }));
-    alert(`Copied ${exercisesToCopy.length} exercises from ${selectedDay}`);
-  };
+    }))
+    alert(`Copied ${exercisesToCopy.length} exercises from ${selectedDay}`)
+  }
 
   const pasteExercisesToDay = () => {
     if (!selectedDay) {
-      alert('Select a target day to paste exercises');
-      return;
+      alert('Select a target day to paste exercises')
+      return
     }
-    const copiedDataRaw = localStorage.getItem('copiedExercises');
+    const copiedDataRaw = localStorage.getItem('copiedExercises')
     if (!copiedDataRaw) {
-      alert('No exercises to paste');
-      return;
+      alert('No exercises to paste')
+      return
     }
-    const copiedData = JSON.parse(copiedDataRaw) as { sourceDay: string; exercises: ExerciseWithSetsReps[] };
+    const copiedData = JSON.parse(copiedDataRaw) as { sourceDay: string; exercises: ExerciseWithSetsReps[] }
     if (!copiedData.exercises || copiedData.exercises.length === 0) {
-      alert('No exercises to paste');
-      return;
+      alert('No exercises to paste')
+      return
     }
     if (copiedData.sourceDay === selectedDay) {
-      alert('Cannot paste to the same day');
-      return;
+      alert('Cannot paste to the same day')
+      return
     }
     setPlanDetails(prev => {
-      const updatedSelectedExercises = { ...prev.selectedExercises };
+      const updatedSelectedExercises = { ...prev.selectedExercises }
       const newExercises = copiedData.exercises.filter(copiedEx =>
-        !(updatedSelectedExercises[selectedDay] || []).some(
+        !(updatedSelectedExercises[selectedDay] ?? []).some(
           existingEx => existingEx.exercise_id === copiedEx.exercise_id
         )
-      );
+      )
       updatedSelectedExercises[selectedDay] = [
-        ...(updatedSelectedExercises[selectedDay] || []),
+        ...(updatedSelectedExercises[selectedDay] ?? []),
         ...newExercises
-      ];
+      ]
       return {
         ...prev,
         workoutDays: prev.workoutDays.includes(selectedDay)
           ? prev.workoutDays
           : [...prev.workoutDays, selectedDay],
         selectedExercises: updatedSelectedExercises
-      };
-    });
-    alert(`Pasted ${copiedData.exercises.length} exercises to ${selectedDay}`);
-  };
+      }
+    })
+    alert(`Pasted ${copiedData.exercises.length} exercises to ${selectedDay}`)
+  }
 
   const handleSavePlan = async () => {
     if (!planDetails.name.trim()) {
-      alert('Please enter a plan name');
-      return;
+      alert('Please enter a plan name')
+      return
     }
     if (!planDetails.fitnessGoal) {
-      alert('Please select a fitness goal');
-      return;
+      alert('Please select a fitness goal')
+      return
     }
     const finalPlanDetails: PlanDetails = {
       ...planDetails,
       workoutDays: allDays,
       selectedExercises: allDays.reduce<SelectedExercises>((acc, day) => {
-        acc[day] = planDetails.selectedExercises[day] || [];
-        return acc;
+        acc[day] = planDetails.selectedExercises[day] ?? []
+        return acc
       }, {})
-    };
-    try {
-      await workoutPlanService.createCustomWorkoutPlan(finalPlanDetails);
-      alert('Workout plan saved successfully!');
-      navigate('/workout-plans/existing');
-    } catch (error: any) {
-      alert(`Failed to save plan: ${error.message}`);
     }
-  };
+    try {
+      await workoutPlanService.createCustomWorkoutPlan(finalPlanDetails)
+      alert('Workout plan saved successfully!')
+      navigate('/workout-plans/existing')
+    } catch (error: any) {
+      alert(`Failed to save plan: ${error.message}`)
+    }
+  }
 
   return (
     <div className="workout-plan-builder">
@@ -317,7 +302,7 @@ const WorkoutPlanBuilder: React.FC = () => {
           type="text"
           placeholder="Plan Name"
           value={planDetails.name}
-          onChange={(e) => setPlanDetails(prev => ({
+          onChange={e => setPlanDetails(prev => ({
             ...prev,
             name: e.target.value
           }))}
@@ -326,7 +311,7 @@ const WorkoutPlanBuilder: React.FC = () => {
 
         <select
           value={planDetails.fitnessGoal}
-          onChange={(e) => setPlanDetails(prev => ({
+          onChange={e => setPlanDetails(prev => ({
             ...prev,
             fitnessGoal: e.target.value
           }))}
@@ -348,21 +333,19 @@ const WorkoutPlanBuilder: React.FC = () => {
             className={`
               ${planDetails.workoutDays.includes(day) ? 'active' : ''}
               ${selectedDay === day ? 'selected' : ''}
-              ${planDetails.selectedExercises[day] &&
-                planDetails.selectedExercises[day].length > 0 ? 'has-exercises' : ''}
+              ${(planDetails.selectedExercises[day] ?? []).length > 0 ? 'has-exercises' : ''}
             `}
             onClick={() => handleDaySelection(day)}
           >
             {day}
-            {planDetails.selectedExercises[day] &&
-              planDetails.selectedExercises[day].length > 0 && (
-                <span
-                  className="day-completed-checkmark"
-                  title={`${planDetails.selectedExercises[day].length} exercises added`}
-                >
-                  ✓
-                </span>
-              )}
+            {(planDetails.selectedExercises[day] ?? []).length > 0 && (
+              <span
+                className="day-completed-checkmark"
+                title={`${(planDetails.selectedExercises[day] ?? []).length} exercises added`}
+              >
+                ✓
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -466,7 +449,7 @@ const WorkoutPlanBuilder: React.FC = () => {
 
             <div className="selected-exercises">
               <h3>Exercises for {selectedDay}</h3>
-              {planDetails.selectedExercises[selectedDay]?.map((exercise, index) => (
+              {(planDetails.selectedExercises[selectedDay] ?? []).map((exercise, index) => (
                 <div key={exercise.exercise_id} className="selected-exercise">
                   <div className="exercise-info">
                     <span className="exercise-name">{exercise.name}</span>
@@ -476,7 +459,7 @@ const WorkoutPlanBuilder: React.FC = () => {
                         <input
                           type="number"
                           value={exercise.sets}
-                          onChange={(e) => updateExerciseDetail(index, 'sets', e.target.value)}
+                          onChange={e => updateExerciseDetail(index, 'sets', e.target.value)}
                         />
                       </div>
                       <div className="reps-input">
@@ -484,7 +467,7 @@ const WorkoutPlanBuilder: React.FC = () => {
                         <input
                           type="number"
                           value={exercise.reps}
-                          onChange={(e) => updateExerciseDetail(index, 'reps', e.target.value)}
+                          onChange={e => updateExerciseDetail(index, 'reps', e.target.value)}
                         />
                       </div>
                       <button
@@ -514,7 +497,7 @@ const WorkoutPlanBuilder: React.FC = () => {
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default WorkoutPlanBuilder;
+export default WorkoutPlanBuilder

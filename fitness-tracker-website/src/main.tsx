@@ -2,8 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './components/Dock.css'
-import App from './App'
-import { AuthProvider } from './contexts/AuthContext'
+import App from './App.js'
+import { AuthProvider } from './contexts/AuthContext.js'
 
 const rootEl = document.getElementById('root')
 if (!rootEl) {

@@ -1,17 +1,18 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import './ForgotPassword.css';
+import { useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { Link } from 'react-router-dom'
+import './ForgotPassword.css'
 
-const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
+const ForgotPassword: React.FC = () => {
+  const [email, setEmail] = useState<string>('')
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     // Add password reset logic here
-    console.log('Password reset requested for:', email);
-    setIsSubmitted(true);
-  };
+    console.log('Password reset requested for:', email)
+    setIsSubmitted(true)
+  }
 
   if (isSubmitted) {
     return (
@@ -29,7 +30,7 @@ const ForgotPassword = () => {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -37,7 +38,6 @@ const ForgotPassword = () => {
       <div className="forgot-password-container">
         <h2>Reset Password</h2>
         <p>Enter your email address to receive a password reset link</p>
-        
         <form onSubmit={handleSubmit} className="forgot-password-form">
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -45,23 +45,23 @@ const ForgotPassword = () => {
               type="email"
               id="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               required
               placeholder="Enter your email"
             />
           </div>
-          
           <button type="submit" className="reset-button">
             Send Reset Link
           </button>
         </form>
-        
         <div className="forgot-password-footer">
-          <p>Remember your password? <Link to="/login">Log in</Link></p>
+          <p>
+            Remember your password? <Link to="/login">Log in</Link>
+          </p>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ForgotPassword;
+export default ForgotPassword

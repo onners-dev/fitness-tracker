@@ -1,38 +1,41 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from 'react';
-import { userService } from '../services/api.js';
-import { workoutPlanService } from '../services/workoutPlanService.js';
-import { useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { MouseEvent } from "react";
+import { userService } from "../services/api.js";
+import { workoutPlanService } from "../services/workoutPlanService.js";
 import LogoIcon from "./LogoIcon.js";
-import './Header.css';
+import "./Header.css";
 
-const WorkoutPlansLink = ({ onClick, className }) => {
+type WorkoutPlansLinkProps = {
+  onClick?: () => void;
+  className?: string;
+};
+
+const WorkoutPlansLink = ({ onClick, className }: WorkoutPlansLinkProps) => {
   const navigate = useNavigate();
-  const [hasExistingPlans, setHasExistingPlans] = useState(false);
+  const [hasExistingPlans, setHasExistingPlans] = useState<boolean>(false);
 
   useEffect(() => {
     const checkExistingPlans = async () => {
       try {
         const plans = await workoutPlanService.getUserWorkoutPlans();
-        setHasExistingPlans(plans.length > 0);
-      } catch (error) {
-        console.error('Error checking existing workout plans:', error);
+        setHasExistingPlans(Array.isArray(plans) && plans.length > 0);
+      } catch {
         setHasExistingPlans(false);
       }
     };
-
     checkExistingPlans();
   }, []);
 
   const handleClick = () => {
     if (onClick) onClick();
-    navigate(hasExistingPlans ? '/workout-plans/existing' : '/workout-plans/onboarding');
+    navigate(hasExistingPlans ? "/workout-plans/existing" : "/workout-plans/onboarding");
   };
 
   return (
     <span
       onClick={handleClick}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: "pointer" }}
       className={className}
     >
       Workout Plans
@@ -40,20 +43,22 @@ const WorkoutPlansLink = ({ onClick, className }) => {
   );
 };
 
+type DropdownKey = "tracking" | "fitness" | "admin" | "profile" | null;
+
 const Header = () => {
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem('token');
-  const [userInitials, setUserInitials] = useState('');
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isAdmin = localStorage.getItem('isAdmin') === 'true';
-  const desktopNavRef = useRef(null);
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
+  const [userInitials, setUserInitials] = useState<string>("");
+  const [activeDropdown, setActiveDropdown] = useState<DropdownKey>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const desktopNavRef = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [logoHovered, setLogoHovered] = useState<boolean>(false);
 
-  // Theme detection (for other usage—no longer needed for logo)
-  const [theme, setTheme] = useState('light');
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) setTheme(savedTheme);
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
   }, []);
 
   useEffect(() => {
@@ -61,46 +66,41 @@ const Header = () => {
       if (isLoggedIn) {
         try {
           const profile = await userService.getProfile();
-          const initials = `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase();
+          const initials = `${profile.first_name?.[0] ?? ""}${profile.last_name?.[0] ?? ""}`.toUpperCase();
           setUserInitials(initials);
-        } catch (err) {
-          console.error('Error fetching profile:', err);
+        } catch {
+          setUserInitials("");
         }
       }
     };
-
     fetchUserProfile();
   }, [isLoggedIn]);
 
   const handleSignOut = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('isAdmin');
-    navigate('/home');
+    localStorage.removeItem("token");
+    localStorage.removeItem("isAdmin");
+    navigate("/home");
     setIsMobileMenuOpen(false);
   };
 
   const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+    setIsMobileMenuOpen((open) => !open);
   };
-
-  const [logoHovered, setLogoHovered] = useState(false);
 
   useEffect(() => {
     if (!activeDropdown) return;
-  
-    function handleClickOutside(event) {
+    function handleClickOutside(event: MouseEvent | globalThis.MouseEvent) {
       if (
         desktopNavRef.current &&
-        !desktopNavRef.current.contains(event.target)
+        !desktopNavRef.current.contains(event.target as Node)
       ) {
         setActiveDropdown(null);
       }
     }
-  
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside as EventListener);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside as EventListener);
   }, [activeDropdown]);
-  
 
   return (
     <>
@@ -112,24 +112,29 @@ const Header = () => {
           onMouseEnter={() => setLogoHovered(true)}
           onMouseLeave={() => setLogoHovered(false)}
         >
-          <LogoIcon width={80} height={80} hovered={logoHovered} />
+          <LogoIcon
+            width={80}
+            height={80}
+            hovered={logoHovered}
+            style={{}}
+            color1="#6366F1"
+            color2="#06B6D4"
+          />
+
           <span style={{ fontSize: "2rem" }}>Arcus</span>
         </Link>
-
-        {/* Desktop Navigation */}
         <nav className="desktop-nav" ref={desktopNavRef}>
           {isLoggedIn ? (
             <>
-              {/* Tracking Dropdown */}
               <div
                 className="header-dropdown"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setActiveDropdown(activeDropdown === 'tracking' ? null : 'tracking');
+                  setActiveDropdown(activeDropdown === "tracking" ? null : "tracking");
                 }}
               >
                 <span>Tracking</span>
-                {activeDropdown === 'tracking' && (
+                {activeDropdown === "tracking" && (
                   <div className="dropdown-menu">
                     <Link to="/calorietracker" className="dropdown-item">
                       Calorie Tracking
@@ -143,17 +148,15 @@ const Header = () => {
                   </div>
                 )}
               </div>
-
-              {/* Fitness Dropdown */}
               <div
                 className="header-dropdown"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setActiveDropdown(activeDropdown === 'fitness' ? null : 'fitness');
+                  setActiveDropdown(activeDropdown === "fitness" ? null : "fitness");
                 }}
               >
                 <span>Fitness</span>
-                {activeDropdown === 'fitness' && (
+                {activeDropdown === "fitness" && (
                   <div className="dropdown-menu">
                     <Link to="/workouts" className="dropdown-item">
                       Workout Library
@@ -165,18 +168,16 @@ const Header = () => {
                   </div>
                 )}
               </div>
-
-              {/* Admin Dropdown */}
               {isAdmin && (
                 <div
                   className="header-dropdown"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setActiveDropdown(activeDropdown === 'admin' ? null : 'admin');
+                    setActiveDropdown(activeDropdown === "admin" ? null : "admin");
                   }}
                 >
                   <span>Admin</span>
-                  {activeDropdown === 'admin' && (
+                  {activeDropdown === "admin" && (
                     <div className="dropdown-menu">
                       <Link to="/admin" className="dropdown-item">Dashboard</Link>
                       <Link to="/admin/users" className="dropdown-item">User Management</Link>
@@ -189,27 +190,24 @@ const Header = () => {
                   )}
                 </div>
               )}
-
               <Link to="/dashboard" className="link">Dashboard</Link>
-
-              {/* Profile Dropdown */}
               <div
-                className={`header-dropdown profile-dropdown${activeDropdown === 'profile' ? ' active' : ''}`}
+                className={`header-dropdown profile-dropdown${activeDropdown === "profile" ? " active" : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setActiveDropdown(activeDropdown === 'profile' ? null : 'profile');
+                  setActiveDropdown(activeDropdown === "profile" ? null : "profile");
                 }}
               >
                 <div
                   className="avatar"
                   tabIndex={0}
                   aria-label="Open Profile Menu"
-                  onFocus={() => setActiveDropdown('profile')}
+                  onFocus={() => setActiveDropdown("profile")}
                   onBlur={() => setActiveDropdown(null)}
                 >
                   {userInitials}
                 </div>
-                {activeDropdown === 'profile' && (
+                {activeDropdown === "profile" && (
                   <div className="dropdown-menu">
                     <Link to="/dashboard" className="dropdown-item">Profile</Link>
                     <Link to="/settings" className="dropdown-item">Settings</Link>
@@ -233,26 +231,27 @@ const Header = () => {
             </>
           )}
         </nav>
-
-        {/* Mobile Hamburger Menu */}
         <div className="mobile-menu-toggle" onClick={toggleMobileMenu}>
           <span></span>
           <span></span>
           <span></span>
         </div>
-      </header>
-
-      {/* Mobile Navigation */}
+      </header> 
       {isMobileMenuOpen && (
         <>
-          <div
-            className="mobile-nav-overlay open"
-            onClick={toggleMobileMenu}
-          ></div>
+          <div className="mobile-nav-overlay open" onClick={toggleMobileMenu}></div>
           <div className="mobile-nav open">
             <div className="mobile-nav-header">
               <Link to="/home" className="logo" style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}>
-                <LogoIcon width={30} height={30} hovered={true} /> {/* Always accent color for mobile */}
+              <LogoIcon
+                width={30}
+                height={30}
+                hovered={true}
+                style={{}}
+                color1="#6366F1"
+                color2="#06B6D4"
+              />
+
                 <span>Arcus</span>
               </Link>
               <button
@@ -272,7 +271,6 @@ const Header = () => {
                       <Link to="/settings" onClick={toggleMobileMenu}>Settings</Link>
                     </div>
                   </div>
-
                   <div className="mobile-dropdown">
                     <span>Tracking</span>
                     <div className="mobile-dropdown-content">
@@ -281,7 +279,6 @@ const Header = () => {
                       <Link to="/trends" onClick={toggleMobileMenu}>Progress Trends</Link>
                     </div>
                   </div>
-
                   <div className="mobile-dropdown">
                     <span>Fitness</span>
                     <div className="mobile-dropdown-content">
@@ -292,8 +289,6 @@ const Header = () => {
                       />
                     </div>
                   </div>
-
-                  {/* Mobile Admin Dropdown */}
                   {isAdmin && (
                     <div className="mobile-dropdown">
                       <span>Admin</span>
@@ -308,7 +303,6 @@ const Header = () => {
                       </div>
                     </div>
                   )}
-
                   <button onClick={handleSignOut} className="mobile-signout">Sign Out</button>
                 </>
               ) : (

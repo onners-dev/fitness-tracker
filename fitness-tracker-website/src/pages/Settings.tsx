@@ -1,212 +1,198 @@
-import React, { useState, useEffect } from 'react';
-import { userService } from '../services/api.js';
-import './Settings.css';
+import React, { useState, useEffect } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { userService } from '../services/api.js'
+import './Settings.css'
 
-const Settings = () => {
-  const [activeSection, setActiveSection] = useState('profile');
-  const [userProfile, setUserProfile] = useState(null);
-  const [formData, setFormData] = useState({
-    // Profile Section
+type Section = 'profile' | 'fitness' | 'security'
+
+interface Profile {
+  first_name: string
+  last_name: string
+  email: string
+  date_of_birth?: string
+  gender?: string
+  height?: string | number
+  current_weight?: string | number
+  target_weight?: string | number
+  fitness_goal?: string
+  activity_level?: string
+  primary_focus?: string
+  weight_unit?: string
+  height_unit?: string
+}
+
+interface SettingsFormData {
+  firstName: string
+  lastName: string
+  email: string
+  dateOfBirth: string
+  gender: string
+  height: string
+  currentWeight: string
+  targetWeight: string
+  fitnessGoal: string
+  activityLevel: string
+  primaryFocus: string
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
+}
+
+type Errors = Partial<Record<keyof SettingsFormData | 'submit', string>>
+
+const Settings: React.FC = () => {
+  const [activeSection, setActiveSection] = useState<Section>('profile')
+  const [userProfile, setUserProfile] = useState<Profile | null>(null)
+  const [formData, setFormData] = useState<SettingsFormData>({
     firstName: '',
     lastName: '',
     email: '',
     dateOfBirth: '',
     gender: '',
-    
-    // Fitness Goals
     height: '',
     currentWeight: '',
     targetWeight: '',
     fitnessGoal: '',
     activityLevel: '',
     primaryFocus: '',
-    
-    // Account Security
     currentPassword: '',
     newPassword: '',
     confirmNewPassword: ''
-  });
-  const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState('');
+  })
+  const [errors, setErrors] = useState<Errors>({})
+  const [successMessage, setSuccessMessage] = useState<string>('')
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const profile = await userService.getProfile();
-        setUserProfile(profile);
-        setFormData({
-          firstName: profile.first_name,
-          lastName: profile.last_name,
-          email: profile.email,
-          dateOfBirth: profile.date_of_birth 
-            ? new Date(profile.date_of_birth).toISOString().split('T')[0] 
-            : '',
-          gender: profile.gender || '',
-          height: profile.height,
-          currentWeight: profile.current_weight,
-          targetWeight: profile.target_weight || '',
-          fitnessGoal: profile.fitness_goal,
-          activityLevel: profile.activity_level,
-          primaryFocus: profile.primary_focus || '',
-          currentPassword: '',
-          newPassword: '',
-          confirmNewPassword: ''
-        });
-      } catch (error) {
-        console.error('Error fetching profile', error);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear any existing errors for this field
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const validateProfileSection = () => {
-    const newErrors = {};
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required';
-    if (!formData.gender) newErrors.gender = 'Gender is required';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateFitnessSection = () => {
-    const newErrors = {};
-    if (!formData.height) newErrors.height = 'Height is required';
-    if (!formData.currentWeight) newErrors.currentWeight = 'Current weight is required';
-    if (!formData.fitnessGoal) newErrors.fitnessGoal = 'Fitness goal is required';
-    if (!formData.primaryFocus) newErrors.primaryFocus = 'Primary focus is required'; 
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateSecuritySection = () => {
-    const newErrors = {};
-    
-    // Only validate if passwords are being changed
-    if (formData.newPassword || formData.confirmNewPassword) {
-      if (!formData.currentPassword) {
-        newErrors.currentPassword = 'Current password is required';
-      }
-      
-      if (formData.newPassword !== formData.confirmNewPassword) {
-        newErrors.confirmNewPassword = 'Passwords do not match';
-      }
-      
-      if (formData.newPassword && formData.newPassword.length < 8) {
-        newErrors.newPassword = 'Password must be at least 8 characters';
-      }
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-  
+  // Utility – safely format date for <input type="date" />
+  const formatDateForInput = (dateString: string | undefined): string => {
+    if (!dateString) return ''
     try {
-      // Try parsing the date, ensuring it works with various formats
-      const date = new Date(dateString);
-      
+      const date = new Date(dateString)
       if (!isNaN(date.getTime())) {
-        // Convert to YYYY-MM-DD format
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        
-        return `${year}-${month}-${day}`;
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
       }
-    } catch (error) {
-      console.error('Date parsing error:', error);
+    } catch {
+      /* fallback empty string */
     }
-  
-    return '';
-  };
+    return ''
+  }
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const profile = await userService.getProfile();
-        setUserProfile(profile);
-        
+        const profile = await userService.getProfile()
+        setUserProfile(profile)
         setFormData({
           firstName: profile.first_name || '',
           lastName: profile.last_name || '',
           email: profile.email || '',
-          // Use the new formatting function
           dateOfBirth: formatDateForInput(profile.date_of_birth),
           gender: profile.gender || '',
-          height: profile.height || '',
-          currentWeight: profile.current_weight || '',
-          targetWeight: profile.target_weight || '',
+          height: profile.height ? String(profile.height) : '',
+          currentWeight: profile.current_weight ? String(profile.current_weight) : '',
+          targetWeight: profile.target_weight ? String(profile.target_weight) : '',
           fitnessGoal: profile.fitness_goal || '',
           activityLevel: profile.activity_level || '',
           primaryFocus: profile.primary_focus || '',
           currentPassword: '',
           newPassword: '',
           confirmNewPassword: ''
-        });
+        })
       } catch (error) {
-        console.error('Error fetching profile', error);
+        console.error('Error fetching profile', error)
       }
-    };
-  
-    fetchUserProfile();
-  }, []);
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSuccessMessage('');
-  
-    let isValid = false;
-    
-    switch(activeSection) {
-      case 'profile':
-        isValid = validateProfileSection();
-        break;
-      case 'fitness':
-        isValid = validateFitnessSection();
-        break;
-      case 'security':
-        isValid = validateSecuritySection();
-        break;
-      default:
-        isValid = false;
     }
-  
-    if (!isValid) return;
-  
+    fetchUserProfile()
+  }, [])
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    if (errors[name as keyof Errors]) {
+      setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+  }
+
+  // --- Validations --- //
+
+  const validateProfileSection = (): boolean => {
+    const newErrors: Errors = {}
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
+    if (!formData.email.trim()) newErrors.email = 'Email is required'
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required'
+    if (!formData.gender) newErrors.gender = 'Gender is required'
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateFitnessSection = (): boolean => {
+    const newErrors: Errors = {}
+    if (!formData.height) newErrors.height = 'Height is required'
+    if (!formData.currentWeight) newErrors.currentWeight = 'Current weight is required'
+    if (!formData.fitnessGoal) newErrors.fitnessGoal = 'Fitness goal is required'
+    if (!formData.primaryFocus) newErrors.primaryFocus = 'Primary focus is required'
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateSecuritySection = (): boolean => {
+    const newErrors: Errors = {}
+
+    // Only validate if passwords are being changed
+    if (formData.newPassword || formData.confirmNewPassword) {
+      if (!formData.currentPassword) {
+        newErrors.currentPassword = 'Current password is required'
+      }
+      if (formData.newPassword !== formData.confirmNewPassword) {
+        newErrors.confirmNewPassword = 'Passwords do not match'
+      }
+      if (formData.newPassword && formData.newPassword.length < 8) {
+        newErrors.newPassword = 'Password must be at least 8 characters'
+      }
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setSuccessMessage('')
+    let isValid = false
+
+    switch (activeSection) {
+      case 'profile':
+        isValid = validateProfileSection()
+        break
+      case 'fitness':
+        isValid = validateFitnessSection()
+        break
+      case 'security':
+        isValid = validateSecuritySection()
+        break
+      default:
+        isValid = false
+    }
+    if (!isValid) return
+
     try {
-      console.log('Updating section:', activeSection);
-      console.log('Complete Form Data:', formData);
-  
-      switch(activeSection) {
+      switch (activeSection) {
         case 'profile':
           await userService.updateProfile({
             first_name: formData.firstName || null,
             last_name: formData.lastName || null,
             email: formData.email || null,
-            // Ensure date is in YYYY-MM-DD format
             date_of_birth: formData.dateOfBirth || null,
             gender: formData.gender || null,
-            // Preserve other profile data
             height: userProfile?.height || null,
             current_weight: userProfile?.current_weight || null,
             target_weight: userProfile?.target_weight || null,
@@ -215,17 +201,20 @@ const Settings = () => {
             primary_focus: userProfile?.primary_focus || null,
             weight_unit: 'kg',
             height_unit: 'cm'
-          });
-          break;
+          })
+          break
         case 'fitness':
           await userService.updateProfile({
             height: formData.height ? parseFloat(formData.height) : null,
-            current_weight: formData.currentWeight ? parseFloat(formData.currentWeight) : null,
-            target_weight: formData.targetWeight ? parseFloat(formData.targetWeight) : null,
+            current_weight: formData.currentWeight
+              ? parseFloat(formData.currentWeight)
+              : null,
+            target_weight: formData.targetWeight
+              ? parseFloat(formData.targetWeight)
+              : null,
             fitness_goal: formData.fitnessGoal,
             activity_level: formData.activityLevel,
             primary_focus: formData.primaryFocus,
-            // Preserve personal information
             first_name: userProfile?.first_name || null,
             last_name: userProfile?.last_name || null,
             email: userProfile?.email || null,
@@ -233,96 +222,66 @@ const Settings = () => {
             gender: userProfile?.gender || null,
             weight_unit: 'kg',
             height_unit: 'cm'
-          });
-          break;
+          })
+          break
         case 'security':
           try {
-            console.log('Attempting password update:', {
-              currentPasswordLength: formData.currentPassword.length,
-              newPasswordLength: formData.newPassword.length
-            });
-  
             await userService.updatePassword({
               currentPassword: formData.currentPassword,
               newPassword: formData.newPassword
-            });
-  
-            // Clear password fields after successful update
+            })
             setFormData(prev => ({
               ...prev,
               currentPassword: '',
               newPassword: '',
               confirmNewPassword: ''
-            }));
-  
-            setSuccessMessage('Password updated successfully!');
-            
-            // Optional: Reset errors in case they were set previously
-            setErrors({});
-          } catch (passwordError) {
-            console.error('Password update error:', {
-              error: passwordError,
-              message: passwordError.message,
-              status: passwordError.status
-            });
-  
-            // More specific error handling
+            }))
+            setSuccessMessage('Password updated successfully!')
+            setErrors({})
+          } catch (passwordError: any) {
             if (passwordError.status === 400) {
-              setErrors({ 
-                submit: passwordError.message || 'Invalid current password or new password',
-                currentPassword: passwordError.message || 'Current password is incorrect'
-              });
+              setErrors({
+                submit:
+                  passwordError.message ||
+                  'Invalid current password or new password',
+                currentPassword:
+                  passwordError.message || 'Current password is incorrect'
+              })
             } else {
-              setErrors({ 
+              setErrors({
                 submit: passwordError.message || 'Failed to update password'
-              });
+              })
             }
-  
-            // Prevent further execution
-            return;
+            return
           }
-          break;
+          break
       }
-  
-      // Fetch and update the profile after successful update
-      const updatedProfile = await userService.getProfile();
-      setUserProfile(updatedProfile);
-  
-      // If no specific success message was set, use a generic one
+      // Refetch profile after update
+      const updatedProfile = await userService.getProfile()
+      setUserProfile(updatedProfile)
       if (!successMessage) {
-        setSuccessMessage(`${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} updated successfully!`);
+        setSuccessMessage(
+          `${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} updated successfully!`
+        )
       }
-    } catch (error) {
-      console.error('Profile update error:', {
-        error: error,
-        response: error.response,
-        message: error.message,
-        details: error.response?.data
-      });
-  
-      // More detailed error handling
+    } catch (error: any) {
       if (error.response) {
-        // Server responded with an error
-        setErrors({ 
-          submit: error.response.data.message || 
-                  error.response.data.error || 
-                  'An error occurred while updating profile' 
-        });
+        setErrors({
+          submit:
+            error.response.data.message ||
+            error.response.data.error ||
+            'An error occurred while updating profile'
+        })
       } else if (error.request) {
-        // Request was made but no response received
-        setErrors({ submit: 'No response received from server' });
+        setErrors({ submit: 'No response received from server' })
       } else {
-        // Something happened in setting up the request
-        setErrors({ submit: 'Error setting up the request' });
+        setErrors({ submit: 'Error setting up the request' })
       }
     }
-  };
-  
-  
-  
+  }
 
   const renderSection = () => {
-    switch(activeSection) {
+    switch (activeSection) {
       case 'profile':
         return (
           <div className="settings-section">
@@ -364,17 +323,15 @@ const Settings = () => {
                 name="dateOfBirth"
                 value={formData.dateOfBirth}
                 onChange={handleChange}
-                max={new Date().toISOString().split('T')[0]} // Prevent future dates
+                max={new Date().toISOString().split('T')[0]}
               />
-              {errors.dateOfBirth && <span className="error">{errors.dateOfBirth}</span>}
+              {errors.dateOfBirth && (
+                <span className="error">{errors.dateOfBirth}</span>
+              )}
             </div>
             <div className="form-group">
               <label>Gender</label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-              >
+              <select name="gender" value={formData.gender} onChange={handleChange}>
                 <option value="">Select Gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -384,7 +341,7 @@ const Settings = () => {
               {errors.gender && <span className="error">{errors.gender}</span>}
             </div>
           </div>
-        );
+        )
       case 'fitness':
         return (
           <div className="settings-section">
@@ -407,7 +364,9 @@ const Settings = () => {
                 value={formData.currentWeight}
                 onChange={handleChange}
               />
-              {errors.currentWeight && <span className="error">{errors.currentWeight}</span>}
+              {errors.currentWeight && (
+                <span className="error">{errors.currentWeight}</span>
+              )}
             </div>
             <div className="form-group">
               <label>Target Weight (kg)</label>
@@ -432,7 +391,9 @@ const Settings = () => {
                 <option value="endurance">Improve Endurance</option>
                 <option value="general_fitness">General Fitness</option>
               </select>
-              {errors.fitnessGoal && <span className="error">{errors.fitnessGoal}</span>}
+              {errors.fitnessGoal && (
+                <span className="error">{errors.fitnessGoal}</span>
+              )}
             </div>
             <div className="form-group">
               <label>Activity Level</label>
@@ -448,7 +409,6 @@ const Settings = () => {
                 <option value="very_active">Very Active</option>
               </select>
             </div>
-
             <div className="form-group">
               <label>Primary Focus</label>
               <select
@@ -468,7 +428,7 @@ const Settings = () => {
               {errors.primaryFocus && <span className="error">{errors.primaryFocus}</span>}
             </div>
           </div>
-        );
+        )
       case 'security':
         return (
           <div className="settings-section">
@@ -481,7 +441,9 @@ const Settings = () => {
                 value={formData.currentPassword}
                 onChange={handleChange}
               />
-              {errors.currentPassword && <span className="error">{errors.currentPassword}</span>}
+              {errors.currentPassword && (
+                <span className="error">{errors.currentPassword}</span>
+              )}
             </div>
             <div className="form-group">
               <label>New Password</label>
@@ -501,14 +463,16 @@ const Settings = () => {
                 value={formData.confirmNewPassword}
                 onChange={handleChange}
               />
-              {errors.confirmNewPassword && <span className="error">{errors.confirmNewPassword}</span>}
+              {errors.confirmNewPassword && (
+                <span className="error">{errors.confirmNewPassword}</span>
+              )}
             </div>
           </div>
-        );
+        )
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   return (
     <div className="settings-page">
@@ -516,21 +480,24 @@ const Settings = () => {
         <div className="settings-sidebar">
           <h1>Settings</h1>
           <nav>
-            <button 
+            <button
               className={activeSection === 'profile' ? 'active' : ''}
               onClick={() => setActiveSection('profile')}
+              type="button"
             >
               Personal Information
             </button>
-            <button 
+            <button
               className={activeSection === 'fitness' ? 'active' : ''}
               onClick={() => setActiveSection('fitness')}
+              type="button"
             >
               Fitness Goals
             </button>
-            <button 
+            <button
               className={activeSection === 'security' ? 'active' : ''}
               onClick={() => setActiveSection('security')}
+              type="button"
             >
               Account Security
             </button>
@@ -539,8 +506,12 @@ const Settings = () => {
         <div className="settings-content">
           <form onSubmit={handleSubmit}>
             {renderSection()}
-            {successMessage && <div className="success-message">{successMessage}</div>}
-            {errors.submit && <div className="error-message">{errors.submit}</div>}
+            {successMessage && (
+              <div className="success-message">{successMessage}</div>
+            )}
+            {errors.submit && (
+              <div className="error-message">{errors.submit}</div>
+            )}
             <button type="submit" className="save-button">
               Save Changes
             </button>
@@ -548,7 +519,7 @@ const Settings = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Settings;
+export default Settings

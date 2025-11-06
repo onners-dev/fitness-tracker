@@ -1,18 +1,30 @@
-import './About.css';
-import { FaFire, FaCheckCircle, FaChartLine, FaUtensils, FaUserTie, FaCrown } from 'react-icons/fa';
+import './About.css'
+import {
+  FaFire,
+  FaCheckCircle,
+  FaChartLine,
+  FaUtensils,
+  FaUserTie
+} from 'react-icons/fa'
+import type { ReactNode } from 'react'
 
-const FeatureBox = ({ icon, headline, desc }) => (
+interface FeatureBoxProps {
+  icon: ReactNode
+  headline: string
+  desc: string
+}
+
+const FeatureBox: React.FC<FeatureBoxProps> = ({ icon, headline, desc }) => (
   <div className="feature-box">
     <div className="feature-icon">{icon}</div>
     <h3>{headline}</h3>
     <p>{desc}</p>
   </div>
-);
+)
 
-export default function About() {
+const About: React.FC = () => {
   return (
     <div className="about-page">
-
       <section className="section-features">
         <h2 className="section-title">Everything You Need. Nothing You Don’t.</h2>
         <div className="features-flex">
@@ -61,8 +73,12 @@ export default function About() {
           Join users who trust Arcus with their progress.<br />
           Every rep, every meal, every breakthrough—tracked and celebrated.
         </p>
-        <a href="/signup" className="primary-button footer-cta">Create My Account</a>
+        <a href="/signup" className="primary-button footer-cta">
+          Create My Account
+        </a>
       </section>
     </div>
-  );
+  )
 }
+
+export default About

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useLocation } from "react-router-dom";
-import { workoutService, exerciseLibraryService } from "../services/workoutApi";
-import { workoutPlanService } from "../services/workoutPlanService";
+import { workoutService, exerciseLibraryService } from "../services/workoutApi.js";
+import { workoutPlanService } from "../services/workoutPlanService.js";
 import "./WorkoutLogging.css";
 
 type Exercise = {
