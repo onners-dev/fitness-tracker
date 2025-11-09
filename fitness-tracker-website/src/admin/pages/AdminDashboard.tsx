@@ -2,21 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService.js';
 import './AdminDashboard.css';
 
-const AdminDashboard = () => {
-  const [stats, setStats] = useState({
+interface DashboardStats {
+  totalUsers: number;
+  activeUsers: number;
+  totalWorkouts: number;
+  totalMeals: number;
+}
+
+const AdminDashboard: React.FC = () => {
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     activeUsers: 0,
     totalWorkouts: 0,
-    totalMeals: 0
+    totalMeals: 0,
   });
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
-        const dashboardStats = await adminService.getDashboardStats();
+        const dashboardStats: DashboardStats = await adminService.getDashboardStats();
         setStats(dashboardStats);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch dashboard stats', error);
         setError(error.message || 'Failed to fetch dashboard statistics');
       }

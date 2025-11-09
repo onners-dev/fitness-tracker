@@ -2,8 +2,8 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosInstance } from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL as string;
+const API_PREFIX = '/api';
 
-// Typed error handler utility
 function handleApiError(error: AxiosError): never {
   if (error.response) {
     throw error.response.data || new Error('An error occurred');
@@ -21,7 +21,6 @@ const api: AxiosInstance = axios.create({
   }
 });
 
-// Correct header mutation for TypeScript + Axios 1.x+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -29,7 +28,6 @@ api.interceptors.request.use(
       if (config.headers && typeof (config.headers as any).set === 'function') {
         (config.headers as any).set('Authorization', `Bearer ${token.replace(/^Bearer\s+/i, '').trim()}`);
       } else if (config.headers) {
-        // Plain object, fallback for legacy compat
         (config.headers as Record<string, string>)['Authorization'] = `Bearer ${token.replace(/^Bearer\s+/i, '').trim()}`;
       }
     }
@@ -54,7 +52,6 @@ api.interceptors.response.use(
   }
 );
 
-// --- Types ---
 export interface AuthUser {
   user_id: string;
   email: string;
@@ -89,11 +86,10 @@ export interface UserProfile {
   [key: string]: any;
 }
 
-// --- Auth service ---
 export const authService = {
   login: async (email: string, password: string): Promise<AuthResponse> => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post(`${API_PREFIX}/auth/login`, { email, password });
       const token = response.data.token;
       if (!token) throw new Error('No authentication token received');
       localStorage.setItem('isAdmin', response.data.user.is_admin ? 'true' : 'false');
@@ -115,7 +111,7 @@ export const authService = {
 
   register: async (userData: RegisterUserInput): Promise<AuthResponse> => {
     try {
-      const response = await api.post(`${API_URL}/auth/register`, userData);
+      const response = await api.post(`${API_PREFIX}/auth/register`, userData);
       if (!response.data.token) throw new Error('No authentication token received');
       return {
         token: response.data.token,
@@ -139,7 +135,7 @@ export const authService = {
 
   verifyCode: async (email: string, code: string): Promise<any> => {
     try {
-      const response = await api.post('/auth/verify-code', { email, code });
+      const response = await api.post(`${API_PREFIX}/auth/verify-code`, { email, code });
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('isVerified', 'true');
@@ -152,7 +148,7 @@ export const authService = {
 
   resendVerificationCode: async (email: string): Promise<any> => {
     try {
-      const response = await api.post('/auth/resend-verification', { email });
+      const response = await api.post(`${API_PREFIX}/auth/resend-verification`, { email });
       return response.data;
     } catch (error: any) {
       handleApiError(error);
@@ -160,11 +156,10 @@ export const authService = {
   }
 };
 
-// --- User service ---
 export const userService = {
   getProfile: async (): Promise<UserProfile> => {
     try {
-      const response = await api.get('/users/profile');
+      const response = await api.get(`${API_PREFIX}/users/profile`);
       return response.data;
     } catch (error: any) {
       handleApiError(error);
@@ -173,7 +168,7 @@ export const userService = {
 
   updateProfile: async (profileData: Partial<UserProfile>): Promise<UserProfile> => {
     try {
-      const response = await api.put('/users/profile', profileData);
+      const response = await api.put(`${API_PREFIX}/users/profile`, profileData);
       return response.data;
     } catch (error: any) {
       handleApiError(error);
@@ -182,7 +177,7 @@ export const userService = {
 
   updatePassword: async (passwordData: UpdatePasswordInput): Promise<any> => {
     try {
-      const response = await api.put('/users/password', passwordData);
+      const response = await api.put(`${API_PREFIX}/users/password`, passwordData);
       return response.data;
     } catch (error: any) {
       handleApiError(error);
@@ -190,11 +185,10 @@ export const userService = {
   }
 };
 
-// --- Exercise service ---
 export const exerciseService = {
   getMuscleGroups: async (): Promise<{ name: string; description?: string | null; }[]> => {
     try {
-      const response = await api.get('/workouts/muscle-groups');
+      const response = await api.get(`${API_PREFIX}/workouts/muscle-groups`);
       return response.data.map((group: any) => ({
         name: group.name,
         description: group.description || null
@@ -206,7 +200,7 @@ export const exerciseService = {
 
   getMuscles: async (groupName: string): Promise<any[]> => {
     try {
-      const response = await api.get('/workouts/muscles', { params: { groupName } });
+      const response = await api.get(`${API_PREFIX}/workouts/muscles`, { params: { groupName } });
       return response.data;
     } catch (error: any) {
       if (error.response && error.response.status === 404) {
@@ -218,7 +212,7 @@ export const exerciseService = {
 
   getExercises: async (muscleOrGroupName: string): Promise<any[]> => {
     try {
-      const response = await api.get('/workouts/exercises', {
+      const response = await api.get(`${API_PREFIX}/workouts/exercises`, {
         params: { muscleGroup: muscleOrGroupName }
       });
       return response.data;
@@ -228,11 +222,10 @@ export const exerciseService = {
   }
 };
 
-// --- Favorite service ---
 export const favoriteService = {
   addFavorite: async (exerciseId: string): Promise<any> => {
     try {
-      const response = await api.post('/favorites/add', { exerciseId });
+      const response = await api.post(`${API_PREFIX}/favorites/add`, { exerciseId });
       return response.data;
     } catch (error: any) {
       throw error;
@@ -241,7 +234,7 @@ export const favoriteService = {
 
   removeFavorite: async (exerciseId: string): Promise<any> => {
     try {
-      const response = await api.delete('/favorites/remove', { data: { exerciseId } });
+      const response = await api.delete(`${API_PREFIX}/favorites/remove`, { data: { exerciseId } });
       return response.data;
     } catch (error: any) {
       throw error;
@@ -250,7 +243,7 @@ export const favoriteService = {
 
   getFavorites: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/favorites');
+      const response = await api.get(`${API_PREFIX}/favorites`);
       return response.data;
     } catch (error: any) {
       return [];
@@ -258,11 +251,10 @@ export const favoriteService = {
   }
 };
 
-// --- Nutrition service ---
 export const nutritionService = {
   getNutritionGoals: async (): Promise<any> => {
     try {
-      const response = await api.get('/nutrition/goals');
+      const response = await api.get(`${API_PREFIX}/nutrition/goals`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -271,7 +263,7 @@ export const nutritionService = {
 
   calculateNutritionGoals: async (): Promise<any> => {
     try {
-      const response = await api.post('/nutrition/calculate-goals');
+      const response = await api.post(`${API_PREFIX}/nutrition/calculate-goals`);
       return response.data;
     } catch (error: any) {
       throw error;

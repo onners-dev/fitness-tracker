@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../../services/authContext';
+import { useAuth } from '../../contexts/AuthContext.js';
 import './AdminHeader.css';
 
 const AdminHeader = () => {

@@ -1,8 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef } from "react";
+import type { ReactNode, MouseEvent, KeyboardEvent } from "react";
 import "./Dock.css";
 
-function DockLabel({ children, hovered }) {
+interface DockLabelProps {
+  children: ReactNode;
+  hovered: boolean;
+}
+
+function DockLabel({ children, hovered }: DockLabelProps) {
   return (
     <AnimatePresence>
       {hovered && (
@@ -21,25 +27,38 @@ function DockLabel({ children, hovered }) {
   );
 }
 
-function DockIcon({ children }) {
+interface DockIconProps {
+  children: ReactNode;
+}
+
+function DockIcon({ children }: DockIconProps) {
   return <div className="dock-icon">{children}</div>;
+}
+
+interface DockItemProps {
+  icon: ReactNode;
+  label: ReactNode;
+  className?: string;
+  onClick?: (e: MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>) => void;
+  animationScale?: number;
+  baseItemSize?: number;
 }
 
 function DockItem({
   icon,
   label,
-  className = "",
+  className,
   onClick,
   animationScale = 1.2,
   baseItemSize = 50,
-}) {
+}: DockItemProps) {
   const [hovered, setHovered] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   return (
     <div
       ref={ref}
-      className={`dock-item ${className}`}
+      className={`dock-item${className ? ` ${className}` : ""}`}
       style={{
         width: baseItemSize,
         height: baseItemSize,
@@ -53,9 +72,7 @@ function DockItem({
       role="button"
       aria-haspopup="true"
     >
-      {/* Label positioned relative to dock-item, not dock-inner */}
       <DockLabel hovered={hovered}>{label}</DockLabel>
-      
       <motion.div
         className="dock-inner"
         animate={{
@@ -69,13 +86,28 @@ function DockItem({
   );
 }
 
+export interface DockItemObject {
+  icon: ReactNode;
+  label: ReactNode;
+  className?: string;
+  onClick?: (e: MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>) => void;
+}
+
+interface DockProps {
+  items: DockItemObject[];
+  className?: string;
+  animationScale?: number;
+  baseItemSize?: number;
+  panelHeight?: number;
+}
+
 export default function Dock({
   items,
   className = "",
   animationScale = 1.2,
   baseItemSize = 50,
   panelHeight = 68,
-}) {
+}: DockProps) {
   return (
     <div className={`dock-panel ${className}`} style={{ height: panelHeight }}>
       {items.map((item, index) => (
@@ -83,8 +115,8 @@ export default function Dock({
           key={index}
           icon={item.icon}
           label={item.label}
-          onClick={item.onClick}
-          className={item.className}
+          {...(item.className !== undefined ? { className: item.className } : {})}
+          {...(item.onClick !== undefined ? { onClick: item.onClick } : {})}
           animationScale={animationScale}
           baseItemSize={baseItemSize}
         />

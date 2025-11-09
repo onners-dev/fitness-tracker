@@ -1,12 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService.js';
 import './WorkoutExerciseEdit.css';
 
-const WorkoutExerciseEdit = () => {
-  const { exerciseId } = useParams();
+interface ExerciseFormState {
+  name: string;
+  description: string;
+  instructions: string;
+  difficulty: string;
+  video_url: string;
+  equipment_options: string[];
+  muscle_groups: string[];
+  muscles: string[];
+}
+
+interface Equipment {
+  name: string;
+  [key: string]: any;
+}
+
+interface MuscleGroup {
+  name: string;
+  [key: string]: any;
+}
+
+interface Muscle {
+  name: string;
+  [key: string]: any;
+}
+
+const WorkoutExerciseEdit: React.FC = () => {
+  const { exerciseId } = useParams<{ exerciseId: string }>();
   const navigate = useNavigate();
-  const [exercise, setExercise] = useState({
+
+  const [exercise, setExercise] = useState<ExerciseFormState>({
     name: '',
     description: '',
     instructions: '',
@@ -14,28 +42,26 @@ const WorkoutExerciseEdit = () => {
     video_url: '',
     equipment_options: [],
     muscle_groups: [],
-    muscles: []
+    muscles: [],
   });
-  const [availableEquipment, setAvailableEquipment] = useState([]);
-  const [availableMuscleGroups, setAvailableMuscleGroups] = useState([]);
-  const [availableMuscles, setAvailableMuscles] = useState([]);
-  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState(null);
+
+  const [availableEquipment, setAvailableEquipment] = useState<(string | Equipment)[]>([]);
+  const [availableMuscleGroups, setAvailableMuscleGroups] = useState<(string | MuscleGroup)[]>([]);
+  const [availableMuscles, setAvailableMuscles] = useState<Muscle[]>([]);
+  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchExerciseDetails = async () => {
       try {
         setIsLoading(true);
-        
-        // Fetch available equipment and muscle groups
         const equipment = await adminService.getAvailableEquipment();
         const muscleGroups = await adminService.getAvailableMuscleGroups();
-        
+
         setAvailableEquipment(equipment);
         setAvailableMuscleGroups(muscleGroups);
-        
-        // If there's an exerciseId, fetch its details
+
         if (exerciseId && exerciseId !== 'new') {
           const exerciseData = await adminService.getExerciseDetails(exerciseId);
           setExercise({
@@ -46,22 +72,20 @@ const WorkoutExerciseEdit = () => {
             video_url: exerciseData.video_url || '',
             equipment_options: exerciseData.equipment_options || [],
             muscle_groups: exerciseData.muscle_groups || [],
-            muscles: exerciseData.muscles || []
+            muscles: exerciseData.muscles || [],
           });
         }
-        
+
         setIsLoading(false);
-      } catch (err) {
-        console.error('Error fetching exercise details:', err);
-        setError(err.message);
+      } catch (err: any) {
+        setError(err.message || 'Error fetching exercise details');
         setIsLoading(false);
       }
     };
-  
+
     fetchExerciseDetails();
   }, [exerciseId]);
 
-  // Fetch muscles when a muscle group is selected
   useEffect(() => {
     const fetchMusclesInGroup = async () => {
       if (selectedMuscleGroup) {
@@ -69,7 +93,6 @@ const WorkoutExerciseEdit = () => {
           const muscles = await adminService.getMusclesInMuscleGroup(selectedMuscleGroup);
           setAvailableMuscles(muscles);
         } catch (err) {
-          console.error('Error fetching muscles:', err);
           setError('Failed to fetch muscles');
         }
       }
@@ -78,116 +101,101 @@ const WorkoutExerciseEdit = () => {
     fetchMusclesInGroup();
   }, [selectedMuscleGroup]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setExercise(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleEquipmentChange = (e) => {
+  const handleEquipmentChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setExercise(prev => {
       const currentEquipment = prev.equipment_options || [];
       if (checked) {
         return { ...prev, equipment_options: [...currentEquipment, value] };
       } else {
-        return { 
-          ...prev, 
-          equipment_options: currentEquipment.filter(eq => eq !== value) 
+        return {
+          ...prev,
+          equipment_options: currentEquipment.filter(eq => eq !== value),
         };
       }
     });
   };
 
-  const handleMuscleGroupChange = (e) => {
+  const handleMuscleGroupChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setExercise(prev => {
       const currentMuscleGroups = prev.muscle_groups || [];
+      let updatedMuscleGroups: string[];
+      let updatedMuscles: string[];
       if (checked) {
-        // When a muscle group is selected, set it as the selected group
         setSelectedMuscleGroup(value);
-        return { ...prev, muscle_groups: [...currentMuscleGroups, value] };
+        updatedMuscleGroups = [...currentMuscleGroups, value];
+        updatedMuscles = prev.muscles;
       } else {
-        // Remove muscle group and associated muscles
-        const updatedMuscleGroups = currentMuscleGroups.filter(mg => mg !== value);
-        const updatedMuscles = prev.muscles.filter(muscle => 
+        updatedMuscleGroups = currentMuscleGroups.filter(mg => mg !== value);
+        updatedMuscles = prev.muscles.filter(muscle =>
           !availableMuscles.some(m => m.name === muscle)
         );
-        
-        // Reset selected muscle group if it's the one being unchecked
         if (selectedMuscleGroup === value) {
           setSelectedMuscleGroup(null);
           setAvailableMuscles([]);
         }
-
-        return { 
-          ...prev, 
-          muscle_groups: updatedMuscleGroups,
-          muscles: updatedMuscles
-        };
       }
+      return {
+        ...prev,
+        muscle_groups: updatedMuscleGroups,
+        muscles: updatedMuscles,
+      };
     });
   };
 
-  const handleMuscleChange = (e) => {
+  const handleMuscleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setExercise(prev => {
       const currentMuscles = prev.muscles || [];
       if (checked) {
         return { ...prev, muscles: [...currentMuscles, value] };
       } else {
-        return { 
-          ...prev, 
-          muscles: currentMuscles.filter(muscle => muscle !== value) 
+        return {
+          ...prev,
+          muscles: currentMuscles.filter(muscle => muscle !== value),
         };
       }
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
-    // Validate required fields
     if (!exercise.name || !exercise.difficulty) {
       setError('Name and Difficulty are required');
       return;
     }
-
     try {
-      // Prepare data for submission
       const submissionData = {
         ...exercise,
-        // Ensure empty arrays are handled correctly
         equipment_options: exercise.equipment_options || [],
         muscle_groups: exercise.muscle_groups || [],
         muscles: exercise.muscles || [],
-        // Ensure string fields are not null
         description: exercise.description || '',
         instructions: exercise.instructions || '',
-        video_url: exercise.video_url || ''
+        video_url: exercise.video_url || '',
       };
-
       if (exerciseId && exerciseId !== 'new') {
-        // Update existing exercise
         await adminService.updateExercise(exerciseId, submissionData);
       } else {
-        // Create new exercise
         await adminService.createExercise(submissionData);
       }
-      
-      // Redirect back to exercise list or show success message
       navigate('/admin/workouts/exercises');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'An error occurred while saving the exercise');
     }
   };
 
-  // Render error message if exists
   const renderErrorMessage = () => {
     if (!error) return null;
-    
     return (
       <div className="error-message">
         <p>{error}</p>
@@ -201,9 +209,9 @@ const WorkoutExerciseEdit = () => {
   return (
     <div className="workout-exercise-edit">
       <h1>{exerciseId ? 'Edit Exercise' : 'Create New Exercise'}</h1>
-      
+
       {renderErrorMessage()}
-      
+
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="name">Exercise Name *</label>
@@ -272,7 +280,6 @@ const WorkoutExerciseEdit = () => {
           <h3>Equipment Options</h3>
           {availableEquipment.map((equip) => {
             const equipName = typeof equip === 'object' ? equip.name : equip;
-            
             return (
               <div key={equipName} className="checkbox-group">
                 <input
@@ -292,7 +299,6 @@ const WorkoutExerciseEdit = () => {
           <h3>Muscle Groups</h3>
           {availableMuscleGroups.map((group) => {
             const groupName = typeof group === 'object' ? group.name : group;
-            
             return (
               <div key={groupName} className="checkbox-group">
                 <input

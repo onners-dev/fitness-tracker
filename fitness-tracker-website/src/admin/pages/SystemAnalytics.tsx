@@ -2,8 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService.js';
 import './SystemAnalytics.css';
 
-const SystemAnalytics = () => {
-  const [systemMetrics, setSystemMetrics] = useState({
+interface ServerPerformance {
+  averageResponseTime: number;
+  requestsPerMinute: number;
+}
+
+interface UserGrowthPoint {
+  date: string;
+  newUsers: number;
+}
+
+interface SystemMetrics {
+  totalUsers: number;
+  activeUsers: number;
+  totalWorkouts: number;
+  totalMeals: number;
+  serverPerformance: ServerPerformance;
+  userGrowth: UserGrowthPoint[];
+}
+
+const SystemAnalytics: React.FC = () => {
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics>({
     totalUsers: 0,
     activeUsers: 0,
     totalWorkouts: 0,
@@ -18,7 +37,7 @@ const SystemAnalytics = () => {
   useEffect(() => {
     const fetchSystemAnalytics = async () => {
       try {
-        const analytics = await adminService.getSystemAnalytics();
+        const analytics: SystemMetrics = await adminService.getSystemAnalytics();
         setSystemMetrics(analytics);
       } catch (error) {
         console.error('Failed to fetch system analytics', error);
@@ -61,7 +80,6 @@ const SystemAnalytics = () => {
 
       <section className="user-growth">
         <h2>User Growth</h2>
-        {/* You could add a chart library here to visualize user growth */}
         <div className="growth-chart">
           {systemMetrics.userGrowth.map((growth, index) => (
             <div key={index} className="growth-point">

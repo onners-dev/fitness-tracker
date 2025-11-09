@@ -2,38 +2,54 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService.js';
 import './ContentModeration.css';
 
-const ContentModeration = () => {
-  const [flaggedContent, setFlaggedContent] = useState({
+interface FlaggedItem {
+  flag_id: string;
+  name: string;
+  email: string;
+  reason: string;
+  [key: string]: any;
+}
+
+interface FlaggedContent {
+  contributedFoods: FlaggedItem[];
+  workouts: FlaggedItem[];
+  meals: FlaggedItem[];
+}
+
+type FlaggedContentType = keyof FlaggedContent;
+type ModerationAction = 'approve' | 'reject';
+
+const ContentModeration: React.FC = () => {
+  const [flaggedContent, setFlaggedContent] = useState<FlaggedContent>({
     contributedFoods: [],
     workouts: [],
-    meals: []
+    meals: [],
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFlaggedContent = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const content = await adminService.getFlaggedContent();
-        
-        // Ensure each content type is an array, defaulting to empty array if undefined
+        let content: any = await adminService.getFlaggedContent();
+        // Defensive: if we get an array (invalid), make it an empty object
+        if (!content || Array.isArray(content)) {
+          content = {};
+        }
         setFlaggedContent({
           contributedFoods: content.contributedFoods || [],
           workouts: content.workouts || [],
-          meals: content.meals || []
+          meals: content.meals || [],
         });
-        
         setError(null);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch flagged content', error);
         setError(error.message || 'Failed to load flagged content');
-        
-        // Set to empty arrays in case of error
         setFlaggedContent({
           contributedFoods: [],
           workouts: [],
-          meals: []
+          meals: [],
         });
       } finally {
         setIsLoading(false);
@@ -43,15 +59,16 @@ const ContentModeration = () => {
     fetchFlaggedContent();
   }, []);
 
-  const handleContentAction = async (type, flagId, action) => {
+  const handleContentAction = async (
+    type: FlaggedContentType,
+    flagId: string,
+    action: ModerationAction
+  ) => {
     try {
-      // Call admin service method to review flagged content
       await adminService.reviewFlaggedContent(type, flagId, action);
-      
-      // Remove the handled flag from the list
       setFlaggedContent(prev => ({
         ...prev,
-        [type]: prev[type].filter(item => item.flag_id !== flagId)
+        [type]: prev[type].filter(item => item.flag_id !== flagId),
       }));
     } catch (error) {
       console.error(`Failed to ${action} content`, error);
@@ -67,8 +84,7 @@ const ContentModeration = () => {
     return <div>Error: {error}</div>;
   }
 
-  // Check if there are any flagged items at all
-  const hasFlaggedContent = 
+  const hasFlaggedContent =
     flaggedContent.contributedFoods.length > 0 ||
     flaggedContent.workouts.length > 0 ||
     flaggedContent.meals.length > 0;
@@ -76,13 +92,13 @@ const ContentModeration = () => {
   return (
     <div className="content-moderation">
       <h1>Content Moderation</h1>
-      
+
       {!hasFlaggedContent && (
         <div className="no-flagged-content">
           <p>No flagged content at the moment.</p>
         </div>
       )}
-      
+
       {/* Contributed Foods Section */}
       {flaggedContent.contributedFoods.length > 0 && (
         <section className="flagged-contributed-foods">
@@ -93,13 +109,13 @@ const ContentModeration = () => {
               <p>Submitted By: {food.email}</p>
               <p>Reason: {food.reason}</p>
               <div className="content-actions">
-                <button 
+                <button
                   onClick={() => handleContentAction('contributedFoods', food.flag_id, 'approve')}
                   className="approve-btn"
                 >
                   Approve
                 </button>
-                <button 
+                <button
                   onClick={() => handleContentAction('contributedFoods', food.flag_id, 'reject')}
                   className="reject-btn"
                 >
@@ -121,13 +137,13 @@ const ContentModeration = () => {
               <p>Submitted By: {workout.email}</p>
               <p>Reason: {workout.reason}</p>
               <div className="content-actions">
-                <button 
+                <button
                   onClick={() => handleContentAction('workouts', workout.flag_id, 'approve')}
                   className="approve-btn"
                 >
                   Approve
                 </button>
-                <button 
+                <button
                   onClick={() => handleContentAction('workouts', workout.flag_id, 'reject')}
                   className="reject-btn"
                 >
@@ -149,13 +165,13 @@ const ContentModeration = () => {
               <p>Submitted By: {meal.email}</p>
               <p>Reason: {meal.reason}</p>
               <div className="content-actions">
-                <button 
+                <button
                   onClick={() => handleContentAction('meals', meal.flag_id, 'approve')}
                   className="approve-btn"
                 >
                   Approve
                 </button>
-                <button 
+                <button
                   onClick={() => handleContentAction('meals', meal.flag_id, 'reject')}
                   className="reject-btn"
                 >

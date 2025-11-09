@@ -2,13 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService.js';
 import './NutritionModeration.css';
 
-const NutritionModeration = () => {
-  const [nutritionSubmissions, setNutritionSubmissions] = useState([]);
+interface NutritionSubmission {
+  id: string;
+  name: string;
+  brand?: string;
+  barcode?: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  serving_size?: string;
+  category?: string;
+  email: string;
+  created_at: string | number | Date;
+}
+
+const NutritionModeration: React.FC = () => {
+  const [nutritionSubmissions, setNutritionSubmissions] = useState<NutritionSubmission[]>([]);
 
   useEffect(() => {
     const fetchNutritionSubmissions = async () => {
       try {
-        const submissions = await adminService.getNutritionSubmissions();
+        const submissions: NutritionSubmission[] = await adminService.getNutritionSubmissions();
         setNutritionSubmissions(submissions);
       } catch (error) {
         console.error('Failed to fetch nutrition submissions', error);
@@ -18,10 +33,9 @@ const NutritionModeration = () => {
     fetchNutritionSubmissions();
   }, []);
 
-  const handleNutritionAction = async (submissionId, action) => {
+  const handleNutritionAction = async (submissionId: string, action: 'approve' | 'reject') => {
     try {
       await adminService.reviewNutritionSubmission(submissionId, action);
-      // Remove the submission from the list or refresh the list
       setNutritionSubmissions(prev => 
         prev.filter(submission => submission.id !== submissionId)
       );

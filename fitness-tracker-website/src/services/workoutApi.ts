@@ -1,17 +1,15 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL as string;
+const BASE_URL = `${import.meta.env.VITE_API_URL as string}/api`;
 
-// Types
 export interface WorkoutData {
-  // Add all the required fields for a workout object, for example:
   workout_type: string;
   workout_name: string;
   date: string;
   total_duration: string | null;
   total_calories_burned: string | null;
   notes?: string | null;
-  exercises: Array<any>; // Use your real exercise type if available
+  exercises: Array<any>;
   [key: string]: any;
 }
 
@@ -30,7 +28,6 @@ export interface Exercise {
 }
 
 export interface ExerciseDetailsResponse {
-  // shape of your exercise details response
   [key: string]: any;
 }
 
@@ -66,7 +63,6 @@ export const workoutService = {
   }
 };
 
-// Exercise Library Service
 export const exerciseLibraryService = {
   getMuscles: async (groupName?: string): Promise<Muscle[]> => {
     try {

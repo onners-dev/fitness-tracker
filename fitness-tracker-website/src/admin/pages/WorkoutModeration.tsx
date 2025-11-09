@@ -2,13 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService.js';
 import './WorkoutModeration.css';
 
-const WorkoutModeration = () => {
-  const [workoutSubmissions, setWorkoutSubmissions] = useState([]);
+interface WorkoutSubmission {
+  id: string;
+  name: string;
+  description: string;
+  difficulty: string;
+  submittedBy: string;
+  submittedAt: string | number | Date;
+}
+
+const WorkoutModeration: React.FC = () => {
+  const [workoutSubmissions, setWorkoutSubmissions] = useState<WorkoutSubmission[]>([]);
 
   useEffect(() => {
     const fetchWorkoutSubmissions = async () => {
       try {
-        const submissions = await adminService.getWorkoutSubmissions();
+        const submissions: WorkoutSubmission[] = await adminService.getWorkoutSubmissions();
         setWorkoutSubmissions(submissions);
       } catch (error) {
         console.error('Failed to fetch workout submissions', error);
@@ -18,7 +27,7 @@ const WorkoutModeration = () => {
     fetchWorkoutSubmissions();
   }, []);
 
-  const handleWorkoutAction = async (workoutId, action) => {
+  const handleWorkoutAction = async (workoutId: string, action: 'approve' | 'reject') => {
     try {
       // Implement workout submission review logic
       console.log(`${action} workout with ID: ${workoutId}`);

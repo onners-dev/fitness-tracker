@@ -2,14 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService.js';
 import './UserManagement.css';
 
-const UserManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
+interface User {
+  id: string;
+  email: string;
+  registeredAt: string | number | Date;
+  isBanned: boolean;
+}
+
+const UserManagement: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const userList = await adminService.getAllUsers();
+        const userList: User[] = await adminService.getAllUsers();
         setUsers(userList);
       } catch (error) {
         console.error('Failed to fetch users', error);
@@ -19,24 +26,30 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
-  const handleUserBan = async (userId) => {
+  const handleUserBan = async (userId: string) => {
     try {
       await adminService.banUser(userId);
-      setUsers(users.map(user => 
-        user.id === userId ? {...user, isBanned: true} : user
-      ));
+      setUsers(users =>
+        users.map(user =>
+          user.id === userId ? { ...user, isBanned: true } : user
+        )
+      );
     } catch (error) {
       console.error('Failed to ban user', error);
     }
   };
 
-  const handleBulkAction = async (action) => {
+  const handleBulkAction = async (action: 'ban') => {
     try {
       if (action === 'ban') {
-        await Promise.all(selectedUsers.map(userId => adminService.banUser(userId)));
-        setUsers(users.map(user => 
-          selectedUsers.includes(user.id) ? {...user, isBanned: true} : user
-        ));
+        await Promise.all(
+          selectedUsers.map(userId => adminService.banUser(userId))
+        );
+        setUsers(users =>
+          users.map(user =>
+            selectedUsers.includes(user.id) ? { ...user, isBanned: true } : user
+          )
+        );
       }
       setSelectedUsers([]);
     } catch (error) {
@@ -48,7 +61,7 @@ const UserManagement = () => {
     <div className="user-management">
       <h1>User Management</h1>
       <div className="bulk-actions">
-        <button 
+        <button
           onClick={() => handleBulkAction('ban')}
           disabled={selectedUsers.length === 0}
         >
@@ -59,12 +72,14 @@ const UserManagement = () => {
         <thead>
           <tr>
             <th>
-              <input 
-                type="checkbox" 
-                onChange={(e) => setSelectedUsers(
-                  e.target.checked ? users.map(u => u.id) : []
-                )}
-                checked={selectedUsers.length === users.length}
+              <input
+                type="checkbox"
+                onChange={e =>
+                  setSelectedUsers(
+                    e.target.checked ? users.map(u => u.id) : []
+                  )
+                }
+                checked={users.length > 0 && selectedUsers.length === users.length}
               />
             </th>
             <th>Email</th>
@@ -77,10 +92,10 @@ const UserManagement = () => {
           {users.map(user => (
             <tr key={user.id}>
               <td>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={selectedUsers.includes(user.id)}
-                  onChange={(e) => {
+                  onChange={e => {
                     if (e.target.checked) {
                       setSelectedUsers([...selectedUsers, user.id]);
                     } else {
@@ -93,7 +108,7 @@ const UserManagement = () => {
               <td>{new Date(user.registeredAt).toLocaleDateString()}</td>
               <td>{user.isBanned ? 'Banned' : 'Active'}</td>
               <td>
-                <button 
+                <button
                   onClick={() => handleUserBan(user.id)}
                   disabled={user.isBanned}
                 >

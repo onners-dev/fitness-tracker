@@ -1,12 +1,11 @@
 import axios from 'axios';
 
-const BASE_URL = `${import.meta.env.VITE_API_URL as string}/meals`;
+const BASE_URL = `${import.meta.env.VITE_API_URL as string}/api/meals`;
 
-// Types
 export interface Meal {
   meal_id: string;
   user_id: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   name: string;
   calories?: number;
   proteins?: number;

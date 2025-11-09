@@ -1,49 +1,66 @@
 import React from 'react';
-import './GoalSummary.css';
 
-const GoalSummary = ({ userProfile }) => {
+interface UserProfile {
+  current_weight: number;
+  height: number;
+  age: number;
+  gender?: 'male' | 'female';
+  activity_level: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
+  fitness_goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'endurance' | 'general_fitness';
+  primary_focus: 'strength' | 'cardio' | 'flexibility' | 'weight_management' | 'overall_wellness';
+}
+
+interface GoalSummaryProps {
+  userProfile: UserProfile;
+}
+
+const GoalSummary: React.FC<GoalSummaryProps> = ({ userProfile }) => {
   const getCalorieGoal = () => {
-    // More comprehensive calorie calculation
     const baseMetabolicRate = calculateBMR(
-      userProfile.current_weight, 
-      userProfile.height, 
-      userProfile.age
+      userProfile.current_weight,
+      userProfile.height,
+      userProfile.age,
+      userProfile.gender
     );
-    
-    const activityMultiplier = {
+
+    const activityMultiplier: Record<UserProfile['activity_level'], number> = {
       'sedentary': 1.2,
       'lightly_active': 1.375,
       'moderately_active': 1.55,
       'very_active': 1.725
     };
 
-    const multiplier = activityMultiplier[userProfile.activity_level] || 1.375;
+    const multiplier = activityMultiplier[userProfile.activity_level] ?? 1.375;
     const calorieAdjustment = getCalorieAdjustmentForGoal(userProfile.fitness_goal);
 
     return Math.round(baseMetabolicRate * multiplier + calorieAdjustment);
   };
 
-  // Basal Metabolic Rate calculation (Mifflin-St Jeor Equation)
-  const calculateBMR = (weight, height, age, gender = 'male') => {
-    const baseCalc = gender === 'male' 
+  const calculateBMR = (
+    weight: number,
+    height: number,
+    age: number,
+    gender: 'male' | 'female' = 'male'
+  ) => {
+    return gender === 'male'
       ? 10 * weight + 6.25 * height - 5 * age + 5
       : 10 * weight + 6.25 * height - 5 * age - 161;
-    return baseCalc;
   };
 
-  // Adjust calories based on fitness goal
-  const getCalorieAdjustmentForGoal = (goal) => {
-    switch(goal) {
-      case 'weight_loss': return -500; // Deficit for weight loss
-      case 'muscle_gain': return +300;  // Surplus for muscle gain
-      case 'maintenance': return 0;     // No adjustment
-      case 'endurance': return +200;    // Slight surplus
+  const getCalorieAdjustmentForGoal = (
+    goal: UserProfile['fitness_goal']
+  ) => {
+    switch (goal) {
+      case 'weight_loss': return -500;
+      case 'muscle_gain': return 300;
+      case 'maintenance': return 0;
+      case 'endurance': return 200;
       default: return 0;
     }
   };
 
   const getWorkoutGoal = () => {
-    const workoutGoals = {
+    const workoutGoals: Record<UserProfile['fitness_goal'], string> = {
       'weight_loss': '4-5 workouts/week, mix of cardio and strength',
       'muscle_gain': '4-6 strength training sessions/week',
       'maintenance': '3-4 varied workouts/week',
@@ -51,11 +68,11 @@ const GoalSummary = ({ userProfile }) => {
       'general_fitness': '3-5 mixed workouts/week'
     };
 
-    return workoutGoals[userProfile.fitness_goal] || 'Consistent exercise';
+    return workoutGoals[userProfile.fitness_goal] ?? 'Consistent exercise';
   };
 
   const getPrimaryFocusDescription = () => {
-    const focusDescriptions = {
+    const focusDescriptions: Record<UserProfile['primary_focus'], string> = {
       'strength': 'Build muscle and increase strength',
       'cardio': 'Improve cardiovascular endurance',
       'flexibility': 'Enhance mobility and prevent injuries',
@@ -63,14 +80,13 @@ const GoalSummary = ({ userProfile }) => {
       'overall_wellness': 'Holistic approach to fitness and health'
     };
 
-    return focusDescriptions[userProfile.primary_focus] || 'Not specified';
+    return focusDescriptions[userProfile.primary_focus] ?? 'Not specified';
   };
 
   return (
     <div className="dashboard-grid goal-summary">
-    {/* Calorie Goal Card */}
-    <div className="dashboard-card goal-summary-card goal-summary-first-row">
-      <h2>Calorie Goal</h2>
+      <div className="dashboard-card goal-summary-card goal-summary-first-row">
+        <h2>Calorie Goal</h2>
         <div className="stats">
           <div className="stat-item">
             <span className="stat-label">Daily Intake</span>
@@ -80,8 +96,6 @@ const GoalSummary = ({ userProfile }) => {
           </div>
         </div>
       </div>
-
-      {/* Workout Goal Card */}
       <div className="dashboard-card goal-summary-card goal-summary-first-row">
         <h2>Workout Goal</h2>
         <div className="stats">
@@ -93,8 +107,6 @@ const GoalSummary = ({ userProfile }) => {
           </div>
         </div>
       </div>
-
-      {/* Primary Focus Card */}
       <div className="dashboard-card goal-summary-card goal-summary-first-row goal-summary-full-width">
         <h2>Primary Focus</h2>
         <div className="stats">

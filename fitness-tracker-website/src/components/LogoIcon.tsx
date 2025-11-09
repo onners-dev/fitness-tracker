@@ -1,27 +1,31 @@
 import React from "react";
+import type { CSSProperties, SVGProps } from "react";
 
-// Blue brand colors for dashboard
 const BLUE1 = "#1e5afa";
 const BLUE2 = "#5096ff";
 const ACCENT = "var(--accent-color, #e0115f)";
 const ACCENT_LIGHT = "var(--accent-light, #fa5cba)";
 
-/**
- * LogoIcon supports two color modes:
- * - Hovered: accent colors (pink)
- * - Not hovered: blue colors (default look for Dashboard)
- */
+interface LogoIconProps extends SVGProps<SVGSVGElement> {
+  width?: number;
+  height?: number;
+  className?: string;
+  style?: CSSProperties;
+  hovered?: boolean;
+  color1?: string;
+  color2?: string;
+}
+
 function LogoIcon({
   width = 100,
   height = 100,
   className = "",
   style,
-  hovered = false,        // <--- add this prop!
+  hovered = false,
   color1,
   color2,
   ...rest
-}) {
-  // Colors: use blue by default, accent when hovered
+}: LogoIconProps) {
   const gradientColor1 = color1 || (hovered ? ACCENT : BLUE1);
   const gradientColor2 = color2 || (hovered ? ACCENT_LIGHT : BLUE2);
 

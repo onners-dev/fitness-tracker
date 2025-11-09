@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = `${import.meta.env.VITE_API_URL as string}/foods`;
+const BASE_URL = `${import.meta.env.VITE_API_URL as string}/api/foods`;
 
-// Types
 export interface FoodContribution {
   name: string;
   calories?: number;
@@ -40,7 +39,6 @@ const getAuthHeader = (): Record<string, string> => {
 };
 
 export const contributedFoodService = {
-  // Get user's contributed foods
   getMyContributions: async (): Promise<MyContributionResponse> => {
     try {
       const response = await axios.get(`${BASE_URL}/my-contributions`, {

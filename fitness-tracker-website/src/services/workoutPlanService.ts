@@ -1,9 +1,8 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL as string;
+const BASE_URL = `${import.meta.env.VITE_API_URL as string}/api`;
 
-// Types
 export interface UserProfile {
   fitness_goal: string;
   activity_level: string;
