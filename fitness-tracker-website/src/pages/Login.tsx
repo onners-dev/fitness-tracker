@@ -1,0 +1,167 @@
+import React, { useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { authService } from '../services/api.js'
+import { FaEye, FaEyeSlash } from 'react-icons/fa'
+import './Login.css'
+
+interface LoginCredentials {
+  email: string
+  password: string
+}
+
+interface LoginResponse {
+  token: string
+  user: {
+    email_verified: boolean
+    is_profile_complete: boolean
+    is_admin?: boolean
+    // Add more fields as needed
+  }
+}
+
+const Login: React.FC = () => {
+  const [credentials, setCredentials] = useState<LoginCredentials>({
+    email: '',
+    password: ''
+  })
+  const [error, setError] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const navigate = useNavigate()
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setCredentials(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    setError('')
+  }
+
+  const validateInput = (): boolean => {
+    if (!credentials.email.trim()) {
+      setError('Please enter your email')
+      return false
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(credentials.email)) {
+      setError('Please enter a valid email address')
+      return false
+    }
+    if (!credentials.password) {
+      setError('Please enter your password')
+      return false
+    }
+    return true
+  }
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    if (!validateInput()) return
+
+    setIsLoading(true)
+
+    try {
+      const loginResponse: LoginResponse = await authService.login(
+        credentials.email,
+        credentials.password
+      )
+
+      if (!loginResponse.token) {
+        throw new Error('No token received from login')
+      }
+      localStorage.setItem('token', loginResponse.token)
+
+      localStorage.setItem(
+        'isVerified',
+        (loginResponse.user.email_verified === true).toString()
+      )
+
+      if (!loginResponse.user.is_profile_complete) {
+        navigate('/profile-setup')
+      } else if (loginResponse.user.is_admin) {
+        navigate('/admin')
+      } else {
+        navigate('/dashboard')
+      }
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || err.message || 'Login failed. Please try again.'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="login-page">
+      <div className="login-container">
+        <h2>Welcome Back</h2>
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={credentials.email}
+              onChange={handleChange}
+              required
+              placeholder="Enter your email"
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="form-group password-group">
+            <label htmlFor="password">Password</label>
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={credentials.password}
+                onChange={handleChange}
+                required
+                placeholder="Enter your password"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+            <Link to="/forgot-password" className="forgot-password-link">
+              Forgot Password?
+            </Link>
+          </div>
+
+          <button
+            type="submit"
+            className="login-button"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Logging In...' : 'Log In'}
+          </button>
+        </form>
+
+        <div className="login-footer">
+          <p>
+            Don't have an account?{' '}
+            <Link to="/signup" className="signup-link">
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Login

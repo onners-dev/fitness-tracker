@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
 const authMiddleware = require('../middleware/authorization');
 
@@ -13,9 +14,9 @@ const transporter = nodemailer.createTransport({
   path: '/usr/sbin/sendmail'
 });
 
-// Generate random verification code
-function generateVerificationCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+// Generate random verification token (uuid)
+function generateVerificationToken() {
+  return uuidv4();
 }
 
 // User Registration Route
@@ -43,7 +44,7 @@ router.post('/register', async (req, res) => {
       age
     });
 
-    // Validate input with more detailed checks
+    // Validate input
     const missingFields = [];
     if (!firstName) missingFields.push('firstName');
     if (!lastName) missingFields.push('lastName');
@@ -51,17 +52,11 @@ router.post('/register', async (req, res) => {
     if (!password) missingFields.push('password');
     if (!dateOfBirth) missingFields.push('dateOfBirth');
     if (!gender) missingFields.push('gender');
-
     if (missingFields.length > 0) {
       console.warn('❌ Missing fields:', missingFields);
       return res.status(400).json({ 
         message: `Missing required fields: ${missingFields.join(', ')}` 
       });
-    }
-
-    // Validate input
-    if (!firstName || !lastName || !email || !password || !dateOfBirth || !gender) {
-      return res.status(400).json({ message: 'All fields are required' });
     }
 
     // Check if user already exists
@@ -74,32 +69,30 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Generate verification code
-    const verificationCode = generateVerificationCode();
+    // Generate verification token
+    const verificationToken = generateVerificationToken();
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Create user
+      // Create user (store verification_token)
       const newUser = await client.query(
-        'INSERT INTO users (email, password_hash, verification_code, verification_code_expires_at, email_verified) VALUES ($1, $2, $3, $4, $5) RETURNING user_id',
+        'INSERT INTO users (email, password_hash, verification_token, email_verified) VALUES ($1, $2, $3, $4) RETURNING user_id',
         [
           email, 
           hashedPassword, 
-          verificationCode, 
-          new Date(Date.now() + 15 * 60 * 1000), // Code expires in 15 minutes
-          false // explicitly set email_verified to false
+          verificationToken,
+          false
         ]
       );
 
-      // Create user profile
       await client.query(
         `INSERT INTO user_profiles (user_id, first_name, last_name, date_of_birth, gender) VALUES ($1, $2, $3, $4, $5)`,
         [newUser.rows[0].user_id, firstName, lastName, dateOfBirth, gender]
       );
 
-      // Generate JWT token - FIXED: use newUser details
+      // Generate JWT token
       const token = jwt.sign(
         { 
           user_id: newUser.rows[0].user_id, 
@@ -117,7 +110,7 @@ router.post('/register', async (req, res) => {
         from: 'no-reply@arcus.fit',
         to: email,
         subject: 'Verify Your Email with Arcus',
-        text: `Your verification code is: ${verificationCode}. This code will expire in 15 minutes.`
+        text: `Your verification link is: https://arcus.fit/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
@@ -160,60 +153,43 @@ router.post('/register', async (req, res) => {
 });
 
 
-// Email Verification Route
-router.post('/verify-code', async (req, res) => {
+// Email Verification Route (token-based)
+router.post('/verify-token', async (req, res) => {
   try {
-    const { email, code } = req.body;
+    const { email, token } = req.body;
 
-    console.log('🔍 Verification Request:', { 
-      email, 
-      code, 
-      codeType: typeof code 
-    });
-
-    // Validate input
-    if (!email || !code) {
+    if (!email || !token) {
       return res.status(400).json({ 
-        message: 'Email and verification code are required' 
-      });
-    }
-
-    // Ensure code is a string and has 6 digits
-    const verificationCode = code.toString().trim();
-    if (!/^\d{6}$/.test(verificationCode)) {
-      return res.status(400).json({ 
-        message: 'Invalid verification code format' 
+        message: 'Email and verification token are required' 
       });
     }
 
     const result = await pool.query(
       `SELECT * FROM users 
        WHERE email = $1 
-       AND verification_code = $2 
-       AND verification_code_expires_at > CURRENT_TIMESTAMP`,
-      [email, verificationCode]
+       AND verification_token = $2`,
+      [email, token]
     );
 
     if (result.rows.length === 0) {
       return res.status(400).json({ 
-        message: 'Invalid or expired verification code' 
+        message: 'Invalid verification token' 
       });
     }
 
     const user = result.rows[0];
 
-    // Mark email as verified and clear verification code
+    // Mark email as verified and clear verification token
     await pool.query(
       `UPDATE users 
        SET email_verified = true, 
-           verification_code = NULL, 
-           verification_code_expires_at = NULL 
+           verification_token = NULL
        WHERE email = $1`,
       [email]
     );
 
     // Generate new token for verified user
-    const token = jwt.sign(
+    const jwtToken = jwt.sign(
       { 
         user_id: user.user_id, 
         email: user.email,
@@ -226,14 +202,14 @@ router.post('/verify-code', async (req, res) => {
     res.status(200).json({ 
       message: 'Email verified successfully',
       email_verified: true,
-      token: token,
+      token: jwtToken,
       user: {
         user_id: user.user_id,
         email: user.email
       }
     });
   } catch (error) {
-    console.error('🚨 Code Verification Error:', {
+    console.error('🚨 Token Verification Error:', {
       name: error.name,
       message: error.message,
       stack: error.stack
@@ -246,14 +222,11 @@ router.post('/verify-code', async (req, res) => {
   }
 });
 
-// Resend Verification Code Route
+// Resend Verification Token Route
 router.post('/resend-verification', async (req, res) => {
   try {
     const { email } = req.body;
 
-    console.log('🔄 Resend Verification Code Request:', { email });
-
-    // Validate input
     if (!email) {
       return res.status(400).json({ 
         message: 'Email is required' 
@@ -270,18 +243,16 @@ router.post('/resend-verification', async (req, res) => {
       });
     }
 
-    // Generate new verification code
-    const verificationCode = generateVerificationCode();
+    // Generate new verification token
+    const verificationToken = generateVerificationToken();
 
-    // Update user with new verification code
+    // Update user with new verification token
     await pool.query(
       `UPDATE users 
-       SET verification_code = $1, 
-           verification_code_expires_at = $2 
-       WHERE email = $3`,
+       SET verification_token = $1 
+       WHERE email = $2`,
       [
-        verificationCode, 
-        new Date(Date.now() + 15 * 60 * 1000), // Code expires in 15 minutes
+        verificationToken, 
         email
       ]
     );
@@ -290,8 +261,8 @@ router.post('/resend-verification', async (req, res) => {
     const mailOptions = {
       from: 'no-reply@arcus.fit',
       to: email,
-      subject: 'New Verification Code for Arcus',
-      text: `Your new verification code is: ${verificationCode}. This code will expire in 15 minutes.`
+      subject: 'New Verification Link for Arcus',
+      text: `Your new verification link is: https://arcus.fit/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}`
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -301,25 +272,23 @@ router.post('/resend-verification', async (req, res) => {
     });
 
     res.status(200).json({ 
-      message: 'New verification code has been sent to your email',
+      message: 'A new verification email has been sent.',
       email: email
     });
 
   } catch (error) {
-    console.error('🚨 Resend Verification Code Error:', {
+    console.error('🚨 Resend Verification Token Error:', {
       name: error.name,
       message: error.message,
       stack: error.stack
     });
 
     res.status(500).json({ 
-      message: 'Server error while resending verification code',
+      message: 'Server error while resending verification link',
       error: error.message 
     });
   }
 });
-
-
 
 router.post('/login', async (req, res) => {
   console.log('JWT Secret Check:', {
@@ -336,13 +305,11 @@ router.post('/login', async (req, res) => {
       passwordLength: password.length
     });
 
-    // Verify JWT secret
     if (!process.env.JWT_SECRET) {
       console.error('❌ JWT_SECRET is UNDEFINED');
       return res.status(500).json({ message: 'Server configuration error' });
     }
 
-    // Find user with profile information
     const userResult = await pool.query(`
       SELECT 
         u.user_id, 
@@ -358,7 +325,6 @@ router.post('/login', async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Extremely detailed logging
     console.log('User Query Result:', {
       userFound: !!user,
       userDetails: user ? {
@@ -369,19 +335,11 @@ router.post('/login', async (req, res) => {
       } : null
     });
 
-    // Check if user exists
     if (!user) {
       console.warn('❌ User not found:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Detailed password verification logging
-    console.log('Password Verification:', {
-      inputPasswordLength: password.length,
-      storedHashLength: user.password_hash.length
-    });
-
-    // Verify password
     const validPassword = await bcrypt.compare(password, user.password_hash);
     
     console.log('Password Validation:', {
@@ -394,7 +352,6 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Token generation with extremely detailed logging
     try {
       const isAdmin = user.is_admin === true || user.is_admin === 't';
       const isProfileComplete = user.is_profile_complete === true;
@@ -403,11 +360,9 @@ router.post('/login', async (req, res) => {
         user_id: user.user_id, 
         email: user.email,
         email_verified: user.email_verified === true || user.email_verified === 't',
-        is_admin: user.is_admin === true || user.is_admin === 't', // Explicitly convert to boolean
+        is_admin: user.is_admin === true || user.is_admin === 't',
         is_profile_complete: user.is_profile_complete === true
       };
-
-      console.log('Token Payload:', JSON.stringify(tokenPayload, null, 2));
 
       const token = jwt.sign(
         tokenPayload, 
@@ -418,13 +373,6 @@ router.post('/login', async (req, res) => {
         }
       );
 
-      console.log('🎉 Token Generated Successfully:', {
-        tokenLength: token.length,
-        firstChars: token.substring(0, 10),
-        lastChars: token.substring(token.length - 10)
-      });
-
-      // Explicit and complete response
       res.status(200).json({
         token: token,
         user: {
@@ -461,7 +409,5 @@ router.post('/login', async (req, res) => {
     });
   }
 });
-
-
 
 module.exports = router;
