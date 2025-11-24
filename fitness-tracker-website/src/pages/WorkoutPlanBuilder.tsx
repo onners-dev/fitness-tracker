@@ -129,29 +129,24 @@ const WorkoutPlanBuilder: React.FC = () => {
   }
 
   const handleDaySelection = (day: string) => {
+    setSelectedDay(day)
     setPlanDetails(prev => {
-      const updatedDays = prev.workoutDays.includes(day)
-        ? prev.workoutDays.filter(d => d !== day)
-        : [...prev.workoutDays, day]
-      const updatedSelectedExercises = { ...prev.selectedExercises }
-      if (!updatedSelectedExercises[day]) {
-        updatedSelectedExercises[day] = []
-      }
+      if (prev.selectedExercises[day]) return prev
       return {
         ...prev,
-        workoutDays: updatedDays,
-        selectedExercises: updatedSelectedExercises
+        selectedExercises: {
+          ...prev.selectedExercises,
+          [day]: []
+        }
       }
     })
-
     setFilters({
       muscleGroup: '',
       difficulty: '',
       equipment: ''
     })
-
-    setSelectedDay(prevDay => prevDay === day ? null : day)
   }
+  
 
   const addExerciseToDay = (exercise: Exercise) => {
     if (!selectedDay) return
@@ -330,12 +325,9 @@ const WorkoutPlanBuilder: React.FC = () => {
         {allDays.map(day => (
           <button
             key={day}
-            className={`
-              ${planDetails.workoutDays.includes(day) ? 'active' : ''}
-              ${selectedDay === day ? 'selected' : ''}
-              ${(planDetails.selectedExercises[day] ?? []).length > 0 ? 'has-exercises' : ''}
-            `}
+            className={`day-btn${selectedDay === day ? ' selected' : ''}`}
             onClick={() => handleDaySelection(day)}
+            type="button"
           >
             {day}
             {(planDetails.selectedExercises[day] ?? []).length > 0 && (

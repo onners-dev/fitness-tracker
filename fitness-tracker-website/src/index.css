@@ -6,7 +6,7 @@
   --primary-light: #18191b;
 
   --secondary-color: #ececec;  
-  --secondary-dark: #cacaca;      /* Slightly darker gray */
+  --secondary-dark: #cacaca;     
 
   --accent-color: #e0115f;
   --accent-light: #fa5cba;
@@ -28,7 +28,6 @@
   --text-muted: #7e7f87;
   --text-accent: var(--accent-color);
 
-  /* Fitness-specific highlight */
   --success: #19a979;
   --danger: #e0115f;
 
@@ -136,4 +135,3 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-xs);
 }
 p { color: var(--text-secondary); }
-/* ...You can keep the rest of your layout/grid/feature-card stuff, just adjust backgrounds and borders to gray/black palette... */

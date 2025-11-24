@@ -383,33 +383,26 @@ const WorkoutPlanEdit: React.FC = () => {
       </div>
 
       <div className="workout-days">
-        {allDays.map(day => {
-          const dayArr = Array.isArray(planDetails.selectedExercises[day])
-            ? planDetails.selectedExercises[day]
-            : []
-          return (
-            <button
-              key={day}
-              className={`
-                ${planDetails.workoutDays.includes(day) ? 'active' : ''}
-                ${selectedDay === day ? 'selected' : ''}
-                ${dayArr.length > 0 ? 'has-exercises' : ''}
-              `}
-              onClick={() => handleDaySelection(day)}
-            >
-              {day}
-              {dayArr.length > 0 && (
-                <span
-                  className="day-completed-checkmark"
-                  title={`${dayArr.length} exercises added`}
-                >
-                  ✓
-                </span>
-              )}
-            </button>
-          )
-        })}
+        {allDays.map(day => (
+          <button
+            key={day}
+            className={`day-btn${selectedDay === day ? ' selected' : ''}`}
+            onClick={() => handleDaySelection(day)}
+            type="button"
+          >
+            {day}
+            {(Array.isArray(planDetails.selectedExercises[day]) && planDetails.selectedExercises[day].length > 0) && (
+              <span
+                className="day-completed-checkmark"
+                title={`${planDetails.selectedExercises[day].length} exercises added`}
+              >
+                ✓
+              </span>
+            )}
+          </button>
+        ))}
       </div>
+
 
       {selectedDay && (
         <>
