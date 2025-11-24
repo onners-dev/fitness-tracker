@@ -220,4 +220,7 @@
   text-align: center;
   margin-top: 2rem;
 }
+.goal-summary {
+  margin-bottom: var(--spacing-lg);
+}
 
