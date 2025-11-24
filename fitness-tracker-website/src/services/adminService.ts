@@ -1,5 +1,6 @@
 import api from './api.js';
 
+const API_PREFIX = '/api';
 
 export type AdminAction = 'approve' | 'reject' | 'pending' | 'approved' | 'rejected' | string;
 
@@ -15,12 +16,10 @@ export interface ExerciseData {
   [key: string]: any;
 }
 
-// Service
 export const adminService = {
-  // Dashboard Statistics
   getDashboardStats: async (): Promise<any> => {
     try {
-      const response = await api.get('/admin/dashboard-stats');
+      const response = await api.get(`${API_PREFIX}/admin/dashboard-stats`);
       return response.data;
     } catch (error: any) {
       if (error.response) {
@@ -41,7 +40,7 @@ export const adminService = {
 
   getAllUsers: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/users');
+      const response = await api.get(`${API_PREFIX}/admin/users`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -50,7 +49,7 @@ export const adminService = {
 
   banUser: async (userId: string): Promise<any> => {
     try {
-      const response = await api.post(`/admin/users/${userId}/ban`);
+      const response = await api.post(`${API_PREFIX}/admin/users/${userId}/ban`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -59,7 +58,7 @@ export const adminService = {
 
   getFlaggedContent: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/report/flagged-content');
+      const response = await api.get(`${API_PREFIX}/report/flagged-content`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -68,7 +67,7 @@ export const adminService = {
 
   getWorkoutSubmissions: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/workout-submissions');
+      const response = await api.get(`${API_PREFIX}/admin/workout-submissions`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -77,7 +76,7 @@ export const adminService = {
   
   getSystemAnalytics: async (): Promise<any> => {
     try {
-      const response = await api.get('/admin/system-analytics');
+      const response = await api.get(`${API_PREFIX}/admin/system-analytics`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -86,7 +85,7 @@ export const adminService = {
   
   getNutritionSubmissions: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/nutrition-submissions');
+      const response = await api.get(`${API_PREFIX}/admin/nutrition-submissions`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -95,7 +94,7 @@ export const adminService = {
   
   reviewNutritionSubmission: async (foodId: string, action: AdminAction): Promise<any> => {
     try {
-      const response = await api.post(`/admin/nutrition-submissions/${foodId}/review`, { 
+      const response = await api.post(`${API_PREFIX}/admin/nutrition-submissions/${foodId}/review`, { 
         status: action 
       });
       return response.data;
@@ -110,7 +109,7 @@ export const adminService = {
     action: AdminAction
   ): Promise<any> => {
     try {
-      const response = await api.post(`/report/flagged-content/${flagId}/review`, {
+      const response = await api.post(`${API_PREFIX}/report/flagged-content/${flagId}/review`, {
         contentType,
         action: action === 'approve' ? 'approved' : 'rejected'
       });
@@ -122,7 +121,7 @@ export const adminService = {
 
   getExerciseDetails: async (exerciseId: string): Promise<any> => {
     try {
-      const response = await api.get(`/admin/exercises/${exerciseId}`);
+      const response = await api.get(`${API_PREFIX}/admin/exercises/${exerciseId}`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -131,7 +130,7 @@ export const adminService = {
 
   getAvailableEquipment: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/equipment');
+      const response = await api.get(`${API_PREFIX}/admin/equipment`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -140,7 +139,7 @@ export const adminService = {
 
   getAvailableMuscleGroups: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/muscle-groups');
+      const response = await api.get(`${API_PREFIX}/admin/muscle-groups`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -160,7 +159,7 @@ export const adminService = {
         muscle_groups: exerciseData.muscle_groups || [],
         muscles: exerciseData.muscles || []
       };
-      const response = await api.put(`/admin/exercises/${exerciseId}`, sanitizedData);
+      const response = await api.put(`${API_PREFIX}/admin/exercises/${exerciseId}`, sanitizedData);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -169,7 +168,7 @@ export const adminService = {
   
   getMusclesInMuscleGroup: async (muscleGroupName: string): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/muscles-in-group', {
+      const response = await api.get(`${API_PREFIX}/admin/muscles-in-group`, {
         params: { muscleGroupName }
       });
       return response.data;
@@ -191,7 +190,7 @@ export const adminService = {
         muscle_groups: exerciseData.muscle_groups || [],
         muscles: exerciseData.muscles || []
       };
-      const response = await api.post('/admin/exercises', sanitizedData);
+      const response = await api.post(`${API_PREFIX}/admin/exercises`, sanitizedData);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -200,7 +199,7 @@ export const adminService = {
 
   getAllExercises: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/exercises');
+      const response = await api.get(`${API_PREFIX}/admin/exercises`);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || new Error('Failed to fetch exercises');
@@ -209,7 +208,7 @@ export const adminService = {
 
   deleteExercise: async (exerciseId: string): Promise<any> => {
     try {
-      const response = await api.delete(`/admin/exercises/${exerciseId}`);
+      const response = await api.delete(`${API_PREFIX}/admin/exercises/${exerciseId}`);
       return response.data;
     } catch (error: any) {
       throw error.response?.data || new Error('Failed to delete exercise');
@@ -218,7 +217,7 @@ export const adminService = {
 
   getMuscleGroups: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/muscle-groups');
+      const response = await api.get(`${API_PREFIX}/admin/muscle-groups`);
       return response.data;
     } catch (error: any) {
       throw error;
@@ -227,7 +226,7 @@ export const adminService = {
 
   getMuscles: async (groupName: string): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/muscles', {
+      const response = await api.get(`${API_PREFIX}/admin/muscles`, {
         params: { groupName }
       });
       return response.data;
@@ -238,7 +237,7 @@ export const adminService = {
 
   getExercises: async (muscleName: string, filters: {difficulty?: string; equipment?: string} = {}): Promise<any[]> => {
     try {
-      const response = await api.get('/admin/exercises', {
+      const response = await api.get(`${API_PREFIX}/admin/exercises`, {
         params: {
           muscleName,
           difficulty: filters.difficulty,

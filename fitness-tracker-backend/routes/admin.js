@@ -123,18 +123,18 @@ router.get('/flagged-content', adminRoute, async (req, res) => {
 router.get('/workout-submissions', adminRoute, async (req, res) => {
   try {
     const submissions = await pool.query(`
-      SELECT 
-        workout_id as id, 
-        workout_name as name, 
-        workout_type as description, 
-        'N/A' as difficulty, 
-        u.email as "submittedBy", 
-        created_at as "submittedAt",
-        'pending' as status
-      FROM user_workouts w
-      JOIN users u ON w.user_id = u.user_id
-      ORDER BY created_at DESC
-      LIMIT 50
+    SELECT 
+      w.workout_id as id, 
+      w.workout_name as name, 
+      COALESCE(w.notes, w.workout_type, w.workout_name, '') as description, 
+      'N/A' as difficulty, 
+      u.email as "submittedBy", 
+      w.created_at as "submittedAt",
+      'pending' as status
+    FROM user_workouts w
+    JOIN users u ON w.user_id = u.user_id
+    ORDER BY w.created_at DESC
+    LIMIT 50
     `);
 
     res.json(submissions.rows);
